@@ -31,12 +31,17 @@ public class DataManager {
 	//Positions list
 	private DBObjectList positions;
 	
+	//Duties List
+	private DBDutiesList duties;
+	
 	/**
 	 * Default constructor. Initializes member variables.
 	 * @param pprop  Properties object.
 	 * @param pids Status display
 	 */
 	public DataManager(Properties pprop, IDisplayStatus pids) {
+		positions=null;
+		
 		ids = pids;
 		prop = pprop;
 		
@@ -46,6 +51,15 @@ public class DataManager {
 	
 			if (initDBMan()) {
 				ids.DisplayStatus("Connected to the Database!");
+				
+				duties=new DBDutiesList(dbman, "DUTIES");
+				duties.populateList();
+				
+				persons=new DBPersonList(dbman, "PERSON");
+				persons.populateList();
+				
+				positions=new DBPositionsList(dbman, "PLACE");
+				positions.populateList();
 			} else {
 				ids.DisplayStatus("Database connection failed. Exiting...");
 				return;
@@ -74,9 +88,7 @@ public class DataManager {
 	 * @return List of employees
 	 */
 	public ArrayList<String> getEmployees()
-	{
-		persons=new DBPersonList(dbman, "PERSON");
-		persons.populateList();
+	{		
 		return persons.getNames();
 	}
 	
@@ -97,8 +109,6 @@ public class DataManager {
 	 */
 	public ArrayList<String> getPositions()
 	{
-		positions=new DBPositionsList(dbman, "PLACE");
-		positions.populateList();
 		return positions.getNames();
 	}
 	
@@ -111,6 +121,31 @@ public class DataManager {
 	{		
 		DBObject position=positions.getObjectByName(name);		
 		return position==null?null:position.getCols();
+	}
+	
+	/**
+	 * Retrieves a list of employees stored in the database
+	 * @return List of employees
+	 */
+	public ArrayList<String> getDuties()
+	{	
+		return duties.getNames();
+	}
+	
+	public ArrayList<String> isDutyOn(String date, String postion_id)
+	{
+		ArrayList<String> pers=duties.isOn(date, postion_id);
+		ArrayList<String> retval=new ArrayList<String> ();
+		for(String s: pers)
+		{
+			DBObject obj=persons.getObjectByPKID(s);
+			if(obj!=null)
+			{
+				retval.add(obj.getProperty("PERSON_NAME"));
+			}
+		}
+		
+		return retval;
 	}
 	
 	
@@ -127,6 +162,32 @@ public class DataManager {
 		else
 		{
 			ids.DisplayStatus("Unable to add employee!");
+		}
+	}
+	
+	/**
+	 * Adds new duty to the database, note that the name should be unique
+	 * @param HashMap with the details to add to the database.
+	 */
+	public void addDuty(HashMap<String, String> details)
+	{
+		DBObject employee=persons.getObjectByName(details.get("PERSON_ID"));
+		details.put("PERSON_ID", employee.getProperty("PERSON_ID"));
+		
+		DBObject place=positions.getObjectByName(details.get("PLACE_ID"));
+		details.put("PLACE_ID", place.getProperty("PLACE_ID"));
+		
+		if(duties.insertItem(details))
+		{
+			ids.DisplayStatus("Shift added! "+
+			employee.getProperty("PERSON_NAME")
+			+" - "+place.getProperty("PLACE_NAME")
+			+":"+details.get("DUTY_START_TIME")+" - "
+			+details.get("DUTY_END_TIME"));	
+		}
+		else
+		{
+			ids.DisplayStatus("Unable to add shift!");
 		}
 	}
 	

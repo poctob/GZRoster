@@ -80,7 +80,7 @@ public abstract class DBObjectList {
 	/**
 	 * Updates object's data in the collection and database.
 	 * @param obj Object to update.
-	 * @return True if operation is succesfull, false otherwise
+	 * @return True if operation is successful, false otherwise
 	 */
 	abstract boolean updateObject(DBObject obj);
 	
@@ -90,6 +90,13 @@ public abstract class DBObjectList {
 	 * @return DBObject with the specified properties.
 	 */
 	abstract DBObject getObjectByDetails(HashMap<String, String> details);
+	
+	/**
+	 * Uses pkID to get an object from the list
+	 * @param pkid pkID to use to retrieve an object.
+	 * @return DBObject with a specified pkid;
+	 */
+	abstract DBObject getObjectByPKID(String pkid);
 	/**
 	 * Adds object to the database.
 	 * @param item Item to add.
@@ -128,6 +135,22 @@ public abstract class DBObjectList {
 		if (retval)
 			objects.remove(obj);
 		return retval;
+	}
+	
+	/**
+	 * Finds an object with specified property.  Only one object is returned.
+	 * @param key Key of the property.
+	 * @param value Value of the property.
+	 * @return DBOject matching specified key/value pair.  Null if none is found.
+	 */
+	protected DBObject getObjectByProperty(String key, String value)
+	{
+		for( DBObject obj : objects)
+		{
+			if(obj.getProperty(key).equals(value))
+				return obj;
+		}
+		return null;
 	}
 	
 }

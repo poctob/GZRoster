@@ -60,12 +60,7 @@ public class DBPersonList extends DBObjectList{
 	}
 	@Override
 	DBObject getObjectByName(String name) {
-		for( DBObject obj : objects)
-		{
-			if(obj.getProperty("PERSON_NAME").equals(name))
-				return obj;
-		}
-		return null;
+		return getObjectByProperty("PERSON_NAME", name);
 	}
 	@Override
 	boolean recordExists(DBObject obj) {	
@@ -95,7 +90,10 @@ public class DBPersonList extends DBObjectList{
 		// TODO Auto-generated method stub
 		return getObjectByName(details.get("PERSON_NAME"));
 	}
-	
-	
+
+	@Override
+	DBObject getObjectByPKID(String pkid) {
+		return getObjectByProperty("PERSON_ID", pkid);
+	}	
 
 }

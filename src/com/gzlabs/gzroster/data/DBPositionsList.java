@@ -39,8 +39,7 @@ public class DBPositionsList extends DBObjectList {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}	
-		
+		}			
 	}
 
 	@Override
@@ -59,13 +58,8 @@ public class DBPositionsList extends DBObjectList {
 	}
 
 	@Override
-	DBObject getObjectByName(String name) {
-		for( DBObject obj : objects)
-		{
-			if(obj.getProperty("PLACE_NAME").equals(name))
-				return obj;
-		}
-		return null;
+	DBObject getObjectByName(String name) {		
+		return getObjectByProperty("PLACE_NAME", name);
 	}
 
 	@Override
@@ -93,6 +87,11 @@ public class DBPositionsList extends DBObjectList {
 	@Override
 	DBObject getObjectByDetails(HashMap<String, String> details) {
 		return getObjectByName(details.get("PLACE_NAME"));
+	}
+
+	@Override
+	DBObject getObjectByPKID(String pkid) {		
+		return getObjectByProperty("PLACE_ID", pkid);
 	}
 
 }

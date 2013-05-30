@@ -191,6 +191,29 @@ public class DataManager {
 		}
 	}
 	
+	
+	public void deleteDuty(String person, String position, String datetime)
+	{
+		if(person.length()>1)
+		{
+			HashMap<String, String> details=new HashMap<String, String> ();
+			String pers=person.substring(0, person.length()-1);
+			pers=pers.substring(1, pers.length());
+			
+			details.put("PLACE_ID", position);
+			details.put("PERSON_ID", persons.getObjectByName(pers).getProperty("PERSON_ID"));
+			details.put("DUTY_START_TIME", datetime);
+			
+			if(duties.deleteObject(duties.getObjectByDetails(details)))
+			{
+				ids.DisplayStatus("Shift deleted!");	
+			}
+			else
+			{
+				ids.DisplayStatus("Failed to delete!");	
+			}
+		}
+	}
 	/**
 	 * Adds new position to the database, note that the name should be unique
 	 * @param value Name to add.
@@ -264,6 +287,25 @@ public class DataManager {
 			{
 				ids.DisplayStatus("Unable to update record!");
 			}
+	}
+	
+	public String getCellLabelString(String str_time, String column_label, String string_date)
+	{
+		if(column_label!=null && string_date!=null)
+		{
+							
+			String date=string_date+" "+str_time+":00.0";
+			
+			ArrayList<String> persons_on_duty=null;
+			persons_on_duty=isDutyOn(date, column_label);
+			
+			if(persons_on_duty!=null && persons_on_duty.size()>0)
+			{
+				return persons_on_duty.toString();
+			}												
+			return "X";
+		}
+		return null;
 	}
 
 }

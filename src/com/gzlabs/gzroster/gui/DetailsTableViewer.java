@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.swt.SWT;
@@ -16,7 +17,7 @@ public class DetailsTableViewer extends TableViewer{
 	private ArrayList<TableViewerColumn> l_columns;
 	
 	public DetailsTableViewer(Composite parent) {
-		super(parent);
+		super(parent, SWT.FULL_SELECTION);
 		this.getTable().setLayoutData(new GridData(GridData.FILL_BOTH));
 		getTable().setHeaderVisible(true);
 		getTable().setLinesVisible(true);
@@ -39,6 +40,11 @@ public class DetailsTableViewer extends TableViewer{
 	public void setLabelProvider(int col, ColumnLabelProvider provider)
 	{
 		l_columns.get(col).setLabelProvider(provider);
+	}
+	
+	public void setEditingProvider(int col, EditingSupport provider)
+	{		
+		l_columns.get(col).setEditingSupport(provider);
 	}
 	
 	public void initiateData(ArrayList<String> data)

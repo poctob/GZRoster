@@ -46,7 +46,7 @@ import org.eclipse.jface.layout.TableColumnLayout;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.jface.viewers.TreeViewer;
 
-public class MainWindow implements IDisplayStatus{
+public class MainWindow implements IDisplayStatus, IDateProvider{
 
 	private static final int DAYS_IN_THE_WEEK = 7;
 	
@@ -67,11 +67,6 @@ public class MainWindow implements IDisplayStatus{
 	/************************************************************/
 	//Main Window Container
 	private TabFolder tabFolder;
-	/************************************************************/
-	
-	/************************************************************/
-	//Schedule Tab
-	private DateTime dateTime;
 	private TableItem dateRow;
 	private TableColumn[] weekDayColumns;
 	private DateTime scheduleDate;
@@ -128,7 +123,6 @@ public class MainWindow implements IDisplayStatus{
 	//Details Tab
 	private DetailsTableViewer tv;
 	private DutiesManager dutiesman;
-	private TabItem tbtmAddShift;
 	/************************************************************/
 
 	/**
@@ -164,7 +158,7 @@ public class MainWindow implements IDisplayStatus{
 	 */
 	protected void createContents() {
 		shell = new Shell();
-		shell.setSize(1024, 789);
+		shell.setSize(1420, 840);
 		shell.setText("SWT Application");
 		shell.setLayout(null);
 		
@@ -172,7 +166,7 @@ public class MainWindow implements IDisplayStatus{
 		shell.setMenuBar(menu);
 		
 		tabFolder = new TabFolder(shell, SWT.NONE);
-		tabFolder.setBounds(10, 10, 1000, 557);			
+		tabFolder.setBounds(10, 10, 1398, 557);			
 		
 		createScheduleTab();
 		createEmployeesTab();
@@ -180,8 +174,89 @@ public class MainWindow implements IDisplayStatus{
 		
 		TextViewer textViewer = new TextViewer(shell, SWT.BORDER);
 		statusWindow = textViewer.getTextWidget();
-		statusWindow.setBounds(10, 573, 778, 160);
+		statusWindow.setBounds(10, 573, 473, 160);
 		formToolkit.paintBordersFor(statusWindow);
+		
+		scheduleDate = new DateTime(shell, SWT.BORDER | SWT.CALENDAR | SWT.SHORT);
+		scheduleDate.setBounds(489, 573, 250, 196);
+		scheduleDate.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				updateDetailsData(dutiesman.getTimeSpan());
+			}
+		});
+		formToolkit.adapt(scheduleDate);
+		formToolkit.paintBordersFor(scheduleDate);
+		
+		Label lblEmployee = new Label(shell, SWT.NONE);
+		lblEmployee.setBounds(745, 573, 69, 18);
+		formToolkit.adapt(lblEmployee, true, true);
+		lblEmployee.setText("Employee");
+		
+		scheduleEmployeeCombo = new Combo(shell, SWT.NONE);
+		scheduleEmployeeCombo.setBounds(745, 597, 150, 30);
+		formToolkit.adapt(scheduleEmployeeCombo);
+		formToolkit.paintBordersFor(scheduleEmployeeCombo);
+		
+		Label lblPosition = new Label(shell, SWT.NONE);
+		lblPosition.setBounds(745, 630, 69, 18);
+		lblPosition.setText("Position");
+		formToolkit.adapt(lblPosition, true, true);
+		
+		schedulePositionCombo = new Combo(shell, SWT.NONE);
+		schedulePositionCombo.setBounds(745, 654, 150, 30);
+		formToolkit.adapt(schedulePositionCombo);
+		formToolkit.paintBordersFor(schedulePositionCombo);
+		
+		Label lblStartTime = new Label(shell, SWT.NONE);
+		lblStartTime.setBounds(901, 573, 69, 18);
+		formToolkit.adapt(lblStartTime, true, true);
+		lblStartTime.setText("Start Time");
+		
+		startTimeCombo = new Combo(shell, SWT.NONE);
+		startTimeCombo.setBounds(901, 597, 103, 30);
+		startTimeCombo.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				
+				if(endTimeCombo!=null && dutiesman!=null)
+				{
+					endTimeCombo.removeAll();
+					endTimeCombo.setEnabled(true);
+					ArrayList <String> timespans=dutiesman.getTimeSpan();							
+					int index=startTimeCombo.getSelectionIndex();
+					
+					for(int i=index+1; i<timespans.size();i++)
+					{
+						endTimeCombo.add(timespans.get(i));
+					}
+				}
+			}
+		});
+		formToolkit.adapt(startTimeCombo);
+		formToolkit.paintBordersFor(startTimeCombo);
+		
+		Label lblEndTime = new Label(shell, SWT.NONE);
+		lblEndTime.setBounds(901, 629, 69, 18);
+		formToolkit.adapt(lblEndTime, true, true);
+		lblEndTime.setText("End Time");
+		
+		endTimeCombo = new Combo(shell, SWT.NONE);
+		endTimeCombo.setBounds(901, 654, 103, 30);
+		endTimeCombo.setEnabled(false);
+		formToolkit.adapt(endTimeCombo);
+		formToolkit.paintBordersFor(endTimeCombo);
+		
+		Button scheduleAddButton = new Button(shell, SWT.NONE);
+		scheduleAddButton.setBounds(916, 690, 88, 30);
+		scheduleAddButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				processDutyData();
+			}
+		});
+		formToolkit.adapt(scheduleAddButton, true, true);
+		scheduleAddButton.setText("Add");
 		getProp();
 		dman = new DataManager(prop, this); 
 		dutiesman=new DutiesManager(prop);
@@ -204,60 +279,8 @@ public class MainWindow implements IDisplayStatus{
 		formToolkit.paintBordersFor(composite_2);
 		composite_2.setLayout(null);
 		
-		scheduleEmployeeCombo = new Combo(composite_2, SWT.NONE);
-		scheduleEmployeeCombo.setBounds(347, 44, 150, 30);
-		formToolkit.adapt(scheduleEmployeeCombo);
-		formToolkit.paintBordersFor(scheduleEmployeeCombo);
-		
-		schedulePositionCombo = new Combo(composite_2, SWT.NONE);
-		schedulePositionCombo.setBounds(347, 101, 150, 30);
-		formToolkit.adapt(schedulePositionCombo);
-		formToolkit.paintBordersFor(schedulePositionCombo);
-		
-		Button scheduleAddButton = new Button(composite_2, SWT.NONE);
-		scheduleAddButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				processDutyData();
-			}
-		});
-		scheduleAddButton.setBounds(609, 101, 88, 30);
-		formToolkit.adapt(scheduleAddButton, true, true);
-		scheduleAddButton.setText("Add");
-		
-		scheduleDate = new DateTime(composite_2, SWT.BORDER | SWT.CALENDAR | SWT.SHORT);
-		scheduleDate.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				updateDetailsData(dutiesman.getTimeSpan());
-			}
-		});
-		scheduleDate.setBounds(78, 0, 250, 196);
-		formToolkit.adapt(scheduleDate);
-		formToolkit.paintBordersFor(scheduleDate);
-		
-		Label lblEmployee = new Label(composite_2, SWT.NONE);
-		lblEmployee.setBounds(347, 20, 69, 18);
-		formToolkit.adapt(lblEmployee, true, true);
-		lblEmployee.setText("Employee");
-		
-		Label lblPosition = new Label(composite_2, SWT.NONE);
-		lblPosition.setBounds(347, 77, 69, 18);
-		lblPosition.setText("Position");
-		formToolkit.adapt(lblPosition, true, true);
-		
-		Label lblStartTime = new Label(composite_2, SWT.NONE);
-		lblStartTime.setBounds(503, 20, 69, 18);
-		formToolkit.adapt(lblStartTime, true, true);
-		lblStartTime.setText("Start Time");
-		
-		Label lblEndTime = new Label(composite_2, SWT.NONE);
-		lblEndTime.setBounds(503, 76, 69, 18);
-		formToolkit.adapt(lblEndTime, true, true);
-		lblEndTime.setText("End Time");
-		
 		table = new Table(composite_2, SWT.BORDER | SWT.FULL_SELECTION);
-		table.setBounds(10, 255, 752, 169);
+		table.setBounds(10, 49, 752, 256);
 		formToolkit.adapt(table);
 		formToolkit.paintBordersFor(table);
 		table.setHeaderVisible(true);
@@ -291,64 +314,24 @@ public class MainWindow implements IDisplayStatus{
 		dateRow.setFont(SWTResourceManager.getFont("Arial", 8, SWT.NORMAL));
 		
 		Button btnNext = new Button(composite_2, SWT.NONE);
-		btnNext.setBounds(580, 219, 88, 30);
+		btnNext.setBounds(547, 10, 88, 30);
 		formToolkit.adapt(btnNext, true, true);
 		btnNext.setText("Next >");
 		
 		Button btnNewButton = new Button(composite_2, SWT.NONE);
-		btnNewButton.setBounds(674, 219, 88, 30);
+		btnNewButton.setBounds(641, 10, 88, 30);
 		formToolkit.adapt(btnNewButton, true, true);
 		btnNewButton.setText("Last >>");
 		
 		Button button = new Button(composite_2, SWT.NONE);
-		button.setBounds(10, 219, 88, 30);
+		button.setBounds(10, 10, 88, 30);
 		formToolkit.adapt(button, true, true);
 		button.setText("<<First");
 		
 		Button button_1 = new Button(composite_2, SWT.NONE);
-		button_1.setBounds(104, 219, 88, 30);
+		button_1.setBounds(104, 10, 88, 30);
 		formToolkit.adapt(button_1, true, true);
 		button_1.setText("<Previous");
-		
-		Label lblWeekOf = new Label(composite_2, SWT.NONE);
-		lblWeekOf.setBounds(330, 196, 88, 18);
-		formToolkit.adapt(lblWeekOf, true, true);
-		lblWeekOf.setText("Week of");
-		
-		dateTime = new DateTime(composite_2, SWT.BORDER);
-		dateTime.setBounds(314, 220, 128, 29);
-		dateTime.setFont(SWTResourceManager.getFont("Arial", 10, SWT.NORMAL));
-		formToolkit.adapt(dateTime);
-		formToolkit.paintBordersFor(dateTime);
-		
-		startTimeCombo = new Combo(composite_2, SWT.NONE);
-		startTimeCombo.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				
-				if(endTimeCombo!=null && dutiesman!=null)
-				{
-					endTimeCombo.removeAll();
-					endTimeCombo.setEnabled(true);
-					ArrayList <String> timespans=dutiesman.getTimeSpan();							
-					int index=startTimeCombo.getSelectionIndex();
-					
-					for(int i=index+1; i<timespans.size();i++)
-					{
-						endTimeCombo.add(timespans.get(i));
-					}
-				}
-			}
-		});
-		startTimeCombo.setBounds(503, 44, 103, 30);
-		formToolkit.adapt(startTimeCombo);
-		formToolkit.paintBordersFor(startTimeCombo);
-		
-		endTimeCombo = new Combo(composite_2, SWT.NONE);
-		endTimeCombo.setEnabled(false);
-		endTimeCombo.setBounds(503, 101, 103, 30);
-		formToolkit.adapt(endTimeCombo);
-		formToolkit.paintBordersFor(endTimeCombo);
 	}
 	private void createDetailsTab()
 	{
@@ -372,30 +355,24 @@ public class MainWindow implements IDisplayStatus{
 		});		
 		
 		for(int i=1; i<cols.size(); i++)
-		{
-			HashMap<String, String> posdetails=dman.getPositionDetails(cols.get(i));
-			final String col_id=posdetails.get("PLACE_ID");
+		{		
+			final String col_id=Integer.toString(i);
 			
 			tv.setLabelProvider(i, new ColumnLabelProvider(){
 				public String getText(Object element)
 				{
-					String time=(String)element;							
-					String date=dateStringFromWidget(scheduleDate, null)+" "+time+":00.0";
-					
- 					ArrayList<String> persons_on_duty=null;
+					String retstr=null;
 					if(dman!=null)
 					{
-						persons_on_duty=dman.isDutyOn(date, col_id);
+						retstr= dman.getCellLabelString((String)element, col_id, 
+								dateStringFromWidget(scheduleDate, null));
 					}
-					
-					if(persons_on_duty!=null && persons_on_duty.size()>0)
-					{
-						return persons_on_duty.toString();
-					}												
-					return "X";
+					return retstr;
 				}
 			}
 			);
+		
+			tv.setEditingProvider(i, new DetailsTableViewerCellEditior(tv, dman,col_id,this));
 		}		
 	}
 	
@@ -410,9 +387,6 @@ public class MainWindow implements IDisplayStatus{
 	
 	protected void createEmployeesTab()
 	{
-		
-		tbtmAddShift = new TabItem(tabFolder, SWT.NONE);
-		tbtmAddShift.setText("Add Shift");
 		
 		
 		TabItem tbtmEmployees = new TabItem(tabFolder, SWT.NONE);
@@ -1027,6 +1001,12 @@ public class MainWindow implements IDisplayStatus{
 			retval+=" "+hour+":"+minute+":"+second+".0";
 		}
 		return retval;
+	}
+
+	@Override
+	public String getDateString() {
+		return dateStringFromWidget(scheduleDate, null);
+		
 	}
 }
 

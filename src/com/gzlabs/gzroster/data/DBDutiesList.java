@@ -80,7 +80,9 @@ public class DBDutiesList extends DBObjectList{
 
 	@Override
 	boolean deleteObject(DBObject obj) {
-		return obj.deleteRecord("DUTY_KEY");
+		boolean retval = obj.deleteRecord("DUTY_KEY");
+		objects.remove(obj);
+		return retval;
 	}
 
 	@Override
@@ -90,8 +92,37 @@ public class DBDutiesList extends DBObjectList{
 
 	@Override
 	DBObject getObjectByDetails(HashMap<String, String> details) {
-		// TODO Auto-generated method stub
-		return null;
+		DBObject retval=null;
+		String position=details.get("PLACE_ID");
+		String person=details.get("PERSON_ID");
+		String starttime=details.get("DUTY_START_TIME");
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+		Calendar time_cal=new GregorianCalendar();
+		Calendar start_cal=new GregorianCalendar();
+		Calendar end_cal=new GregorianCalendar();
+
+		for( DBObject obj : objects)
+		{
+			if(obj.getProperty("PLACE_ID").equals(position) && 
+					obj.getProperty("PERSON_ID").equals(person))
+			{
+				try {
+					start_cal.setTime(sdf.parse(obj.getProperty("DUTY_START_TIME")));
+					end_cal.setTime(sdf.parse(obj.getProperty("DUTY_END_TIME")));
+					time_cal.setTime(sdf.parse(starttime));
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				if(start_cal.equals(time_cal) || end_cal.equals(time_cal) || (start_cal.before(time_cal) && end_cal.after(time_cal)))
+				{
+					return obj;
+				}
+
+			}
+		}
+		return retval;
 	}
 	
 	public ArrayList<String> isOn(String time, String position)

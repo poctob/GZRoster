@@ -196,14 +196,7 @@ public class DataManager {
 	{
 		if(person.length()>1)
 		{
-			HashMap<String, String> details=new HashMap<String, String> ();
-			String pers=person.substring(0, person.length()-1);
-			pers=pers.substring(1, pers.length());
-			
-			details.put("PLACE_ID", position);
-			details.put("PERSON_ID", persons.getObjectByName(pers).getProperty("PERSON_ID"));
-			details.put("DUTY_START_TIME", datetime);
-			
+			HashMap<String, String> details=getDutyDetails(person, position, datetime);
 			if(duties.deleteObject(duties.getObjectByDetails(details)))
 			{
 				ids.DisplayStatus("Shift deleted!");	
@@ -213,6 +206,44 @@ public class DataManager {
 				ids.DisplayStatus("Failed to delete!");	
 			}
 		}
+	}
+	
+	public String getDutyStart(String person, String position, String datetime)
+	{
+		String retstring="";
+		if(person.length()>1)
+		{
+			HashMap<String, String> details=getDutyDetails(person, position, datetime);
+			DBObject duty=duties.getObjectByDetails(details);
+			retstring=duty.getProperty("DUTY_START_TIME");
+			
+		}
+		return retstring;
+	}
+	
+	public String getDutyEnd(String person, String position, String datetime)
+	{
+		String retstring="";
+		if(person.length()>1)
+		{
+			HashMap<String, String> details=getDutyDetails(person, position, datetime);
+			DBObject duty=duties.getObjectByDetails(details);
+			retstring=duty.getProperty("DUTY_END_TIME");
+		}
+		return retstring;
+	}
+	
+	private HashMap<String, String> getDutyDetails(String person, String position, String datetime)
+	{
+		HashMap<String, String> details=new HashMap<String, String> ();
+		String pers=person.substring(0, person.length()-1);
+		pers=pers.substring(1, pers.length());
+		
+		details.put("PLACE_ID", position);
+		details.put("PERSON_ID", persons.getObjectByName(pers).getProperty("PERSON_ID"));
+		details.put("DUTY_START_TIME", datetime);
+		
+		return details;
 	}
 	/**
 	 * Adds new position to the database, note that the name should be unique

@@ -38,6 +38,7 @@ import com.gzlabs.gzroster.data.DataManager;
 import com.gzlabs.gzroster.data.DateUtils;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.swt.widgets.MenuItem;
 
 public class MainWindow implements IDisplayStatus, IDutyUpdater {
 
@@ -130,6 +131,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	 */
 	public static void main(String[] args) {
 		try {
+			Display.setAppName("GZRoster");
 			MainWindow window = new MainWindow();
 			window.open();
 		} catch (Exception e) {
@@ -157,12 +159,46 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	 */
 	protected void createContents() {
 		shell = new Shell();
+		shell.setImage(SWTResourceManager.getImage(MainWindow.class, "/com/gzlabs/gzroster/gui/1370647295_60814.ico"));
 		shell.setSize(1420, 840);
 		shell.setText("GZ Roster");
 		shell.setLayout(null);
 
 		Menu menu = new Menu(shell, SWT.BAR);
 		shell.setMenuBar(menu);
+		
+		MenuItem fileMenu = new MenuItem(menu, SWT.CASCADE);
+		fileMenu.setText("File");
+		
+		Menu menu_2 = new Menu(fileMenu);
+		fileMenu.setMenu(menu_2);
+		
+		MenuItem quitMenuItem = new MenuItem(menu_2, SWT.NONE);
+		quitMenuItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {			
+				System.exit(0);
+			}
+		});
+		quitMenuItem.setText("Quit");
+		
+		MenuItem editMenu = new MenuItem(menu, SWT.CASCADE);
+		editMenu.setText("Edit");
+		
+		Menu menu_3 = new Menu(editMenu);
+		editMenu.setMenu(menu_3);
+		
+		MenuItem configurationMenuItem = new MenuItem(menu_3, SWT.NONE);
+		configurationMenuItem.setText("Configuration");
+		
+		MenuItem helpMenu = new MenuItem(menu, SWT.CASCADE);
+		helpMenu.setText("Help");
+		
+		Menu menu_1 = new Menu(helpMenu);
+		helpMenu.setMenu(menu_1);
+		
+		MenuItem helpAboutMenuItem = new MenuItem(menu_1, SWT.NONE);
+		helpAboutMenuItem.setText("About");
 
 		tabFolder = new TabFolder(shell, SWT.NONE);
 		tabFolder.setBounds(10, 10, 1398, 557);

@@ -1,14 +1,11 @@
 package com.gzlabs.gzroster.gui;
 
-import java.io.FileInputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Properties;
 
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -25,7 +22,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.DateTime;
@@ -40,15 +36,8 @@ import org.eclipse.jface.text.TextViewer;
 import com.gzlabs.drosterheper.IDisplayStatus;
 import com.gzlabs.gzroster.data.DataManager;
 import com.gzlabs.gzroster.data.DateUtils;
-import com.gzlabs.gzroster.data.DutiesManager;
 
-import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.TableViewerColumn;
-import org.eclipse.jface.layout.TableColumnLayout;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.jface.viewers.TreeViewer;
 
 public class MainWindow implements IDisplayStatus, IDutyUpdater {
 
@@ -60,8 +49,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	private Table table;
 	private StyledText statusWindow;
 	private DataManager dman;
-	private Properties prop;
-
+	
 	private Combo scheduleEmployeeCombo;
 	private Combo schedulePositionCombo;
 
@@ -75,6 +63,8 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	private DateTime scheduleDate;
 	private Combo startTimeCombo;
 	private Combo endTimeCombo;
+	private Button scheduleAddButton;
+	private Button scheduleCancelButton;
 	/************************************************************/
 
 	/************************************************************/
@@ -123,8 +113,14 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	/************************************************************/
 	// Details Tab
 	private DetailsTableViewer tv;
-	private DutiesManager dutiesman;
-
+	/************************************************************/
+	
+	/************************************************************/
+	//Update place holders
+	private String upd_person;
+	private int upd_position;
+	private String upd_start;
+	
 	/************************************************************/
 
 	/**
@@ -162,7 +158,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(1420, 840);
-		shell.setText("SWT Application");
+		shell.setText("GZ Roster");
 		shell.setLayout(null);
 
 		Menu menu = new Menu(shell, SWT.BAR);
@@ -175,8 +171,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		createEmployeesTab();
 		createPositionsTab();
 
-		TextViewer textViewer = new TextViewer(shell, SWT.BORDER);
+		TextViewer textViewer = new TextViewer(shell, SWT.BORDER | SWT.V_SCROLL);
 		statusWindow = textViewer.getTextWidget();
+		statusWindow.setAlwaysShowScrollBars(false);
+		statusWindow.setEditable(false);
 		statusWindow.setBounds(10, 573, 473, 160);
 		formToolkit.paintBordersFor(statusWindow);
 
@@ -186,7 +184,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		scheduleDate.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				updateDetailsData(dutiesman.getTimeSpan());
+				updateDetailsData(dman.getTimeSpan());
 			}
 		});
 		formToolkit.adapt(scheduleDate);
@@ -223,16 +221,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 
-				if (endTimeCombo != null && dutiesman != null) {
-					endTimeCombo.removeAll();
-					endTimeCombo.setEnabled(true);
-					ArrayList<String> timespans = dutiesman.getTimeSpan();
-					int index = startTimeCombo.getSelectionIndex();
-
-					for (int i = index + 1; i < timespans.size(); i++) {
-						endTimeCombo.add(timespans.get(i));
-					}
-				}
+				correlateEndTimeCombo();
 			}
 		});
 		formToolkit.adapt(startTimeCombo);
@@ -249,22 +238,51 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		formToolkit.adapt(endTimeCombo);
 		formToolkit.paintBordersFor(endTimeCombo);
 
-		Button scheduleAddButton = new Button(shell, SWT.NONE);
+		scheduleAddButton = new Button(shell, SWT.NONE);
 		scheduleAddButton.setBounds(916, 690, 88, 30);
 		scheduleAddButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				if(scheduleAddButton.getText().equals("Update"))
+				{			
+					dutyDeleteRequest(upd_person,
+							upd_position, 
+							upd_start);
+				}
 				processDutyData();
+				resetScheduleControls();
+				
 			}
 		});
 		formToolkit.adapt(scheduleAddButton, true, true);
-		scheduleAddButton.setText("Add");
-		getProp();
-		dman = new DataManager(prop, this);
-		dutiesman = new DutiesManager(prop);
+		scheduleAddButton.setText("Add");		
+		
+		scheduleCancelButton = new Button(shell, SWT.NONE);
+		scheduleCancelButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+					resetScheduleControls();
+			}
+		});
+		scheduleCancelButton.setBounds(745, 690, 88, 30);
+		formToolkit.adapt(scheduleCancelButton, true, true);
+		scheduleCancelButton.setText("Cancel");
+		scheduleCancelButton.setVisible(false);
+		dman = new DataManager(this);
 		createDetailsTab();
 		populateData();
 		widgetsready = true;
+	}
+
+	protected void resetScheduleControls() {
+		endTimeCombo.setEnabled(false);
+		startTimeCombo.deselectAll();
+		schedulePositionCombo.deselectAll();
+		scheduleEmployeeCombo.deselectAll();
+		endTimeCombo.deselectAll();
+		scheduleAddButton.setText("Add");
+		scheduleCancelButton.setVisible(false);
+		
 	}
 
 	/*************************************************************************/
@@ -301,11 +319,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		weekDayColumns[5].setText("Friday");
 		weekDayColumns[6].setText("Saturday");
 
-		DateUtils dateutils = new DateUtils();
 		dateRow = new TableItem(table, SWT.NONE);
 		String[] days = new String[DAYS_IN_THE_WEEK];
 		for (int j = 0; j < days.length; j++) {
-			days[j] = dateutils.getWeekDayDate(j + 1);
+			days[j] = DateUtils.getWeekDayDate(j + 1);
 		}
 
 		dateRow.setText(days);
@@ -360,7 +377,12 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 					if (dman != null) {
 						retstr = dman.getCellLabelString((String) element,
 								col_id,
-								dateStringFromWidget(scheduleDate, null));
+								DateUtils.dateStringFromWidget(scheduleDate, null));
+						if(retstr.length()>1)
+						{
+							retstr=retstr.substring(0, retstr.length()-1);
+							retstr=retstr.substring(1, retstr.length());
+						}
 					}
 					return retstr;
 				}
@@ -719,35 +741,13 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 			schedulePositionCombo.add(s);
 		}
 		endTimeCombo.setEnabled(false);
-		ArrayList<String> timespans = dutiesman.getTimeSpan();
+		ArrayList<String> timespans = dman.getTimeSpan();
 
 		startTimeCombo.removeAll();
 		for (String s : timespans) {
 			startTimeCombo.add(s);
 		}
 		updateDetailsData(timespans);
-
-	}
-
-	/**
-	 * Loads properties file.
-	 * 
-	 * @param ids
-	 *            Information display interface.
-	 * @return null if something went wrong. Properties loaded from file
-	 *         otherwise.
-	 */
-	public Properties getProp() {
-		DisplayStatus("Loading configuration...");
-		prop = null;
-		try {
-			prop = new Properties();
-			prop.load(new FileInputStream("GZRoster.config"));
-		} catch (Exception e) {
-			DisplayStatus("Unable to load configuration file!");
-		}
-		DisplayStatus("Done...");
-		return prop;
 	}
 
 	/**
@@ -930,15 +930,26 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 				&& endTimeCombo.getText().length() > 0) {
 			HashMap<String, String> details = new HashMap<String, String>();
 			details.put("DUTY_START_TIME",
-					dateStringFromWidget(scheduleDate, null) + " "
+					DateUtils.dateStringFromWidget(scheduleDate, null) + " "
 							+ startTimeCombo.getText() + ":00.0");
 			details.put("DUTY_END_TIME",
-					dateStringFromWidget(scheduleDate, null) + " "
+					DateUtils.dateStringFromWidget(scheduleDate, null) + " "
 							+ endTimeCombo.getText() + ":00.0");
 			details.put("PLACE_ID", schedulePositionCombo.getText());
 			details.put("PERSON_ID", scheduleEmployeeCombo.getText());
 			details.put("APPROVED", "Y");
 
+			if(dman.checkDutyConflict(details))
+			{
+				DisplayStatus("Scheduling conflict!");
+				if(!MessageDialog.openConfirm(shell, "Schedule Conflict", 
+						"This employee is already scheduled during this time period.  Add anyway?"))
+				{
+					DisplayStatus("Cancelled!");
+					return;
+				}
+			}
+			
 			dman.addDuty(details);
 			populateData();
 		} else {
@@ -960,40 +971,23 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		}
 	}
 
-	private String dateStringFromWidget(DateTime date, DateTime time) {
-		String retval = "";
-		if (date != null) {
-			String month = String.format("%02d", date.getMonth() + 1);
-			String day = String.format("%02d", date.getDay());
-			retval = date.getYear() + "-" + month + "-" + day;
-		}
-
-		if (time != null) {
-			String hour = String.format("%02d", time.getHours());
-			String minute = String.format("%02d", time.getMinutes());
-			String second = String.format("%02d", time.getSeconds());
-
-			retval += " " + hour + ":" + minute + ":" + second + ".0";
-		}
-		return retval;
-	}
-
 	@Override
 	public void dutyUpdateRequest(String label, int col_id, String row_label) {
 		
-		schedulePositionCombo.select(col_id);
-		String pers=label.substring(0, label.length()-1);
-		pers=pers.substring(1, pers.length());
-		scheduleEmployeeCombo.select(scheduleEmployeeCombo.indexOf(pers));
+		upd_person=label;
+		upd_position=col_id;
 		
+		schedulePositionCombo.select(col_id-1);
+		scheduleEmployeeCombo.select(scheduleEmployeeCombo.indexOf(label));
+				
 		String start_time=dman.getDutyStart(label, Integer.toString(col_id), 
-				dateStringFromWidget(scheduleDate, null)+" "+row_label+":00.0");
+				DateUtils.dateStringFromWidget(scheduleDate, null)+" "+row_label+":00.0");
 		
 		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 		Calendar time_cal=new GregorianCalendar();
 		
 		String end_time=dman.getDutyEnd(label, Integer.toString(col_id), 
-				dateStringFromWidget(scheduleDate, null)+" "+row_label+":00.0");
+				DateUtils.dateStringFromWidget(scheduleDate, null)+" "+row_label+":00.0");
 		try {
 			String zminute="00";
 			time_cal.setTime(sdf.parse(start_time));
@@ -1001,20 +995,18 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 			time_cal.setTime(sdf.parse(end_time));
 			end_time=time_cal.get(Calendar.HOUR_OF_DAY)+":"+(time_cal.get(Calendar.MINUTE)==0?zminute:time_cal.get(Calendar.MINUTE));
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		endTimeCombo.setEnabled(true);
 		startTimeCombo.select(startTimeCombo.indexOf(start_time));
-				
-		ArrayList<String> timespans = dutiesman.getTimeSpan();
-		int index = startTimeCombo.getSelectionIndex();
-
-		for (int i = index + 1; i < timespans.size(); i++) {
-			endTimeCombo.add(timespans.get(i));
-		}
+		upd_start=start_time;
+		
+		correlateEndTimeCombo();
 		endTimeCombo.select(endTimeCombo.indexOf(end_time));
+		
+		scheduleAddButton.setText("Update");
+		scheduleCancelButton.setVisible(true);
 		
 		
 	}
@@ -1024,8 +1016,36 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		if(dman!=null)
 		{
 			dman.deleteDuty(label, Integer.toString(col_id), 
-					dateStringFromWidget(scheduleDate, null)+" "+row_label+":00.0");
+					DateUtils.dateStringFromWidget(scheduleDate, null)+" "+row_label+":00.0");
 		}
 		
+	}
+
+	@Override
+	public void dutyNewRequest(int col_id, String row_label) {
+		
+		schedulePositionCombo.select(col_id-1);
+		startTimeCombo.select(startTimeCombo.indexOf(row_label));
+		correlateEndTimeCombo();	
+	}
+	
+	/**
+	 * Updates end time combo to reflect a selection in start time combo.
+	 * This is done to makes sure the end time picked is always after
+	 * the start time.
+	 */
+	private void correlateEndTimeCombo()
+	{
+		if (endTimeCombo != null && dman != null) {
+			endTimeCombo.removeAll();
+			endTimeCombo.setEnabled(true);
+			ArrayList<String> timespans = dman.getTimeSpan();
+			int index = startTimeCombo.getSelectionIndex();
+
+			for (int i = index + 1; i < timespans.size(); i++) {
+				endTimeCombo.add(timespans.get(i));
+			}
+			endTimeCombo.select(0);
+		}
 	}
 }

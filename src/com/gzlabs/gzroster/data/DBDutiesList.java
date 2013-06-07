@@ -2,11 +2,7 @@ package com.gzlabs.gzroster.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 
 import com.gzlabs.drosterheper.DBManager;
@@ -57,6 +53,11 @@ public class DBDutiesList extends DBObjectList{
 
 	@Override
 	boolean recordExists(DBObject obj) {
+		if(obj.getProperty("DUTY_KEY")==null)
+		{
+			return false;
+		}
+		
 		return obj.doesRecordExist("DUTY_KEY");
 	}
 
@@ -96,26 +97,14 @@ public class DBDutiesList extends DBObjectList{
 		String position=details.get("PLACE_ID");
 		String person=details.get("PERSON_ID");
 		String starttime=details.get("DUTY_START_TIME");
-		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-		Calendar time_cal=new GregorianCalendar();
-		Calendar start_cal=new GregorianCalendar();
-		Calendar end_cal=new GregorianCalendar();
 
 		for( DBObject obj : objects)
 		{
 			if(obj.getProperty("PLACE_ID").equals(position) && 
 					obj.getProperty("PERSON_ID").equals(person))
 			{
-				try {
-					start_cal.setTime(sdf.parse(obj.getProperty("DUTY_START_TIME")));
-					end_cal.setTime(sdf.parse(obj.getProperty("DUTY_END_TIME")));
-					time_cal.setTime(sdf.parse(starttime));
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				if(start_cal.equals(time_cal) || end_cal.equals(time_cal) || (start_cal.before(time_cal) && end_cal.after(time_cal)))
+				if(DateUtils.isCalendarBetween(obj.getProperty("DUTY_START_TIME"), 
+						obj.getProperty("DUTY_END_TIME"), starttime, true))
 				{
 					return obj;
 				}
@@ -134,23 +123,11 @@ public class DBDutiesList extends DBObjectList{
 			{
 				String start=obj.getProperty("DUTY_START_TIME");
 				String end=obj.getProperty("DUTY_END_TIME");
-				SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-				Calendar start_cal=new GregorianCalendar();
-				Calendar end_cal=new GregorianCalendar();
-				Calendar time_cal=new GregorianCalendar();
-				try {
-					start_cal.setTime(sdf.parse(start));
-					end_cal.setTime(sdf.parse(end));
-					time_cal.setTime(sdf.parse(time));
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
 				
-				if(start_cal.equals(time_cal) || end_cal.equals(time_cal) || (start_cal.before(time_cal) && end_cal.after(time_cal)))
+				if(DateUtils.isCalendarBetween(start, end, time, true))
 				{
 					retval.add(obj.getProperty("PERSON_ID"));
-				}			
+				}		
 			}
 				
 		}
@@ -163,4 +140,31 @@ public class DBDutiesList extends DBObjectList{
 		return null;
 	}	
 
+	/**
+	 * Checks if an employee is already scheduled for the specified time period.
+	 * @param employee_id  Employee id
+	 * @param start Shift start
+	 * @param end	Shift end
+	 * @return True if employee is scheduled within specified period, false otherwise.
+	 */
+	boolean checkAvailability(String employee_id, String start, String end)
+	{	
+		for( DBObject obj : objects)
+		{
+			if(obj.getProperty("PERSON_ID").equals(employee_id))
+			{
+				String obj_start=obj.getProperty("DUTY_START_TIME");
+				String obj_end=obj.getProperty("DUTY_END_TIME");
+				
+				boolean start_match=DateUtils.isCalendarBetween(obj_start, obj_end, start, true);
+				boolean end_match=DateUtils.isCalendarBetween(obj_start, obj_end, end, true);
+				
+				if(start_match || end_match)
+				{
+					return true;
+				}				
+			}
+		}
+		return false;
+	}
 }

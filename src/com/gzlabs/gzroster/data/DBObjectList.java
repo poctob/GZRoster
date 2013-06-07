@@ -105,10 +105,10 @@ public abstract class DBObjectList {
 	{
 		if(details != null && objects!=null)
 		{
-			DBObject obj=new DBObject(dbman, table_name, details);	
-			objects.add(obj);
+			DBObject obj=new DBObject(dbman, table_name, details);				
 			if(!recordExists(obj))
 			{
+				objects.add(obj);
 				generateNewKey(obj);
 				generateNewPKID(obj);
 				return obj.insertNew();
@@ -151,6 +151,6 @@ public abstract class DBObjectList {
 				return obj;
 		}
 		return null;
-	}
+	}	
 	
 }

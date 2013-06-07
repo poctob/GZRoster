@@ -1,5 +1,9 @@
 package com.gzlabs.gzroster.data;
+import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -13,6 +17,8 @@ import com.gzlabs.drosterheper.IDisplayStatus;
  */
 public class DataManager {
 	
+	private static final String CONFIG_FILE_PATH = "GZRoster.config";
+
 	//Database manager.
 	private DBManager dbman;
 	
@@ -21,9 +27,6 @@ public class DataManager {
 	
 	//Status display
 	private IDisplayStatus ids = null;
-	
-	//Current error message
-	private String error_msg=null;
 	
 	//Employees list
 	private DBObjectList persons;
@@ -39,11 +42,11 @@ public class DataManager {
 	 * @param pprop  Properties object.
 	 * @param pids Status display
 	 */
-	public DataManager(Properties pprop, IDisplayStatus pids) {
+	public DataManager(IDisplayStatus pids) {
 		positions=null;
 		
 		ids = pids;
-		prop = pprop;
+		getProp();
 		
 		if(prop != null && !prop.isEmpty())
 		{
@@ -132,6 +135,12 @@ public class DataManager {
 		return duties.getNames();
 	}
 	
+	/**
+	 * Gets a list of people scheduled on a specified position and date/time
+	 * @param date Date/time duty is scheduled on.
+	 * @param postion_id Duty position.
+	 * @return A List of people scheduled on that date.
+	 */
 	public ArrayList<String> isDutyOn(String date, String postion_id)
 	{
 		ArrayList<String> pers=duties.isOn(date, postion_id);
@@ -144,7 +153,6 @@ public class DataManager {
 				retval.add(obj.getProperty("PERSON_NAME"));
 			}
 		}
-		
 		return retval;
 	}
 	
@@ -191,7 +199,12 @@ public class DataManager {
 		}
 	}
 	
-	
+	/**
+	 * Deletes a duty from the database.
+	 * @param person Person scheduled for this duty.
+	 * @param position Position id.
+	 * @param datetime Date/time of the duty.
+	 */
 	public void deleteDuty(String person, String position, String datetime)
 	{
 		if(person.length()>1)
@@ -236,11 +249,9 @@ public class DataManager {
 	private HashMap<String, String> getDutyDetails(String person, String position, String datetime)
 	{
 		HashMap<String, String> details=new HashMap<String, String> ();
-		String pers=person.substring(0, person.length()-1);
-		pers=pers.substring(1, pers.length());
-		
+	
 		details.put("PLACE_ID", position);
-		details.put("PERSON_ID", persons.getObjectByName(pers).getProperty("PERSON_ID"));
+		details.put("PERSON_ID", persons.getObjectByName(person).getProperty("PERSON_ID"));
 		details.put("DUTY_START_TIME", datetime);
 		
 		return details;
@@ -338,5 +349,64 @@ public class DataManager {
 		}
 		return null;
 	}
+	
+	public ArrayList<String> getTimeSpan()
+	{
+		
+		ArrayList<String> retval=new ArrayList<String> ();
+		int start_time=Integer.parseInt(prop.getProperty("day_start"));
+		int end_time=Integer.parseInt(prop.getProperty("day_end"));
+		int interval=Integer.parseInt(prop.getProperty("interval_minutes"));
+		if(start_time<end_time)
+		{			
+			Calendar cal=new GregorianCalendar();
+			cal.setTime(new Date());
+			cal.set(Calendar.HOUR_OF_DAY, start_time);
+			cal.set(Calendar.MINUTE, 0);
+			retval.add(cal.get(Calendar.HOUR_OF_DAY)+":00");
+			String zminute="00";
+			
+			while(cal.get(Calendar.HOUR_OF_DAY)<end_time)
+			{
+				cal.add(Calendar.MINUTE,interval);
+				
+				retval.add(cal.get(Calendar.HOUR_OF_DAY)+":"+(cal.get(Calendar.MINUTE)==0?zminute:cal.get(Calendar.MINUTE)));
+			}
+		}
+		return retval;
+	}
+	
+	/**
+	 * Loads properties file.
+	 * 
+	 * @param ids
+	 *            Information display interface.
+	 * @return null if something went wrong. Properties loaded from file
+	 *         otherwise.
+	 */
+	private Properties getProp() {
+		ids.DisplayStatus("Loading configuration...");
+		prop = null;
+		try {
+			prop = new Properties();
+			prop.load(new FileInputStream(CONFIG_FILE_PATH));
+		} catch (Exception e) {
+			ids.DisplayStatus("Unable to load configuration file!");
+		}
+		ids.DisplayStatus("Done...");
+		return prop;
+	}
 
+	
+	/**
+	 * Checks if an employee has already been scheduled.
+	 * @param details Employee details map.
+	 * @return True is there is a conflict, false otherwise.
+	 */
+	public boolean checkDutyConflict(HashMap<String, String> details) {
+		DBObject employee=persons.getObjectByName(details.get("PERSON_ID"));
+		return duties.checkAvailability(employee.getProperty("PERSON_ID"), 
+				details.get("DUTY_START_TIME"), details.get("DUTY_END_TIME"));
+	}
+	
 }

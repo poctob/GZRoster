@@ -153,7 +153,7 @@ public class DetailsTableViewer extends TableViewer {
 					menumgr.removeAll();
 					
 					//Our first column contains time labels so we ignore it.
-					if(c_selected.getColumnIndex()>0)
+					if(c_selected!=null && c_selected.getColumnIndex()>0)
 					{
 						//If cell has a name already, then we allow Edit/Delete ops.
 						if(c_selected.getText().length()>1)

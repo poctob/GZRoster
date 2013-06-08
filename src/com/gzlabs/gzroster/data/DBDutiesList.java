@@ -167,4 +167,25 @@ public class DBDutiesList extends DBObjectList{
 		}
 		return false;
 	}
+	
+	public String getTotalEmpoloyeeHours(String employee_id, String start, String end)
+	{
+		double hours=0;
+		
+		for( DBObject obj : objects)
+		{
+			if(obj.getProperty("PERSON_ID").equals(employee_id))
+			{
+				String obj_start=obj.getProperty("DUTY_START_TIME");
+				boolean start_match=DateUtils.isCalendarBetween(start, end, obj_start, true);
+				if(start_match)
+				{
+					String obj_end=obj.getProperty("DUTY_END_TIME");
+					hours+=DateUtils.getSpanMinutes(obj_start, obj_end);
+				}
+			}
+		}
+		double minutes=hours/60;
+		return String.format("%.2f", minutes);
+	}
 }

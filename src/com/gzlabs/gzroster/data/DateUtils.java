@@ -33,6 +33,8 @@ public class DateUtils {
 		return retval;
 	}
 	
+	
+	
 	/**
 	 * Gets a date from the supplied widget.
 	 * @param date Date widget
@@ -71,6 +73,7 @@ public class DateUtils {
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return null;
 		}
 		return retval;
 		
@@ -118,5 +121,106 @@ public class DateUtils {
 		return  isCalendarBetween(start_cal, end_cal, time_cal, inclusive);
 	}
 	
+	/**
+	 * Returns a difference between two dates in minutes	
+	 * @param start First date
+	 * @param end Second date
+	 * @return Difference between two dates
+	 */
+	public static double getSpanMinutes(String start, String end)
+	{
+		Calendar start_cal=DateUtils.calendarFromString(start);
+		Calendar end_cal=DateUtils.calendarFromString(end);
+		if(end_cal.compareTo(start_cal)>0)
+		{
+			long span = end_cal.getTimeInMillis()-start_cal.getTimeInMillis();
+			double seconds=span/1000;
+			double minutes=seconds/60;
+			return minutes;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	
+	/**
+	 * Compares two dates
+	 * @param start First date
+	 * @param end Second date	
+	 * @return 0 if dates are equal, -1 if first date is after the second on, 1 if second date is afer the first
+	 */
+	public static int compareToWidget(DateTime start, DateTime end)
+	{
+		Calendar cal=new GregorianCalendar();
+		cal.set(Calendar.YEAR, start.getYear());
+		cal.set(Calendar.MONTH, start.getMonth());
+		cal.set(Calendar.DAY_OF_MONTH, start.getDay());
+		
+		Calendar cal2=new GregorianCalendar();
+		cal2.set(Calendar.YEAR, end.getYear());
+		cal2.set(Calendar.MONTH, end.getMonth());
+		cal2.set(Calendar.DAY_OF_MONTH, end.getDay());
+		
+		return cal.compareTo(cal2);
+	}
+	
+	public static Calendar getWeekStart(boolean startSunday, Calendar date)
+	{
+		if(date==null)
+		{
+			date=new GregorianCalendar();
+			date.setTime(new Date());
+		}
+		int current_dow=date.get(Calendar.DAY_OF_WEEK)-1;
+		date.add(Calendar.DAY_OF_MONTH, startSunday?-current_dow:(-current_dow)+1);
+		return date;
+	}
+	
+	public static Calendar getWeekEnd(boolean startSunday, Calendar date)
+	{
+		Calendar start=getWeekStart(startSunday, date);
+		start.add(Calendar.DAY_OF_MONTH, 6);
+		return start;
+	}
+	
+	
+	public static int getWeekStartDay(boolean startSunday, String date)
+	{
+		Calendar cal=date==null?null:calendarFromString(date+" 00:00:00.0");
+		return getWeekStart(startSunday, cal).get(Calendar.DAY_OF_MONTH);
+	}
+	
+	public static int getWeekEndDay(boolean startSunday, String date)
+	{
+		Calendar cal=date==null?null:calendarFromString(date+" 00:00:00.0");
+		return getWeekEnd(startSunday, cal).get(Calendar.DAY_OF_MONTH);
+	}
+	
+	public static int getWeekStartMonth(boolean startSunday, String date)
+	{
+		Calendar cal=date==null?null:calendarFromString(date+" 00:00:00.0");
+		return getWeekStart(startSunday, cal).get(Calendar.MONTH);
+	}
+	
+	public static int getWeekEndMonth(boolean startSunday, String date)
+	{
+		Calendar cal=date==null?null:calendarFromString(date+" 00:00:00.0");
+		return getWeekEnd(startSunday, cal).get(Calendar.MONTH);
+	}
+	
+	public static int getWeekStartYear(boolean startSunday, String date)
+	{
+		Calendar cal=date==null?null:calendarFromString(date+" 00:00:00.0");
+		return getWeekStart(startSunday, cal).get(Calendar.YEAR);
+	}
+	
+	public static int getWeekEndYear(boolean startSunday, String date)
+	{
+		Calendar cal=date==null?null:calendarFromString(date+" 00:00:00.0");
+		return getWeekEnd(startSunday, cal).get(Calendar.YEAR);
+	}
+	
+
 
 }

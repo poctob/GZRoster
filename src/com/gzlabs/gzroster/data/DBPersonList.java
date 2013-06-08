@@ -95,5 +95,4 @@ public class DBPersonList extends DBObjectList{
 	DBObject getObjectByPKID(String pkid) {
 		return getObjectByProperty("PERSON_ID", pkid);
 	}	
-
 }

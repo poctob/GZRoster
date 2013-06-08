@@ -40,7 +40,7 @@ import com.gzlabs.gzroster.data.DateUtils;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.swt.widgets.MenuItem;
 
-public class MainWindow implements IDisplayStatus, IDutyUpdater {
+public class MainWindow implements IDisplayStatus, IDutyUpdater, IEHoursHandler {
 
 	private static final int DAYS_IN_THE_WEEK = 7;
 
@@ -66,6 +66,8 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	private Combo endTimeCombo;
 	private Button scheduleAddButton;
 	private Button scheduleCancelButton;
+	
+	private EmployeeHoursComposite employeeHoursComposite;
 	/************************************************************/
 
 	/************************************************************/
@@ -113,7 +115,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 
 	/************************************************************/
 	// Details Tab
-	private DetailsTableViewer tv;
+	private DetailsTableViewer tv;	
 	/************************************************************/
 	
 	/************************************************************/
@@ -160,7 +162,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setImage(SWTResourceManager.getImage(MainWindow.class, "/com/gzlabs/gzroster/gui/1370647295_60814.ico"));
-		shell.setSize(1420, 840);
+		shell.setSize(1420, 1003);
 		shell.setText("GZ Roster");
 		shell.setLayout(null);
 
@@ -221,6 +223,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				updateDetailsData(dman.getTimeSpan());
+				employeeHoursComposite.updateDates(DateUtils.dateStringFromWidget(scheduleDate, null));
 			}
 		});
 		formToolkit.adapt(scheduleDate);
@@ -304,6 +307,11 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		formToolkit.adapt(scheduleCancelButton, true, true);
 		scheduleCancelButton.setText("Cancel");
 		scheduleCancelButton.setVisible(false);
+		
+		employeeHoursComposite = new EmployeeHoursComposite(shell, SWT.NONE, this);
+		employeeHoursComposite.setBounds(1026, 573, 349, 309);
+		formToolkit.adapt(employeeHoursComposite);
+		formToolkit.paintBordersFor(employeeHoursComposite);
 		dman = new DataManager(this);
 		createDetailsTab();
 		populateData();
@@ -767,6 +775,9 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 		for (String s : employees) {
 			employeesList.add(s);
 			scheduleEmployeeCombo.add(s);
+			employeeHoursComposite.updateItem(s, 
+					dman.getTotalEmpoloyeeHours(s, employeeHoursComposite.getStartDate(), 
+							employeeHoursComposite.getEndDate()));
 		}
 
 		ArrayList<String> positions = dman.getPositions();
@@ -1083,5 +1094,20 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater {
 			}
 			endTimeCombo.select(0);
 		}
+	}
+
+	@Override
+	public void rangeChanged(String dateStringFromWidget,
+			String dateStringFromWidget2) {
+		if(dman!=null)
+		{
+			ArrayList<String> employees = dman.getEmployees();
+			for (String s : employees) {
+				employeeHoursComposite.updateItem(s, 
+						dman.getTotalEmpoloyeeHours(s, employeeHoursComposite.getStartDate(), 
+								employeeHoursComposite.getEndDate()));
+		}
+		}
+		
 	}
 }

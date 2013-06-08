@@ -409,4 +409,11 @@ public class DataManager {
 				details.get("DUTY_START_TIME"), details.get("DUTY_END_TIME"));
 	}
 	
+	public String getTotalEmpoloyeeHours(String employee_name, String start, String end)
+	{
+		DBObject employee=persons.getObjectByName(employee_name);
+		return duties.getTotalEmpoloyeeHours(employee.getProperty("PERSON_ID"), 
+				start, end); 
+	}
+	
 }

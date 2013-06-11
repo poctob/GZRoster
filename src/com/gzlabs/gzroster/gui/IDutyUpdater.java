@@ -7,10 +7,10 @@ package com.gzlabs.gzroster.gui;
  */
 public interface IDutyUpdater {
 	
-	public void dutyNewRequest(int col_id, String row_label);
+	public void dutyNewRequest(String col_label, String row_label);
 	
-	public void dutyUpdateRequest(String label, int col_id, String row_label);
+	public void dutyUpdateRequest(String label, String col_label, String row_label);
 	
-	public void dutyDeleteRequest(String label, int col_id, String row_label);
+	public void dutyDeleteRequest(String label, String col_label, String row_label);
 
 }

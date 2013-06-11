@@ -37,6 +37,9 @@ public class DataManager {
 	//Duties List
 	private DBDutiesList duties;
 	
+	//Person to Positions mapping
+	private DBPersonToPlace per_to_pos;
+	
 	/**
 	 * Default constructor. Initializes member variables.
 	 * @param pprop  Properties object.
@@ -63,6 +66,10 @@ public class DataManager {
 				
 				positions=new DBPositionsList(dbman, "PLACE");
 				positions.populateList();
+				
+				per_to_pos=new DBPersonToPlace(dbman, "PERSON_TO_PLACE");
+				per_to_pos.populateList();
+				
 			} else {
 				ids.DisplayStatus("Database connection failed. Exiting...");
 				return;
@@ -116,6 +123,27 @@ public class DataManager {
 	}
 	
 	/**
+	 * Retrieves a list of positions stored in the database
+	 * @return List of positions
+	 */
+	public ArrayList<String> getPersonToPosMapping(String person_name)
+	{
+		String person_id=persons.getObjectByName(person_name).getProperty("PERSON_ID");
+		ArrayList<String> position_ids=per_to_pos.getPositionsByPersonID(person_id);
+		ArrayList<String> retval=new ArrayList<String>();
+		for(String s : position_ids)
+		{
+			DBObject obj=positions.getObjectByPKID(s);
+			if(obj!=null)
+			{
+				retval.add(obj.getProperty("PLACE_NAME"));
+			}
+		}
+		
+		return retval;
+	}
+	
+	/**
 	 * Retrieves detailed information for a single position.
 	 * @param name Positions name to get the data for.
 	 * @return ArrayList of positions details.
@@ -143,7 +171,8 @@ public class DataManager {
 	 */
 	public ArrayList<String> isDutyOn(String date, String postion_id)
 	{
-		ArrayList<String> pers=duties.isOn(date, postion_id);
+		String pos_id=positions.getObjectByName(postion_id).getProperty("PLACE_ID");
+		ArrayList<String> pers=duties.isOn(date, pos_id);
 		ArrayList<String> retval=new ArrayList<String> ();
 		for(String s: pers)
 		{
@@ -250,7 +279,7 @@ public class DataManager {
 	{
 		HashMap<String, String> details=new HashMap<String, String> ();
 	
-		details.put("PLACE_ID", position);
+		details.put("PLACE_ID", positions.getObjectByName(position).getProperty("PLACE_ID"));
 		details.put("PERSON_ID", persons.getObjectByName(person).getProperty("PERSON_ID"));
 		details.put("DUTY_START_TIME", datetime);
 		

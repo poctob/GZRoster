@@ -47,7 +47,7 @@ public class EmployeeHoursComposite extends Composite {
 				}
 			}
 		});
-		endDate.setBounds(231, 31, 107, 29);
+		endDate.setBounds(57, 66, 119, 29);
 		
 		startDate.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -68,24 +68,24 @@ public class EmployeeHoursComposite extends Composite {
 		lblFrom.setText("From:");
 		
 		Label lblTo = new Label(this, SWT.NONE);
-		lblTo.setBounds(198, 31, 27, 18);
+		lblTo.setBounds(24, 66, 152, 18);
 		lblTo.setText("To:");
 		
 		hoursTable = new Table(this, SWT.BORDER | SWT.FULL_SELECTION);
-		hoursTable.setBounds(10, 66, 328, 240);
+		hoursTable.setBounds(10, 105, 205, 416);
 		hoursTable.setHeaderVisible(true);
 		hoursTable.setLinesVisible(true);
 		
 		TableColumn tblclmnEmployee = new TableColumn(hoursTable, SWT.NONE);
-		tblclmnEmployee.setWidth(217);
+		tblclmnEmployee.setWidth(120);
 		tblclmnEmployee.setText("Employee");
 		
 		TableColumn tblclmnHours = new TableColumn(hoursTable, SWT.CENTER);
-		tblclmnHours.setWidth(100);
+		tblclmnHours.setWidth(74);
 		tblclmnHours.setText("Hours");
 		
 		Label lblTotalEmployeeHours = new Label(this, SWT.NONE);
-		lblTotalEmployeeHours.setBounds(104, 7, 142, 18);
+		lblTotalEmployeeHours.setBounds(24, 7, 142, 18);
 		lblTotalEmployeeHours.setText("Total Employee Hours");
 		
 		tableItems=new ArrayList<TableItem>();

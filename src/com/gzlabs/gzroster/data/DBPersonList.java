@@ -45,7 +45,6 @@ public class DBPersonList extends DBObjectList{
 				e.printStackTrace();
 			}
 		}	
-		
 	}
 
 	@Override

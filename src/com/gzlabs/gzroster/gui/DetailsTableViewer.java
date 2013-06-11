@@ -63,9 +63,22 @@ public class DetailsTableViewer extends TableViewer {
 		for (String s : columns) {
 			TableViewerColumn col = new TableViewerColumn(this, SWT.NONE);
 			TableColumn tc = col.getColumn();
-			tc.setWidth(100);
+			tc.setWidth(60);
 			tc.setText(s);
 			l_columns.add(col);
+		}
+	}
+	
+	public void removeAllColumns()
+	{
+	
+		for(final TableColumn col:getTable().getColumns())
+		{
+			col.dispose();
+		}
+		for(int i=0; i<l_columns.size(); i++)
+		{
+			l_columns.remove(i);
 		}
 	}
 
@@ -99,7 +112,8 @@ public class DetailsTableViewer extends TableViewer {
 				ViewerCell cell = getC_selected();
 				if(dutyupdater!=null && cell!=null)
 				{
-					dutyupdater.dutyNewRequest(cell.getColumnIndex(), (String)cell.getElement());
+					String col_label=getTable().getColumn(cell.getColumnIndex()).getText();
+					dutyupdater.dutyNewRequest(col_label, (String)cell.getElement());
 					refresh();
 				}
 			}
@@ -113,7 +127,8 @@ public class DetailsTableViewer extends TableViewer {
 				ViewerCell cell = getC_selected();
 				if(dutyupdater!=null && cell!=null)
 				{
-					dutyupdater.dutyUpdateRequest(cell.getText(), cell.getColumnIndex(), (String)cell.getElement());
+					String col_label=getTable().getColumn(cell.getColumnIndex()).getText();
+					dutyupdater.dutyUpdateRequest(cell.getText(), col_label, (String)cell.getElement());
 					refresh();
 				}
 			}
@@ -129,7 +144,8 @@ public class DetailsTableViewer extends TableViewer {
 						DIALOG_MESSAGE)) {
 					if(dutyupdater!=null && cell!=null)
 					{
-						dutyupdater.dutyDeleteRequest(cell.getText(), cell.getColumnIndex(), (String)cell.getElement());
+						String col_label=getTable().getColumn(cell.getColumnIndex()).getText();
+						dutyupdater.dutyDeleteRequest(cell.getText(), col_label, (String)cell.getElement());
 						refresh();
 					}
 				}

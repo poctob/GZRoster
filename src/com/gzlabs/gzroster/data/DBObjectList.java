@@ -153,4 +153,21 @@ public abstract class DBObjectList {
 		return null;
 	}	
 	
+	/**
+	 * Finds an object with specified property.  Only one object is returned.
+	 * @param key Key of the property.
+	 * @param value Value of the property.
+	 * @return DBOject List matching specified key/value pair.
+	 */
+	protected ArrayList<DBObject> getObjectByPropertyMulti(String key, String value)
+	{
+		ArrayList<DBObject> retval=new ArrayList<DBObject>();
+		for( DBObject obj : objects)
+		{
+			if(obj.getProperty(key).equals(value))
+				retval.add(obj);
+		}
+		return retval;
+	}	
+	
 }

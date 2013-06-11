@@ -162,7 +162,7 @@ public class DBObject {
 	 *            Column that will be used in WHERE clause
 	 * @return a String containing the sql statement.
 	 */
-	private String getUpdate_sql(String column) {
+	protected String getUpdate_sql(String column) {
 		Object[] keys = cols.keySet().toArray();
 		String sql = "UPDATE " + this.table_name + " SET ";
 		for (Object s : keys) {
@@ -184,7 +184,7 @@ public class DBObject {
 	 *            Value of the parameter.
 	 * @return sql statement string.
 	 */
-	private String getSelect_sql(String column, String value) {
+	protected String getSelect_sql(String column, String value) {
 		String sql = "SELECT * FROM " + this.table_name + " WHERE " + column
 				+ "='" + value + "'";
 		return sql;
@@ -197,10 +197,28 @@ public class DBObject {
 	 *            that contains delete parameter.
 	 * @return sql statement string.
 	 */
-	private String getDelete_sql(String column) {
+	protected String getDelete_sql(String column) {
 		String value = cols.get(column);
 		String sql = "DELETE FROM " + this.table_name + " WHERE " + column
 				+ "='" + value + "'";
+		return sql;
+	}
+	
+	/**
+	 * Generates Delete sql statement, all column values are used
+	 * @return sql statement string.
+	 */
+	protected String getDelete_sql() {
+		Object[] keys = cols.keySet().toArray();
+		String sql = "DELETE FROM " + this.table_name + " WHERE ";
+		
+		for (Object s : keys) {
+			if (cols.get(s) != null) {
+				sql +=s + "='" + cols.get(s) + "' AND ";
+			}
+		}
+		sql = sql.substring(0, sql.length() - 5);
+
 		return sql;
 	}
 
@@ -235,7 +253,7 @@ public class DBObject {
 	/**
 	 * Inserts new record to the database.
 	 * 
-	 * @return true is operation is success, false otherwise.
+	 * @return true if operation is success, false otherwise.
 	 */
 	public boolean insertNew() {
 		ResultSet rs = runSQL(getInsert_sql(), false);
@@ -246,7 +264,11 @@ public class DBObject {
 		}
 		return true;
 	}
-
+	/**
+	 * Updates record in the database.
+	 * @param column Reference key column.
+	 * @return true if operation is success, false otherwise.
+	 */
 	public boolean updateRecord(String column) {
 		ResultSet rs = runSQL(getUpdate_sql(column), false);
 		if (rs == null) {
@@ -259,12 +281,25 @@ public class DBObject {
 	/**
 	 * Deletes record from the database.
 	 * 
-	 * @return true is operation is success, false otherwise.
+	 * @return true if operation is success, false otherwise.
 	 */
 	public boolean deleteRecord(String column) {
 		ResultSet rs = runSQL(getDelete_sql(column), false);
 		if (rs == null) {
 			last_error = "Unable to delete record!";
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Deletes record from the database.
+	 * 
+	 * @return true if operation is success, false otherwise.
+	 */
+	public boolean deleteRecord() {
+		ResultSet rs = runSQL(getDelete_sql(), false);
+		if (rs == null) {
 			return false;
 		}
 		return true;
@@ -279,7 +314,7 @@ public class DBObject {
 	 *            Whether the results are expected back.
 	 * @return ResultSet
 	 */
-	private ResultSet runSQL(String sql_str, boolean wantresult) {
+	protected ResultSet runSQL(String sql_str, boolean wantresult) {
 		if (dbman != null) {
 			return dbman.runQuery(sql_str, wantresult);
 		}

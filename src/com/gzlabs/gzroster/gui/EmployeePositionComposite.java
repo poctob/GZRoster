@@ -39,11 +39,15 @@ public class EmployeePositionComposite extends Composite {
 	{
 		for(int i=0; i< pos_boxes.size(); i++)
 		{
-			pos_boxes.remove(i);
+			pos_boxes.remove(i);			
 		}
 	}
 	public void addButton(String label)
 	{
+		if(buttonExist(label))
+		{
+			return;
+		}
 		Button button = new Button(scrolledComposite, SWT.CHECK);
 		
 		int y_pos=Y_POS_FIRST;
@@ -57,6 +61,19 @@ public class EmployeePositionComposite extends Composite {
 		button.setText(label);
 		pos_boxes.add(button);
 	}
+	
+	private boolean buttonExist(String label)
+	{
+		for(Button b:pos_boxes)
+		{
+			if(b.getText().equals(label))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	
 	@Override
 	public void setEnabled(boolean enabled)
@@ -80,6 +97,19 @@ public class EmployeePositionComposite extends Composite {
 			}
 			
 		}
+	}
+	
+	public ArrayList<String> getBoxes()
+	{
+		ArrayList <String> retval=new ArrayList<String>();
+		for(Button b:pos_boxes)
+		{
+			if(b.getSelection())
+			{
+				retval.add(b.getText());
+			}
+		}
+		return retval;
 	}
 	
 	public void checkAll()

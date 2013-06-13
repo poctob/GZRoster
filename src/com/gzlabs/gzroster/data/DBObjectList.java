@@ -170,4 +170,11 @@ public abstract class DBObjectList {
 		return retval;
 	}	
 	
+	abstract public String getObjectID(String name);
+
+	public ArrayList<String> getIDs() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 }

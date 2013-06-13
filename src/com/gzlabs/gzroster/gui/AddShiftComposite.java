@@ -1,6 +1,7 @@
 package com.gzlabs.gzroster.gui;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -13,6 +14,11 @@ import org.eclipse.swt.widgets.Button;
 
 import com.gzlabs.gzroster.data.DateUtils;
 
+/**
+ * Widget for adding new shift.
+ * @author apavlune
+ *
+ */
 public class AddShiftComposite extends Composite {
 	
 	/***************************************************************************/
@@ -33,7 +39,6 @@ public class AddShiftComposite extends Composite {
 	
 	//Callback Interface
 	final private IShiftAdder shiftadder;
-
 
 	/**
 	 * Create the composite.
@@ -58,6 +63,13 @@ public class AddShiftComposite extends Composite {
 		});
 		
 		employeePicker = new Combo(this, SWT.NONE);
+		employeePicker.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+					upd_position=positionPicker.getText();
+					shiftadder.isa_EmployeeChanged(employeePicker.getText());
+			}
+		});
 		employeePicker.setBounds(10, 130, 150, 30);
 		
 		startPicker = new Combo(this, SWT.NONE);
@@ -78,6 +90,13 @@ public class AddShiftComposite extends Composite {
 		endPicker.setEnabled(false);
 		
 		positionPicker = new Combo(this, SWT.NONE);
+		positionPicker.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {				
+				upd_person=employeePicker.getText();	
+				shiftadder.isa_PositionChanged(positionPicker.getText());
+			}
+		});
 		positionPicker.setBounds(10, 70, 150, 30);
 		
 		Label label = new Label(this, SWT.NONE);
@@ -196,6 +215,25 @@ public class AddShiftComposite extends Composite {
 		endPicker.setEnabled(false);
 	}
 	
+	public void clearEmployees()
+	{
+		employeePicker.removeAll();
+	}
+	
+	public void clearPositions()
+	{
+		positionPicker.removeAll();
+	}
+	/***************************************************************************/
+	//Accessors follow
+	public void addEmployee(ArrayList<String> data)
+	{
+		Collections.sort(data);
+		for(String s:data)
+		{
+			employeePicker.add(s);
+		}
+	}
 	public void addEmployee(String s)
 	{
 		employeePicker.add(s);
@@ -209,6 +247,15 @@ public class AddShiftComposite extends Composite {
 	public void selectEmployee(String s)
 	{
 		employeePicker.select(employeePicker.indexOf(s));
+	}
+
+	public void addPosition(ArrayList<String> data)
+	{
+		Collections.sort(data);
+		for(String s:data)
+		{
+			positionPicker.add(s);
+		}
 	}
 	
 	public void addPosition(String s)
@@ -255,7 +302,9 @@ public class AddShiftComposite extends Composite {
 	{
 		endPicker.setEnabled(enabled);
 	}
-	
+	//End accessors	
+	/***************************************************************************/
+
 	public boolean checkTextLength()
 	{
 		return (startPicker.getText().length()>0 && 

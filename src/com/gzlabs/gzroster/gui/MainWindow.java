@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 
@@ -23,14 +24,14 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.jface.dialogs.MessageDialog;
 import com.gzlabs.drosterheper.IDisplayStatus;
 import com.gzlabs.gzroster.data.DataManager;
+import com.gzlabs.gzroster.data.Tables;
 
 import org.eclipse.swt.widgets.MenuItem;
 
 public class MainWindow implements IDisplayStatus, 
 IDutyUpdater, IEHoursHandler, 
 IShiftAdder, IPositionsManager,
-IDetailsManager, IEmployeeManager{
-
+IDetailsManager, IEmployeeManager, ITimeOffManager{
 
 	protected Shell shell;
 	private final FormToolkit formToolkit = new FormToolkit(
@@ -49,6 +50,7 @@ IDetailsManager, IEmployeeManager{
 	/************************************************************/
 	// Employee Tab
 	private EmployeesWidget employeesWidget;
+	private EmployeeTimeOffComposite employeeTimeOffComposite;
 	/************************************************************/
 
 	/************************************************************/
@@ -222,7 +224,7 @@ IDetailsManager, IEmployeeManager{
 		formToolkit.adapt(lblAllowedPositions, true, true);
 		lblAllowedPositions.setText("Allowed Positions");
 		
-		EmployeeTimeOffComposite employeeTimeOffComposite = new EmployeeTimeOffComposite(composite_1, SWT.NONE);
+		employeeTimeOffComposite = new EmployeeTimeOffComposite(composite_1, SWT.NONE, this);
 		employeeTimeOffComposite.setBounds(10, 428, 418, 303);
 		formToolkit.adapt(employeeTimeOffComposite);
 		formToolkit.paintBordersFor(employeeTimeOffComposite);
@@ -255,12 +257,14 @@ IDetailsManager, IEmployeeManager{
 		if(addShiftComposite!=null && employeesWidget != null)
 		{
 			addShiftComposite.clearControls();
-			employeesWidget.clearEmployeesList();
-		
+			addShiftComposite.addEmployee(employees);
 			
+			employeesWidget.clearEmployeesList();
+			employeesWidget.addEmployee(employees);	
+		
+			Collections.sort(employees);
 			for (String s : employees) {
-				employeesWidget.addEmployee(s);
-				addShiftComposite.addEmployee(s);
+							
 				employeeHoursComposite.updateItem(s, 
 						dman.getTotalEmpoloyeeHours(s, employeeHoursComposite.getStartDate(), 
 								employeeHoursComposite.getEndDate()));
@@ -270,12 +274,14 @@ IDetailsManager, IEmployeeManager{
 			
 			if(positionsWidget != null)
 			{
-				positionsWidget.clearPositionsList();		
-				employeePositionComposite.removeAll();
+				positionsWidget.clearPositionsList();	
+				Collections.sort(positions);
 				for (String s : positions) {
 					positionsWidget.addPosition(s);
 					addShiftComposite.addPosition(s);
-					employeePositionComposite.addButton(s);
+					
+					if(employeePositionComposite!=null)
+						employeePositionComposite.addButton(s);
 				}
 			}
 		
@@ -311,7 +317,7 @@ IDetailsManager, IEmployeeManager{
 	 *            Specify to enable or disable
 	 */
 	private void toggleEmployeeEdit(boolean enable) {
-		employeePositionComposite.setEnabled(enable);
+		//employeePositionComposite.setEnabled(enable);
 	}
 
 
@@ -323,51 +329,50 @@ IDetailsManager, IEmployeeManager{
 	 */
 	public void setEmployeeDetails(String string) {
 		
-		HashMap<String, String> details=null;
+		ArrayList<String> details=null;
 		if(dman!=null)
 		{
-			details=dman.getEmployeeDetails(string);
-		}
+			details=dman.getEmployeeDetails(string);		
 		if (details != null && employeesWidget!=null) {
-			String value = (String) details.get("PERSON_NAME");
+			String value =details.get(Tables.PERSON_NAME_INDEX);
 			if (value != null) {
 				employeesWidget.setNameText(value);
 			}
 
-			value = (String) details.get("ADDRESS");
+			value =details.get(Tables.PERSON_ADDRESS_INDEX);
 			if (value != null) {
 				employeesWidget.setAddressText(value);
 			}
 
-			value = (String) details.get("PHONE_HOME");
+			value = details.get(Tables.PERSON_HPHONE_INDEX);
 			if (value != null) {
 				employeesWidget.setHomephoneText(value);
 			}
 
-			value = (String) details.get("PHONE_MOBILE");
+			value = details.get(Tables.PERSON_MPHONE_INDEX);
 			if (value != null) {
 				employeesWidget.setMobilePhoneText(value);
 			}
 
-			value = (String) details.get("WEB_NAME");
-			if (value != null) {
-				employeesWidget.setWebNameText(value);
-			}
-
-			value = (String) details.get("WEB_PASSWORD");
-			if (value != null) {
-				employeesWidget.setWebPasswordText(value);
-			}
-
-			value = (String) details.get("ACTIVE_PERSON");
+			value = details.get(Tables.PERSON_ACTIVE_INDEX);
 			if (value != null && value.equals("1")) {
 				employeesWidget.setActiveCheck(true);
 			} else {
 				employeesWidget.setActiveCheck(false);
 			}
 			
-			employeePositionComposite.checkBoxes
-			(dman.getPersonToPosMapping(employeesWidget.getNameText()));
+			if(employeePositionComposite!=null && dman!=null)
+			{			
+				employeePositionComposite.checkBoxes
+				(dman.getPersonToPosMapping(employeesWidget.getNameText()));
+			}
+			
+			if(employeeTimeOffComposite!=null)
+			{
+				employeeTimeOffComposite.toggleButtonVisibility(true);
+				employeeTimeOffComposite.showTimeOff(dman.getTimeOff(string));
+			}
+		}
 
 		}
 	}
@@ -382,15 +387,15 @@ IDetailsManager, IEmployeeManager{
 		
 		if(dman != null)
 		{
-			HashMap<String, String> details=dman.getPositionDetails(string);
+			ArrayList<String> details=dman.getPositionDetailsByName(string);
 	
 			if (details != null && positionsWidget!=null) {
-				String value = (String) details.get("PLACE_NAME");
+				String value = details.get(Tables.PLACE_NAME_INDEX);
 				if (value != null) {
 					positionsWidget.setPositionNameText(value);
 				}
 	
-				value = (String) details.get("NOTE");
+				value = details.get(Tables.PLACE_NOTE_INDEX);
 				if (value != null) {
 					positionsWidget.setPositionNoteText(value);
 				}
@@ -402,20 +407,40 @@ IDetailsManager, IEmployeeManager{
 	 * Updates existing employee or inserts new one.
 	 */
 	public void processEmployeeData() {
-		HashMap<String, String> details = new HashMap<String, String>();
 		if(employeesWidget!=null)
 		{
-			details.put("PERSON_NAME", employeesWidget.getNameText());
-			details.put("ADDRESS", employeesWidget.getAddressText());
-			details.put("PHONE_HOME", employeesWidget.getHomephoneText());
-			details.put("PHONE_MOBILE", employeesWidget.getMobilePhoneText());
-			details.put("WEB_NAME", employeesWidget.getWebNameText());
-			details.put("WEB_PASSWORD", employeesWidget.getWebPasswordText());
-			details.put("ACTIVE_PERSON", employeesWidget.getActiveCheck() ? "1" : "0");
+			ArrayList<String> new_details = new ArrayList<String>();
+			new_details.add("");
+			new_details.add(employeesWidget.getNameText());
+			new_details.add(employeesWidget.getAddressText());
+			new_details.add(employeesWidget.getHomephoneText());
+			new_details.add(employeesWidget.getMobilePhoneText());
+			new_details.add("");
+			new_details.add(employeesWidget.getActiveCheck() ? "1" : "0");
+			new_details.add("");
+			new_details.add("");
+			
+			ArrayList<String> old_details = new ArrayList<String>(Tables.PLACE_MAX_COLS);
+			old_details.add("");
+			old_details.add(employeesWidget.getOld_name());
+			old_details.add(employeesWidget.getOld_address());
+			old_details.add(employeesWidget.getOld_hphone());
+			old_details.add(employeesWidget.getOld_mphone());
+			old_details.add("");
+			old_details.add(employeesWidget.getOld_active());
+			old_details.add("");
+			old_details.add("");
+			
+			ArrayList<String> position_boxes=null;
+			if(employeePositionComposite!=null)
+			{
+				position_boxes=employeePositionComposite.getBoxes();
+			}				
+			
 			if (employeesWidget.getSelectionIndex() >= 0) {
-				dman.updateEmployee(details);
+				dman.updateEmployee(old_details, new_details, position_boxes);
 			} else {
-				dman.addEmployee(details);
+				dman.addEmployee(new_details,position_boxes);
 			}
 			populateData();
 		}
@@ -464,13 +489,21 @@ IDetailsManager, IEmployeeManager{
 		
 		if(positionsWidget != null)
 		{
-			HashMap<String, String> details = new HashMap<String, String>();
-			details.put("PLACE_NAME", positionsWidget.getPositionNameText());
-			details.put("NOTE", positionsWidget.getPositionNoteText());
+			ArrayList<String> new_details = new ArrayList<String>();
+			new_details.add("");
+			new_details.add(positionsWidget.getPositionNameText());
+			new_details.add(positionsWidget.getPositionNoteText());
+			
+			ArrayList<String> old_details = new ArrayList<String>(Tables.PLACE_MAX_COLS);
+			old_details.add("");
+			old_details.add(positionsWidget.getOld_name());
+			old_details.add(positionsWidget.getOld_note());
+			
+			
 			if (positionsWidget.getSelectionIndex() >= 0) {
-				dman.updatePosition(details);
+				dman.updatePosition(old_details,new_details);
 			} else {
-				dman.addPosition(details);
+				dman.addPosition(new_details);
 			}
 		}
 	}
@@ -478,11 +511,16 @@ IDetailsManager, IEmployeeManager{
 	@Override
 	public void dutyUpdateRequest(String label, String col_label, String row_label) {
 
-		if(addShiftComposite != null)
+		if(addShiftComposite != null && dman!=null)
 		{
 			addShiftComposite.setUpd_person(label);
 			addShiftComposite.setUpd_position(col_label);			
 			addShiftComposite.selectEmployee(label);
+			
+			ArrayList<String> allowed_positions=dman.getPersonToPosMapping(label);
+			addShiftComposite.clearPositions();
+			addShiftComposite.addPosition(allowed_positions);
+			
 			addShiftComposite.selectPosition(col_label);				
 				
 			String start_time=dman.getDutyStart(label, col_label, 
@@ -526,8 +564,14 @@ IDetailsManager, IEmployeeManager{
 	@Override
 	public void dutyNewRequest(String col_label, String row_label) {
 		
-		if(addShiftComposite != null)
+		if(addShiftComposite != null && dman!=null)
 		{
+			//This is where we determine if an employee is allowed to work
+			//this position
+			ArrayList<String> allowed_empl=
+					dman.getAllowedEmployees(col_label, addShiftComposite.getSelectedDate()+" "+row_label+":00.0");
+			addShiftComposite.clearEmployees();
+			addShiftComposite.addEmployee(allowed_empl);
 			addShiftComposite.selectPosition(col_label);
 			addShiftComposite.selectStart(row_label);
 			addShiftComposite.correlateEndTimeCombo();
@@ -552,10 +596,14 @@ IDetailsManager, IEmployeeManager{
 
 	@Override
 	public void isa_DateChaged(String new_date) {
-		if(dman!=null)
+		if(dman!=null && employeeHoursComposite!=null && addShiftComposite!=null)
 		{
 			updateDetailsData(dman.getTimeSpan());
 			employeeHoursComposite.updateDates(new_date);
+			ArrayList<String> allowed_empl=
+					dman.getAllowedEmployees(addShiftComposite.getSelectedEmployee(), addShiftComposite.getSelectedDate()+" 00:00:00.0");
+			addShiftComposite.clearEmployees();
+			addShiftComposite.addEmployee(allowed_empl);
 		}
 		
 	}
@@ -607,6 +655,56 @@ IDetailsManager, IEmployeeManager{
 		{
 			dman.deleteEmployee(selection);
 		}
+		
+	}
+
+	
+	@Override
+	public void isa_PositionChanged(String text) {
+		if(addShiftComposite != null && dman!=null)
+		{
+			//This is where we determine if an employee is allowed to work
+			//this position
+			ArrayList<String> allowed_empl=dman.getAllowedEmployees(text, null);
+			addShiftComposite.clearEmployees();
+			addShiftComposite.addEmployee(allowed_empl);
+			addShiftComposite.selectEmployee(addShiftComposite.getUpd_person());
+		}	
+		
+	}
+
+	@Override
+	public void isa_EmployeeChanged(String text) {
+		if(addShiftComposite != null && dman!=null)
+		{
+			//This is where we determine if an employee is allowed to work
+			//this position
+			ArrayList<String> allowed_empl=dman.getPersonToPosMapping(text);
+			addShiftComposite.clearPositions();
+			addShiftComposite.addPosition(allowed_empl);
+			addShiftComposite.selectPosition(addShiftComposite.getUpd_position());
+
+		}	
+		
+	}
+
+	@Override
+	public void newTimeOffRequest(String start, String end) {
+		if(employeesWidget != null && dman!=null)
+		{
+			dman.newTimeOffRequest(start, end, employeesWidget.getNameText());
+			employeeTimeOffComposite.showTimeOff(dman.getTimeOff(employeesWidget.getNameText()));
+		}
+		
+	}
+
+	@Override
+	public boolean deleteTimeOffRequest(String start, String end) {
+		if(employeesWidget != null && dman!=null)
+		{
+			return dman.deleteTimeOffRequest(start, end, employeesWidget.getNameText());
+		}
+		return false;
 		
 	}
 }

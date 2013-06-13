@@ -1,5 +1,8 @@
 package com.gzlabs.gzroster.gui;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.SWT;
@@ -46,6 +49,13 @@ public class EmployeesWidget extends Composite {
 	private Button activeCheck;
 	/************************************************************/
 	
+	private String old_name;
+	private String old_address;
+	private String old_hphone;
+	private String old_mphone;
+	private String old_active;
+	
+	
 	/**
 	 * Create the composite.
 	 * @param parent
@@ -73,6 +83,11 @@ public class EmployeesWidget extends Composite {
 					clearEmployeeData();
 					iem.setEmployeeDetails(employeesList.getSelection()[0]);
 					toggleEmployeeEdit(true);
+					setOld_name(nameText.getText());
+					setOld_address(addressText.getText());
+					setOld_hphone(homephoneText.getText());
+					setOld_mphone(mobilePhoneText.getText());
+					setOld_active(activeCheck.getSelection()?"1":"0");
 				}
 			}
 
@@ -248,6 +263,15 @@ public class EmployeesWidget extends Composite {
 		employeesList.removeAll();
 	}
 	
+	public void addEmployee(ArrayList<String> data)
+	{
+		Collections.sort(data);
+		for(String s:data)
+		{
+			employeesList.add(s);
+		}
+	}
+	
 	public void addEmployee(String s)
 	{
 		employeesList.add(s);
@@ -349,6 +373,76 @@ public class EmployeesWidget extends Composite {
 
 	public int getSelectionIndex() {
 		return employeesList.getSelectionIndex();
+	}
+
+	/**
+	 * @return the old_name
+	 */
+	public String getOld_name() {
+		return old_name;
+	}
+
+	/**
+	 * @param old_name the old_name to set
+	 */
+	public void setOld_name(String old_name) {
+		this.old_name = old_name;
+	}
+
+	/**
+	 * @return the old_address
+	 */
+	public String getOld_address() {
+		return old_address;
+	}
+
+	/**
+	 * @param old_address the old_address to set
+	 */
+	public void setOld_address(String old_address) {
+		this.old_address = old_address;
+	}
+
+	/**
+	 * @return the old_hphone
+	 */
+	public String getOld_hphone() {
+		return old_hphone;
+	}
+
+	/**
+	 * @param old_hphone the old_hphone to set
+	 */
+	public void setOld_hphone(String old_hphone) {
+		this.old_hphone = old_hphone;
+	}
+
+	/**
+	 * @return the old_mphone
+	 */
+	public String getOld_mphone() {
+		return old_mphone;
+	}
+
+	/**
+	 * @param old_mphone the old_mphone to set
+	 */
+	public void setOld_mphone(String old_mphone) {
+		this.old_mphone = old_mphone;
+	}
+
+	/**
+	 * @return the old_active
+	 */
+	public String getOld_active() {
+		return old_active;
+	}
+
+	/**
+	 * @param old_active the old_active to set
+	 */
+	public void setOld_active(String old_active) {
+		this.old_active = old_active;
 	}
 
 }

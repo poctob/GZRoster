@@ -39,6 +39,9 @@ public class PositionsWidget extends Composite {
 	private Label positionLblNote;		
 	/************************************************************/
 	
+	private String old_name;
+	private String old_note;
+	
 	/**
 	 * Create the composite.
 	 * @param parent
@@ -64,6 +67,8 @@ public class PositionsWidget extends Composite {
 						ipm.setPositionDetails(positionsList.getSelection()[0]);
 					}				
 					togglePositionEdit(true);
+					setOld_name(positionNameText.getText());
+					setOld_note(positionNoteText.getText());
 				}
 			}
 
@@ -243,6 +248,34 @@ public class PositionsWidget extends Composite {
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
+	}
+
+	/**
+	 * @return the old_name
+	 */
+	public String getOld_name() {
+		return old_name;
+	}
+
+	/**
+	 * @param old_name the old_name to set
+	 */
+	public void setOld_name(String old_name) {
+		this.old_name = old_name;
+	}
+
+	/**
+	 * @return the old_note
+	 */
+	public String getOld_note() {
+		return old_note;
+	}
+
+	/**
+	 * @param old_note the old_note to set
+	 */
+	public void setOld_note(String old_note) {
+		this.old_note = old_note;
 	}
 
 }

@@ -188,4 +188,10 @@ public class DBDutiesList extends DBObjectList{
 		double minutes=hours/60;
 		return String.format("%.2f", minutes);
 	}
+
+	@Override
+	public String getObjectID(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

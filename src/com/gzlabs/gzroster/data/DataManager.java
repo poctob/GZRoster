@@ -34,12 +34,8 @@ public class DataManager {
 	
 	private ArrayList<DB_Object> db_positions;
 	
-	//Duties List
-	private DBDutiesList duties;
-	
-	//Person to Non available hours mapping
-	private DBPerson_NA_Avail_Hours per_na_hours;
-	
+	private ArrayList<DB_Object> db_duties;
+
 	
 	/**
 	 * Default constructor. Initializes member variables.
@@ -59,14 +55,9 @@ public class DataManager {
 			if (initDBMan()) {
 				ids.DisplayStatus("Connected to the Database!");
 				
-				duties=new DBDutiesList(dbman, "DUTIES");
-				duties.populateList();
-				
-				per_na_hours=new DBPerson_NA_Avail_Hours(dbman, "PERSON_NA_AVAIL_HOURS");
-				per_na_hours.populateList();
-				
 				db_positions=DB_Factory.getAllRecords(ObjectType.POSITION, dbman);	
 				db_persons=DB_Factory.getAllRecords(ObjectType.PERSON, dbman);	
+				db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions);
 				
 			} else {
 				ids.DisplayStatus("Database connection failed. Exiting...");
@@ -153,7 +144,7 @@ public class DataManager {
 	 */
 	public ArrayList<String> getDuties()
 	{	
-		return duties.getNames();
+		return DB_Factory.getNames(db_duties);
 	}
 	
 	/**
@@ -164,12 +155,16 @@ public class DataManager {
 	 */
 	public ArrayList<String> isDutyOn(String date, String postion_id)
 	{
-		String pos_id=Integer.toString(DB_Factory.getObjectPKIDByName(db_positions, postion_id));
-		ArrayList<String> pers=duties.isOn(date, pos_id);
 		ArrayList<String> retval=new ArrayList<String> ();
-		for(String s: pers)
+		int place_id=DB_Factory.getObjectPKIDByName(db_positions, postion_id);
+		
+		for(DB_Object d: db_duties)
 		{
-			retval.add(DB_Factory.getObjectNameByPKID(db_persons, Integer.parseInt(s)));
+			int person_id=d==null?0:((Duty)d).isPersonOn(place_id, date);
+			if(person_id>0)
+			{
+				retval.add(DB_Factory.getObjectNameByPKID(db_persons,person_id));
+			}
 		}
 		return retval;
 	}
@@ -199,23 +194,11 @@ public class DataManager {
 	 * Adds new duty to the database, note that the name should be unique
 	 * @param HashMap with the details to add to the database.
 	 */
-	public void addDuty(HashMap<String, String> details)
-	{
-		String person_name= details.get("PLACE_ID");
-		int person_id=DB_Factory.getObjectPKIDByName(db_persons, person_name);
-		details.put("PERSON_ID", Integer.toString(person_id));
-		
-		String place_name= details.get("PLACE_ID");
-		int place_id=DB_Factory.getObjectPKIDByName(db_positions, place_name);
-		details.put("PLACE_ID", Integer.toString(place_id));
-		
-		if(duties.insertItem(details))
+	public void addDuty(ArrayList<String> details)
+	{				
+		if(DB_Factory.insertDuty(dbman, details, db_positions, db_persons))
 		{
-			ids.DisplayStatus("Shift added! "+
-					person_name
-			+" - "+place_name
-			+":"+details.get("DUTY_START_TIME")+" - "
-			+details.get("DUTY_END_TIME"));	
+			ids.DisplayStatus("Shift added!");
 		}
 		else
 		{
@@ -229,12 +212,9 @@ public class DataManager {
 	 * @param position Position id.
 	 * @param datetime Date/time of the duty.
 	 */
-	public void deleteDuty(String person, String position, String datetime)
+	public void deleteDuty(ArrayList<String> details)
 	{
-		if(person.length()>1)
-		{
-			HashMap<String, String> details=getDutyDetails(person, position, datetime);
-			if(duties.deleteObject(duties.getObjectByDetails(details)))
+			if(DB_Factory.deleteDuty(db_duties, dbman, details))
 			{
 				ids.DisplayStatus("Shift deleted!");	
 			}
@@ -242,32 +222,31 @@ public class DataManager {
 			{
 				ids.DisplayStatus("Failed to delete!");	
 			}
-		}
 	}
+
 	
 	public String getDutyStart(String person, String position, String datetime)
 	{
-		String retstring="";
+		int person_id=DB_Factory.getObjectPKIDByName(db_persons, person);
+		int position_id=DB_Factory.getObjectPKIDByName(db_positions, position);
 		if(person.length()>1)
 		{
-			HashMap<String, String> details=getDutyDetails(person, position, datetime);
-			DBObject duty=duties.getObjectByDetails(details);
-			retstring=duty.getProperty("DUTY_START_TIME");
-			
+			Duty duty=DB_Factory.findDutyByTime(db_duties, dbman, person_id, position_id, datetime);
+			return DateUtils.DateToString(duty.getM_start());
 		}
-		return retstring;
+		return null;
 	}
 	
 	public String getDutyEnd(String person, String position, String datetime)
 	{
-		String retstring="";
+		int person_id=DB_Factory.getObjectPKIDByName(db_persons, person);
+		int position_id=DB_Factory.getObjectPKIDByName(db_positions, position);
 		if(person.length()>1)
 		{
-			HashMap<String, String> details=getDutyDetails(person, position, datetime);
-			DBObject duty=duties.getObjectByDetails(details);
-			retstring=duty.getProperty("DUTY_END_TIME");
+			Duty duty=DB_Factory.findDutyByTime(db_duties, dbman, person_id, position_id, datetime);
+			return DateUtils.DateToString(duty.getM_end());
 		}
-		return retstring;
+		return null;
 	}
 	
 	private HashMap<String, String> getDutyDetails(String person, String position, String datetime)
@@ -463,22 +442,36 @@ public class DataManager {
 	 * @param details Employee details map.
 	 * @return True is there is a conflict, false otherwise.
 	 */
-	public boolean checkDutyConflict(HashMap<String, String> details) {
-		int per_id=DB_Factory.getObjectPKIDByName(db_persons, details.get("PERSON_ID"));
-		String person_id=Integer.toString(per_id);
-		return duties.checkAvailability(person_id, 
-				details.get("DUTY_START_TIME"), details.get("DUTY_END_TIME"));
+	public boolean checkDutyConflict(String person_name, String start, String end) {
+		
+		int per_id=DB_Factory.getObjectPKIDByName(db_persons, person_name);
+		
+		for(DB_Object d:db_duties)
+		{
+			if(((Duty)d).personConflict(per_id, start, end))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public String getTotalEmpoloyeeHours(String employee_name, String start, String end)
 	{
-		int per_id=DB_Factory.getObjectPKIDByName(db_persons, employee_name);
-		String person_id=Integer.toString(per_id);
-		return duties.getTotalEmpoloyeeHours(person_id, 
-				start, end); 
+		int per_id=DB_Factory.getObjectPKIDByName(db_persons, employee_name);		
+		String ret_str="0.0";
+		
+		for(DB_Object d: db_duties)
+		{
+			if(d!=null && !((Duty)d).getTotalEmpoloyeeHours(per_id, start, end).equals(ret_str))
+			{
+				return ((Duty)d).getTotalEmpoloyeeHours(per_id, start, end);
+			}
+		}
+		return ret_str;
 	}
 
-	public ArrayList<String> getAllowedEmployees(String col_label, String start) {
+	public ArrayList<String> getAllowedEmployees(String col_label, String start, String end) {
 		
 		int place_id=DB_Factory.getObjectPKIDByName(db_positions, col_label);
 		ArrayList<DB_Object> persons=new ArrayList<DB_Object>();
@@ -491,11 +484,11 @@ public class DataManager {
 		}
 		ArrayList<String> retval=new ArrayList<String>();
 		
-		for(String s : DB_Factory.getPIKDsStr(persons))
+		for(DB_Object per:persons)
 		{
-			if(per_na_hours.isPersonAvailable(s, start))
+			if(((Person)per).isTimeAllowed(start, end))
 			{				
-				retval.add(DB_Factory.getObjectNameByPKID(db_persons, Integer.parseInt(s)));
+				retval.add(per.getName());				
 			}
 		}
 		
@@ -503,20 +496,37 @@ public class DataManager {
 
 	}	
 
- 	public void newTimeOffRequest(String start, String end, String nameText) {
-		int person_id=DB_Factory.getObjectPKIDByName(db_persons, nameText);
-		per_na_hours.insertItem(start, end, Integer.toString(person_id));
+ 	public boolean newTimeOffRequest(String start, String end, String nameText) {
+
+		if(DB_Factory.addTimeOff(db_persons, start, end, nameText, dbman))
+		{
+			ids.DisplayStatus("Time Off Added!");
+			return true;
+		}
+		else
+		{
+			ids.DisplayStatus("Unable to add Time Off!");
+			return false;
+		}
 		
 	}
 
 	public ArrayList<String> getTimeOff(String string) {
-		int person_id=DB_Factory.getObjectPKIDByName(db_persons, string);
-		return per_na_hours.getTimeOff(Integer.toString(person_id));
+		DB_Object person=DB_Factory.getObjectByName(db_persons, string);
+		return ((Person)person).getTimesOff();
 	}
 
 	public boolean deleteTimeOffRequest(String start, String end, String nameText) {
-		int person_id=DB_Factory.getObjectPKIDByName(db_persons, nameText);
-		return per_na_hours.deleteTimeOff(start, end, Integer.toString(person_id));
+		if(DB_Factory.deleteTimeOff(db_persons, start, end, nameText, dbman))
+		{
+			ids.DisplayStatus("Time Off Added!");
+			return true;
+		}
+		else
+		{
+			ids.DisplayStatus("Unable to add Time Off!");
+			return false;
+		}
 		
 	}
 	

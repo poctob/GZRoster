@@ -23,4 +23,12 @@ public class Tables
 	public static final int PERSON_ACTIVE_INDEX = 6;
 	public static final int PERSON_EMAIL_INDEX = 7;
 	public static final int PLACE_UUID_INDEX = 8;
+	
+	public static final int DUTIES_MAX_COLS=5;
+	public static final int DUTIES_START_INDEX=0;
+	public static final int DUTIES_PLACE_ID_INDEX=1;
+	public static final int DUTIES_PERSON_ID_INDEX=2;
+	public static final int DUTIES_END_INDEX=3;
+	public static final int DUTIES_KEY_INDEX=4;
+	
 }

@@ -320,7 +320,6 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 		//employeePositionComposite.setEnabled(enable);
 	}
 
-
 	/**
 	 * Sets employee details to the specified HashMap values
 	 * 
@@ -453,18 +452,22 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 	public void processDutyData() {
 		if (addShiftComposite!=null
 				&& addShiftComposite.checkTextLength()) {
-			HashMap<String, String> details = new HashMap<String, String>();
-			details.put("DUTY_START_TIME",
-					addShiftComposite.getSelectedDate() + " "
-							+ addShiftComposite.getSelectedStart() + ":00.0");
-			details.put("DUTY_END_TIME",
-					addShiftComposite.getSelectedDate() + " "
-							+ addShiftComposite.getSelectedEnd() + ":00.0");
-			details.put("PLACE_ID", addShiftComposite.getSelectedPosition());
-			details.put("PERSON_ID", addShiftComposite.getSelectedEmployee());
-			details.put("APPROVED", "Y");
+			
+			String start_date=addShiftComposite.getSelectedDate() + " "
+					+ addShiftComposite.getSelectedStart() + ":00.0";
+			
+			String end_date=addShiftComposite.getSelectedDate() + " "
+					+ addShiftComposite.getSelectedEnd() + ":00.0";
+			
+			ArrayList<String> details = new ArrayList<String>();
+			details.add(start_date);
+			details.add(addShiftComposite.getSelectedPosition());
+			details.add(addShiftComposite.getSelectedEmployee());
+			details.add(end_date);
+			details.add("");
+	
 
-			if(dman.checkDutyConflict(details))
+			if(dman.checkDutyConflict(addShiftComposite.getSelectedEmployee(),start_date, end_date))
 			{
 				DisplayStatus("Scheduling conflict!");
 				if(!MessageDialog.openConfirm(shell, "Schedule Conflict", 
@@ -555,8 +558,20 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 	public void dutyDeleteRequest(String label, String col_label, String row_label) {
 		if(dman!=null)
 		{
-			dman.deleteDuty(label, col_label, 
-					addShiftComposite.getSelectedDate()+" "+row_label+":00.0");
+			String start_date=addShiftComposite.getSelectedDate() + " "
+					+ addShiftComposite.getSelectedStart() + ":00.0";
+			
+			String end_date=addShiftComposite.getSelectedDate() + " "
+					+ addShiftComposite.getSelectedEnd() + ":00.0";
+			
+			ArrayList<String> details = new ArrayList<String>();
+			details.add(start_date);
+			details.add(col_label);
+			details.add(label);
+			details.add(end_date);
+			details.add("");
+	
+			dman.deleteDuty(details);
 		}
 		
 	}
@@ -569,7 +584,7 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 			//This is where we determine if an employee is allowed to work
 			//this position
 			ArrayList<String> allowed_empl=
-					dman.getAllowedEmployees(col_label, addShiftComposite.getSelectedDate()+" "+row_label+":00.0");
+					dman.getAllowedEmployees(col_label, null, null);
 			addShiftComposite.clearEmployees();
 			addShiftComposite.addEmployee(allowed_empl);
 			addShiftComposite.selectPosition(col_label);
@@ -601,7 +616,7 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 			updateDetailsData(dman.getTimeSpan());
 			employeeHoursComposite.updateDates(new_date);
 			ArrayList<String> allowed_empl=
-					dman.getAllowedEmployees(addShiftComposite.getSelectedEmployee(), addShiftComposite.getSelectedDate()+" 00:00:00.0");
+					dman.getAllowedEmployees(addShiftComposite.getSelectedEmployee(), null, null);
 			addShiftComposite.clearEmployees();
 			addShiftComposite.addEmployee(allowed_empl);
 		}
@@ -617,7 +632,6 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 		return null;
 	
 	}
-
 
 	@Override
 	public void deletePosition(String[] selection) {
@@ -647,8 +661,6 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 		return null;
 	}
 
-
-
 	@Override
 	public void deleteEmployee(String[] selection) {
 		if(dman!=null)
@@ -658,14 +670,13 @@ IDetailsManager, IEmployeeManager, ITimeOffManager{
 		
 	}
 
-	
 	@Override
 	public void isa_PositionChanged(String text) {
 		if(addShiftComposite != null && dman!=null)
 		{
 			//This is where we determine if an employee is allowed to work
 			//this position
-			ArrayList<String> allowed_empl=dman.getAllowedEmployees(text, null);
+			ArrayList<String> allowed_empl=dman.getAllowedEmployees(text, null, null);
 			addShiftComposite.clearEmployees();
 			addShiftComposite.addEmployee(allowed_empl);
 			addShiftComposite.selectEmployee(addShiftComposite.getUpd_person());

@@ -10,26 +10,21 @@ public class DB_Factory {
 
 	// Clauses
 	protected final static String WHAT_CLAUSE = " %WHAT% ";
-	protected final static String COL_CLAUSE = " %COLS% ";
-	protected final static String VAL_CLAUSE = " %VALS% ";
 	protected final static String FROM_CLAUSE = " %FROM% ";
 	protected final static String WHERE_CLAUSE = " %WHERE% ";
 
 	// Statements
 	protected final static String SELECT_STM = "SELECT" + WHAT_CLAUSE + "FROM"
 			+ FROM_CLAUSE + "WHERE" + WHERE_CLAUSE;
-	protected final static String UPDATE_STM = "UPDATE" + FROM_CLAUSE + "SET"
-			+ WHAT_CLAUSE + "WHERE" + WHERE_CLAUSE;
-	protected final static String DELETE_STM = "DELETE" + WHAT_CLAUSE + "FROM"
-			+ FROM_CLAUSE + "WHERE" + WHERE_CLAUSE;
-	protected final static String INSERT_STM = "INSERT" + "INT0" + FROM_CLAUSE
-			+ " (" + COL_CLAUSE + ") VALUES (" + VAL_CLAUSE + ")";
+
 
 
 	enum ObjectType {
 		POSITION,
 		PERSON,
-		PERSON_TO_PLACE
+		PERSON_TO_PLACE,
+		PERSON_NA_AVAIL_HOURS,
+		DUTIES
 	};
 
 	public static DB_Object createObject(ObjectType type, DBManager dbman) {
@@ -38,9 +33,32 @@ public class DB_Factory {
 			return new Position();
 		case PERSON:
 			return new Person();
+		case DUTIES:
+			return new Duty();
 		default:
 			return null;
 		}
+	}
+	
+	public static ArrayList<DB_Object> getAllDuties(DBManager dbman, ArrayList<DB_Object> persons, ArrayList<DB_Object> positions) {
+		ResultSet records = runSQL(dbman, getSelect_sql("1","1",ObjectType.DUTIES),
+				true);
+		ArrayList<DB_Object> objects = new ArrayList<DB_Object>();
+		try {
+			while (records.next()) {
+				Duty obj = (Duty) createObject(ObjectType.DUTIES, dbman);
+				obj=obj.populateProperites(records, positions, persons);
+				if(obj!=null)
+				{
+					objects.add(obj);
+				}
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return objects;
+		
 	}
 
 	/**
@@ -83,6 +101,9 @@ public class DB_Factory {
 			{
 				ResultSet records = runSQL(dbman, getSelect_sql("1", "1", ObjectType.PERSON_TO_PLACE), true);
 				((Person) person).populatePositions(records);
+				
+				records = runSQL(dbman, getSelect_sql("1", "1", ObjectType.PERSON_NA_AVAIL_HOURS), true);
+				((Person) person).populateTimeOff(records);
 			}
 		}	
 	}
@@ -129,6 +150,7 @@ public class DB_Factory {
 		if(obj!=null)
 		{
 			String sql=obj.getDelete_sql();
+			sql+=sql.replace(FROM_CLAUSE, obj.getTableName());
 			
 			ResultSet rs = runSQL(dbman,sql, false);
 			if (rs == null) {
@@ -138,6 +160,40 @@ public class DB_Factory {
 		}
 		return false;
 	}	
+	
+	public static boolean deleteDuty(ArrayList<DB_Object> objects, DBManager dbman,
+			ArrayList<String> details) {
+		
+		for(DB_Object obj:objects)
+		{
+			if(obj!=null && ((Duty)obj).matches(details, false))
+			{
+				String sql=obj.getDelete_sql();
+				sql+=sql.replace(FROM_CLAUSE, obj.getTableName());
+				ResultSet rs = runSQL(dbman,sql, false);
+				if (rs == null) {
+					return false;
+				}
+				return true;
+			}
+		}
+		return false;
+	}	
+	
+	public static Duty findDutyByTime(ArrayList<DB_Object> objects, DBManager dbman,int person_id, int position_id, String datetime)
+	{
+		for(DB_Object obj:objects)
+		{
+			if(obj!=null)
+			{
+				if(((Duty)obj).matches(person_id, position_id, datetime))
+				{
+					return (Duty) obj;
+				}
+			}
+		}
+		return null;
+	}
 	
 	/**
 	 * Updates database record
@@ -183,6 +239,10 @@ public class DB_Factory {
 			case PERSON:table_name="PERSON";
 				break;
 			case PERSON_TO_PLACE:table_name="PERSON_TO_PLACE";
+				break;
+			case PERSON_NA_AVAIL_HOURS:table_name="PERSON_NA_AVAIL_HOURS";
+				break;
+			case DUTIES:table_name="DUTIES";
 				break;
 			default:return null;
 		}
@@ -237,6 +297,21 @@ public class DB_Factory {
 			if(obj!=null)
 			{
 				if(obj.getName().equals(name))
+				{
+					return obj;
+				}
+			}
+		}
+		return null;
+	}
+	
+	public static DB_Object getObjectByPKID(ArrayList<DB_Object> objects, int pkid)
+	{
+		for(DB_Object obj: objects)
+		{
+			if(obj!=null)
+			{
+				if(obj.getPKID()==pkid)
 				{
 					return obj;
 				}
@@ -341,4 +416,59 @@ public class DB_Factory {
 		}
 		return null;
 	}
+	
+	public static boolean addTimeOff(ArrayList<DB_Object> objects, String start, String end, String nameText, DBManager dbman)
+	{
+		DB_Object person=getObjectByName(objects, nameText);
+		if(dbman!=null && person !=null && ((Person)person).isTimeAllowed(start, end))
+		{
+			String sql=((Person)person).getTimeOffInsertSql(start, end);
+			sql=sql.replace(FROM_CLAUSE, " PERSON_NA_AVAIL_HOURS ");
+			
+			ResultSet rs = runSQL(dbman, sql, false);
+
+			if (rs == null) {
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean deleteTimeOff(ArrayList<DB_Object> objects, String start, String end, String nameText, DBManager dbman)
+	{
+		DB_Object person=getObjectByName(objects, nameText);
+		if(dbman!=null && person !=null)
+		{		
+				String sql=((Person)person).getDeleteTimeOffSql(start, end);
+				sql+=sql.replace(FROM_CLAUSE, "PERSON_NA_AVAIL_HOURS");
+				
+				ResultSet rs = runSQL(dbman,sql, false);
+				if (rs == null) {
+					return false;
+				}
+				return true;
+		}
+		return false;
+	}
+
+	
+	public static boolean insertDuty(DBManager dbman,ArrayList<String> details,
+			ArrayList<DB_Object> db_positions, ArrayList<DB_Object> db_persons) {
+			
+		DB_Object obj = createObject(ObjectType.DUTIES, dbman);
+		((Duty)obj).populateProperties(details, db_positions, db_persons);
+		
+		String sql=obj.getInsert_sql(getNextPKID(dbman, obj.getTableName()));
+		sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
+		
+		ResultSet rs = runSQL(dbman, sql, false);
+
+		if (rs == null) {
+			return false;
+		}
+		return true;
+	}
+	
+	
 }

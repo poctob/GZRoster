@@ -221,6 +221,63 @@ public class DateUtils {
 		return getWeekEnd(startSunday, cal).get(Calendar.YEAR);
 	}
 	
+	public static String DateToString(Date date)
+	{
+		Calendar cal=new GregorianCalendar();
+		cal.setTime(date);
+		String retsring=String.format("%02d", cal.get(Calendar.YEAR))+"-";
+		retsring+=String.format("%02d", cal.get(Calendar.DAY_OF_MONTH))+"-";
+		retsring+=String.format("%02d", cal.get(Calendar.MONTH))+" ";
+		retsring+=String.format("%02d", cal.get(Calendar.HOUR))+":";
+		retsring+=String.format("%02d", cal.get(Calendar.MINUTE))+":";
+		retsring+=String.format("%02d", cal.get(Calendar.SECOND))+".0"	;;
+		return retsring;
+		
+	}
+
+
+
+	public static boolean isCalendarBetween(Date start, Date end,
+			String start2, String end2, boolean b) {
+		
+		boolean b1=false;
+		boolean b2=false;
+		
+		Calendar start_cal=new GregorianCalendar();
+		start_cal.setTime(start);
+		
+		Calendar end_cal=new GregorianCalendar();
+		end_cal.setTime(end);
+		
+		if(start2!=null)
+		{
+			Calendar time_cal1=DateUtils.calendarFromString(start2);
+			b1=isCalendarBetween(start_cal, end_cal, time_cal1, b);
+		}
+		
+		if(end2!=null)
+		{
+			Calendar time_cal2=DateUtils.calendarFromString(end2);
+			b2=isCalendarBetween(start_cal, end_cal, time_cal2, b);
+		}
+		return   b1 || b2;
+	}
+
+
+
+	public static Date StringToDate(String date) {
+		
+		Calendar cal=calendarFromString(date);
+		return cal.getTime();
+		
+	}
+
+
+
+	public static double getSpanMinutes(Date m_start, Date m_end) {
+		
+		return getSpanMinutes(DateToString(m_start),DateToString(m_end));
+	}
 
 
 }

@@ -106,8 +106,7 @@ public class Person extends DB_Object {
 
 	@Override
 	String getDelete_sql() {
-		String sql = DELETE_STM;				
-		sql=sql.replace(FROM_CLAUSE, getTableName());
+		String sql = DELETE_STM;						
 		sql=sql.replace(WHERE_CLAUSE, "PERSON_ID='"+m_id+"'");
 		return sql;		
 		}
@@ -228,7 +227,84 @@ public class Person extends DB_Object {
 	String getTableName() {		
 		return "PERSON";
 	}
+
+	public void populateTimeOff(ResultSet rs) {
+		if(rs!=null)
+		{
+			m_times_off=new ArrayList<TimeOff>();
+			try {
+				while (rs.next())
+				{
+					int pers_id=rs.getInt("PERSON_ID");
+					if(pers_id==m_id)
+					{
+						TimeOff timeOff=new TimeOff(rs.getDate("PERSON_NA_START_DATE_HOUR"),
+								rs.getDate("PERSON_NA_END_DATE_HOUR"));
+						m_times_off.add(timeOff);
+					}
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}	
+		
+	}
+
+	public ArrayList<String> getTimesOff()
+	{
+		ArrayList<String> retval=new ArrayList<String>();
+		for(TimeOff to:m_times_off)
+		{
+			if(to!=null)
+				{
+				String str_to="From:";
+				str_to+=to.getStartStr();
+				str_to+=" To:";
+				str_to+=to.getEndStr();
+				
+				retval.add(str_to);
+			}
+			
+		}
+		return retval;
+	}
 	
-	
+	public boolean isTimeAllowed(String start_time, String end_time)
+	{
+		if(start_time!=null && end_time!=null)
+		{
+			for(TimeOff to:m_times_off)
+			{
+				if(to!=null)
+				{
+					return to.isConflicting(start_time, end_time);
+				}
+		
+			}
+		}
+		return true;
+	}
+
+	public String getTimeOffInsertSql(String start, String end) {
+		String sql = INSERT_STM;
+		String cols = "PERSON_ID," +
+				"PERSON_NA_START_DATE_HOUR," +
+				"PERSON_NA_END_DATE_HOUR";
+		
+		String vals = "'" + m_id + "','" +
+				start + "','" +
+				end +"'";
+
+		sql = sql.replace(COL_CLAUSE, cols);
+		sql = sql.replace(VAL_CLAUSE, vals);
+		return sql;
+	}
+
+	public String getDeleteTimeOffSql(String start, String end) {
+		String sql = DELETE_STM;						
+		sql=sql.replace(WHERE_CLAUSE, "PERSON_ID='"+m_id+"' AND PERSON_NA_START_DATE_HOUR='"+start+
+				"' AND PERSON_NA_END_DATE_HOUR='"+end+"'");
+		return sql;		
+	}	
 
 }

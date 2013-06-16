@@ -90,15 +90,16 @@ public class Duty extends DB_Object {
 		String sql = INSERT_STM;
 		String cols="DUTY_START_TIME," +
 				"PLACE_ID," +
-				"PERSON_ID"+
-				"DUTY_END_TIME"+
-				"DUTY_KEY";
+				"PERSON_ID,"+
+				"DUTY_END_TIME,"+
+				"DUTY_KEY,"+
+				"APPROVED";
 		;
-		String vals="'"+m_start+"','"+
+		String vals="'"+DateUtils.DateToString(m_start)+"','"+
 				m_position.getPKID()+"','"+
 				m_person.getPKID()+"','"+
-				m_end+"','"+
-				m_uuid+"'";
+				DateUtils.DateToString(m_end)+"','"+
+				m_uuid+"','Y'";
 		
 		sql=sql.replace(COL_CLAUSE, cols);
 		sql=sql.replace(VAL_CLAUSE, vals);
@@ -107,14 +108,22 @@ public class Duty extends DB_Object {
 
 	@Override
 	String getUpdate_sql() {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = UPDATE_STM;				
+		sql=sql.replace(FROM_CLAUSE, getTableName());
+		sql=sql.replace(WHAT_CLAUSE, "DUTY_START_TIME='"+DateUtils.DateToString(m_start)+
+				"',PLACE_ID='"+m_position.getPKID()+
+				"',PERSON_ID='"+m_person.getPKID()+
+				"',DUTY_END_TIME='"+DateUtils.DateToString(m_end)+
+				"',DUTY_KEY='"+m_uuid+"'");
+		sql=sql.replace(WHERE_CLAUSE, "DUTY_KEY='"+m_uuid+"'");
+		return sql;		
 	}
 
 	@Override
 	String getDelete_sql() {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = DELETE_STM;						
+		sql=sql.replace(WHERE_CLAUSE, "DUTY_KEY='"+m_uuid+"'");
+		return sql;		
 	}
 
 	public Duty populateProperites(ResultSet rs, ArrayList<DB_Object> postions,  ArrayList<DB_Object> persons) {
@@ -165,7 +174,7 @@ public class Duty extends DB_Object {
 		m_person=(Person) DB_Factory.getObjectByName(persons, person_id);
 		
 		String place_id=details.get(Tables.DUTIES_PLACE_ID_INDEX);
-		m_position=(Position)DB_Factory.getObjectByName(persons, place_id);
+		m_position=(Position)DB_Factory.getObjectByName(postions, place_id);
 	}
 
 	@Override
@@ -188,11 +197,14 @@ public class Duty extends DB_Object {
 			{
 				id= m_uuid==details.get(Tables.DUTIES_KEY_INDEX);
 			}
+			
+			String start_str=DateUtils.DateToString(m_start);
+			String end_str=DateUtils.DateToString(m_end);
 			return id &&
-					m_start.equals(details.get(Tables.DUTIES_START_INDEX)) &&
-					m_end.equals(details.get(Tables.DUTIES_END_INDEX)) &&
-					m_person.getPKID()==Integer.parseInt(details.get(Tables.DUTIES_PERSON_ID_INDEX)) &&
-				    m_position.getPKID()==Integer.parseInt(details.get(Tables.DUTIES_PLACE_ID_INDEX));			
+					start_str.equals(details.get(Tables.DUTIES_START_INDEX)) &&
+					end_str.equals(details.get(Tables.DUTIES_END_INDEX)) &&
+					m_person.getName().equals(details.get(Tables.DUTIES_PERSON_ID_INDEX)) &&
+				    m_position.getName().equals(details.get(Tables.DUTIES_PLACE_ID_INDEX));			
 		}
 		return false;
 	}

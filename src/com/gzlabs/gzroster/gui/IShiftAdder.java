@@ -12,9 +12,7 @@ public interface IShiftAdder {
 			String upd_start);
 
 	void processDutyData();
-
-	void isa_PositionChanged(String text);
-
-	void isa_EmployeeChanged(String text);
+	
+	void isa_updateEmployeeList();
 
 }

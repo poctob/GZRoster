@@ -63,30 +63,33 @@ public class AddShiftComposite extends Composite {
 		});
 		
 		employeePicker = new Combo(this, SWT.NONE);
-		employeePicker.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-					upd_position=positionPicker.getText();
-					shiftadder.isa_EmployeeChanged(employeePicker.getText());
-			}
-		});
-		employeePicker.setBounds(10, 130, 150, 30);
+		employeePicker.setBounds(10, 250, 150, 30);
+		employeePicker.setEnabled(false);
 		
 		startPicker = new Combo(this, SWT.NONE);
-		startPicker.setBounds(10, 190, 103, 30);
+		startPicker.setBounds(10, 130, 103, 30);
 		
 		startPicker.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-
-				correlateEndTimeCombo();
+				correlateEndTimeCombo();				
+				shiftadder.isa_updateEmployeeList();
+				upd_person=employeePicker.getText();
+				employeePicker.setEnabled(true);
 			}
 		});
-
 		
 		endPicker = new Combo(this, SWT.NONE);
+		endPicker.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				employeePicker.setEnabled(true);
+				shiftadder.isa_updateEmployeeList();
+				upd_person=employeePicker.getText();
+			}
+		});
 		endPicker.setEnabled(false);
-		endPicker.setBounds(10, 251, 103, 30);
+		endPicker.setBounds(10, 190, 103, 30);
 		endPicker.setEnabled(false);
 		
 		positionPicker = new Combo(this, SWT.NONE);
@@ -94,7 +97,7 @@ public class AddShiftComposite extends Composite {
 			@Override
 			public void widgetSelected(SelectionEvent e) {				
 				upd_person=employeePicker.getText();	
-				shiftadder.isa_PositionChanged(positionPicker.getText());
+				shiftadder.isa_updateEmployeeList();
 			}
 		});
 		positionPicker.setBounds(10, 70, 150, 30);
@@ -105,15 +108,15 @@ public class AddShiftComposite extends Composite {
 		
 		Label label_1 = new Label(this, SWT.NONE);
 		label_1.setText("Employee");
-		label_1.setBounds(10, 106, 69, 18);
+		label_1.setBounds(10, 226, 69, 18);
 		
 		Label label_2 = new Label(this, SWT.NONE);
 		label_2.setText("Start Time");
-		label_2.setBounds(10, 166, 69, 18);
+		label_2.setBounds(10, 106, 69, 18);
 		
 		Label label_3 = new Label(this, SWT.NONE);
 		label_3.setText("End Time");
-		label_3.setBounds(10, 226, 69, 18);
+		label_3.setBounds(10, 166, 69, 18);
 		
 		addButton = new Button(this, SWT.NONE);
 		addButton.setText("Add");
@@ -156,6 +159,7 @@ public class AddShiftComposite extends Composite {
 	public void resetControls()
 	{
 		employeePicker.deselectAll();
+		employeePicker.setEnabled(false);
 		positionPicker.deselectAll();
 		endPicker.setEnabled(false);
 		endPicker.deselectAll();
@@ -246,7 +250,12 @@ public class AddShiftComposite extends Composite {
 	
 	public void selectEmployee(String s)
 	{
-		employeePicker.select(employeePicker.indexOf(s));
+		safeComboSelect(s, employeePicker);
+	}
+	
+	public void enableEmployeePicker()
+	{
+		employeePicker.setEnabled(true);
 	}
 
 	public void addPosition(ArrayList<String> data)
@@ -270,7 +279,7 @@ public class AddShiftComposite extends Composite {
 	
 	public void selectPosition(String s)
 	{
-		positionPicker.select(positionPicker.indexOf(s));
+		safeComboSelect(s, positionPicker);
 	}
 	
 	public void addStart(String s)
@@ -285,12 +294,12 @@ public class AddShiftComposite extends Composite {
 	
 	public void selectStart(String s)
 	{
-		startPicker.select(startPicker.indexOf(s));
+		safeComboSelect(s, startPicker);
 	}
 	
 	public void selectEnd(String s)
 	{
-		endPicker.select(endPicker.indexOf(s));
+		safeComboSelect(s, endPicker);	
 	}
 	
 	public String getSelectedEnd()
@@ -350,6 +359,14 @@ public class AddShiftComposite extends Composite {
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
+	}
+	
+	private void safeComboSelect(String s, Combo c)
+	{
+		if(c != null && s != null)
+		{
+			c.select(c.indexOf(s));
+		}
 	}
 
 }

@@ -30,8 +30,7 @@ public class EmployeesWidget extends Composite {
 	private Text addressText;
 	private Text homephoneText;
 	private Text mobilePhoneText;
-	private Text webNameText;
-	private Text webPasswordText;
+	private Text emailText;
 
 	private List employeesList;
 	private Button employeesDeleteButton;
@@ -40,7 +39,6 @@ public class EmployeesWidget extends Composite {
 	private Button btnEmployeeCancel;
 
 	private Label lblWebName;
-	private Label lblWebPassword;
 	private Label lblName;
 	private Label lblAddress;
 	private Label lblMobilePhone;
@@ -54,6 +52,7 @@ public class EmployeesWidget extends Composite {
 	private String old_hphone;
 	private String old_mphone;
 	private String old_active;
+	private String old_email;
 	
 	
 	/**
@@ -88,6 +87,7 @@ public class EmployeesWidget extends Composite {
 					setOld_hphone(homephoneText.getText());
 					setOld_mphone(mobilePhoneText.getText());
 					setOld_active(activeCheck.getSelection()?"1":"0");
+					setOld_email(emailText.getText());
 				}
 			}
 
@@ -192,27 +192,16 @@ public class EmployeesWidget extends Composite {
 		formToolkit.adapt(activeCheck, true, true);
 		activeCheck.setText("Active?");
 
-		webNameText = new Text(this, SWT.BORDER);
-		webNameText.setEnabled(false);
-		webNameText.setBounds(168, 222, 130, 28);
-		formToolkit.adapt(webNameText, true, true);
+		emailText = new Text(this, SWT.BORDER);
+		emailText.setEnabled(false);
+		emailText.setBounds(168, 222, 130, 28);
+		formToolkit.adapt(emailText, true, true);
 
 		lblWebName = new Label(this, SWT.NONE);
 		lblWebName.setEnabled(false);
-		lblWebName.setText("Web Name");
+		lblWebName.setText("Email");
 		lblWebName.setBounds(168, 198, 130, 18);
 		formToolkit.adapt(lblWebName, true, true);
-
-		lblWebPassword = new Label(this, SWT.NONE);
-		lblWebPassword.setEnabled(false);
-		lblWebPassword.setText("Web Password");
-		lblWebPassword.setBounds(326, 198, 130, 18);
-		formToolkit.adapt(lblWebPassword, true, true);
-
-		webPasswordText = new Text(this, SWT.BORDER | SWT.PASSWORD);
-		webPasswordText.setEnabled(false);
-		webPasswordText.setBounds(326, 222, 130, 28);
-		formToolkit.adapt(webPasswordText, true, true);
 
 		btnClear = new Button(this, SWT.NONE);
 		btnClear.addSelectionListener(new SelectionAdapter() {
@@ -254,8 +243,7 @@ public class EmployeesWidget extends Composite {
 		addressText.setText("");
 		homephoneText.setText("");
 		mobilePhoneText.setText("");
-		webNameText.setText("");
-		webPasswordText.setText("");
+		emailText.setText("");
 	}
 
 	public void clearEmployeesList()
@@ -291,11 +279,9 @@ public class EmployeesWidget extends Composite {
 		addressText.setEnabled(enable);
 		homephoneText.setEnabled(enable);
 		mobilePhoneText.setEnabled(enable);
-		webNameText.setEnabled(enable);
-		webPasswordText.setEnabled(enable);
+		emailText.setEnabled(enable);
 
 		lblWebName.setEnabled(enable);
-		lblWebPassword.setEnabled(enable);
 		lblName.setEnabled(enable);
 		lblAddress.setEnabled(enable);
 		lblMobilePhone.setEnabled(enable);
@@ -327,13 +313,8 @@ public class EmployeesWidget extends Composite {
 		
 	}
 
-	public void setWebNameText(String value) {
-		webNameText.setText(value);
-		
-	}
-
-	public void setWebPasswordText(String value) {
-		webPasswordText.setText(value);
+	public void setEmailText(String value) {
+		emailText.setText(value);
 		
 	}
 
@@ -359,14 +340,10 @@ public class EmployeesWidget extends Composite {
 		return mobilePhoneText.getText();
 	}
 
-	public String getWebNameText() {
-		return webNameText.getText();
+	public String getEmailText() {
+		return emailText.getText();
 	}
-
-	public String getWebPasswordText() {
-		return webPasswordText.getText();
-	}
-
+	
 	public boolean getActiveCheck() {
 		return activeCheck.getSelection();
 	}
@@ -443,6 +420,20 @@ public class EmployeesWidget extends Composite {
 	 */
 	public void setOld_active(String old_active) {
 		this.old_active = old_active;
+	}
+
+	/**
+	 * @return the old_email
+	 */
+	public String getOld_email() {
+		return old_email;
+	}
+
+	/**
+	 * @param old_email the old_email to set
+	 */
+	public void setOld_email(String old_email) {
+		this.old_email = old_email;
 	}
 
 }

@@ -150,7 +150,7 @@ public class DB_Factory {
 		if(obj!=null)
 		{
 			String sql=obj.getDelete_sql();
-			sql+=sql.replace(FROM_CLAUSE, obj.getTableName());
+			sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
 			
 			ResultSet rs = runSQL(dbman,sql, false);
 			if (rs == null) {
@@ -169,7 +169,7 @@ public class DB_Factory {
 			if(obj!=null && ((Duty)obj).matches(details, false))
 			{
 				String sql=obj.getDelete_sql();
-				sql+=sql.replace(FROM_CLAUSE, obj.getTableName());
+				sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
 				ResultSet rs = runSQL(dbman,sql, false);
 				if (rs == null) {
 					return false;
@@ -402,6 +402,7 @@ public class DB_Factory {
 		}
 		return 0;
 	}
+	
 	public static ArrayList<String> geDetaislByName(ArrayList<DB_Object> objects, String name) {
 		for(DB_Object obj:objects)
 		{
@@ -435,6 +436,34 @@ public class DB_Factory {
 		return false;
 	}
 	
+	public static boolean updatePersonToPosition(ArrayList<DB_Object> objects, ArrayList<Integer> place_ids, String nameText, DBManager dbman)
+	{
+		DB_Object person=getObjectByName(objects, nameText);
+		if(dbman!=null && person !=null)
+		{
+			((Person)person).setM_positions(place_ids);
+			String sql=((Person)person).getPersonToPositionsDeleteSql();
+			sql=sql.replace(FROM_CLAUSE, " PERSON_TO_PLACE ");			
+			
+			ResultSet rs = runSQL(dbman,sql, false);
+			if (rs == null) {
+				return false;
+			}
+			
+			ArrayList<String> insert_sql=((Person)person).getPersonToPositionsInsertSql();
+			for(String s: insert_sql)
+			{
+				s=s.replace(FROM_CLAUSE, " PERSON_TO_PLACE ");	
+				rs = runSQL(dbman,s, false);
+				if (rs == null) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+	
 	public static boolean deleteTimeOff(ArrayList<DB_Object> objects, String start, String end, String nameText, DBManager dbman)
 	{
 		DB_Object person=getObjectByName(objects, nameText);
@@ -451,7 +480,6 @@ public class DB_Factory {
 		}
 		return false;
 	}
-
 	
 	public static boolean insertDuty(DBManager dbman,ArrayList<String> details,
 			ArrayList<DB_Object> db_positions, ArrayList<DB_Object> db_persons) {
@@ -459,7 +487,7 @@ public class DB_Factory {
 		DB_Object obj = createObject(ObjectType.DUTIES, dbman);
 		((Duty)obj).populateProperties(details, db_positions, db_persons);
 		
-		String sql=obj.getInsert_sql(getNextPKID(dbman, obj.getTableName()));
+		String sql=obj.getInsert_sql(0);
 		sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
 		
 		ResultSet rs = runSQL(dbman, sql, false);

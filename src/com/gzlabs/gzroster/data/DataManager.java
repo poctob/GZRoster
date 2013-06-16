@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.Properties;
 
 import com.gzlabs.drosterheper.DBManager;
@@ -169,7 +168,6 @@ public class DataManager {
 		return retval;
 	}
 	
-	
 	/**
 	 * Adds new employee to the database, note that the name should be unique
 	 * @param position_boxes 
@@ -199,6 +197,7 @@ public class DataManager {
 		if(DB_Factory.insertDuty(dbman, details, db_positions, db_persons))
 		{
 			ids.DisplayStatus("Shift added!");
+			db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions);
 		}
 		else
 		{
@@ -217,13 +216,13 @@ public class DataManager {
 			if(DB_Factory.deleteDuty(db_duties, dbman, details))
 			{
 				ids.DisplayStatus("Shift deleted!");	
+				db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions);
 			}
 			else
 			{
 				ids.DisplayStatus("Failed to delete!");	
 			}
 	}
-
 	
 	public String getDutyStart(String person, String position, String datetime)
 	{
@@ -232,7 +231,11 @@ public class DataManager {
 		if(person.length()>1)
 		{
 			Duty duty=DB_Factory.findDutyByTime(db_duties, dbman, person_id, position_id, datetime);
-			return DateUtils.DateToString(duty.getM_start());
+			
+			if(duty!=null)
+			{
+				return DateUtils.DateToString(duty.getM_start());
+			}
 		}
 		return null;
 	}
@@ -249,19 +252,6 @@ public class DataManager {
 		return null;
 	}
 	
-	private HashMap<String, String> getDutyDetails(String person, String position, String datetime)
-	{
-		HashMap<String, String> details=new HashMap<String, String> ();
-	
-		int place_id=DB_Factory.getObjectPKIDByName(db_positions, position);
-		details.put("PLACE_ID", Integer.toString(place_id));
-		
-		int person_id=DB_Factory.getObjectPKIDByName(db_persons, person);
-		details.put("PERSON_ID",  Integer.toString(person_id));
-		details.put("DUTY_START_TIME", datetime);
-		
-		return details;
-	}
 	/**
 	 * Adds new position to the database, note that the name should be unique
 	 * @param value Name to add.
@@ -333,6 +323,7 @@ public class DataManager {
 		
 		if(DB_Factory.updateRecord(db_persons, dbman, old_val, new_val))
 		{
+			updatePersonToPositionMap(new_val.get(Tables.PERSON_NAME_INDEX), position_boxes);
 			ids.DisplayStatus("Record updated!");
 		}
 		else
@@ -344,7 +335,6 @@ public class DataManager {
 	
 	private void updatePersonToPositionMap(String person_name, ArrayList<String> position_boxes)
 	{
-		Person person=(Person)DB_Factory.getObjectByName(db_persons, person_name);	
 		ArrayList<Integer> place_ids=new ArrayList<Integer>();
 		
 		for(String s:position_boxes)
@@ -352,7 +342,8 @@ public class DataManager {
 			int place_id=DB_Factory.getObjectPKIDByName(db_positions, s);
 			place_ids.add(place_id);
 		}
-		person.setM_positions(place_ids);
+		
+		DB_Factory.updatePersonToPosition(db_persons, place_ids, person_name, dbman);
 	}
 	
 	/**
@@ -459,13 +450,17 @@ public class DataManager {
 	public String getTotalEmpoloyeeHours(String employee_name, String start, String end)
 	{
 		int per_id=DB_Factory.getObjectPKIDByName(db_persons, employee_name);		
-		String ret_str="0.0";
+		String ret_str="0.00";
 		
 		for(DB_Object d: db_duties)
 		{
-			if(d!=null && !((Duty)d).getTotalEmpoloyeeHours(per_id, start, end).equals(ret_str))
+			if(d!=null)
 			{
-				return ((Duty)d).getTotalEmpoloyeeHours(per_id, start, end);
+				String hours=((Duty)d).getTotalEmpoloyeeHours(per_id, start, end);
+				if(!hours.equals(ret_str))
+				{
+					return hours;
+				}
 			}
 		}
 		return ret_str;

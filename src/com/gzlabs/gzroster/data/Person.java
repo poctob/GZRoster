@@ -306,5 +306,31 @@ public class Person extends DB_Object {
 				"' AND PERSON_NA_END_DATE_HOUR='"+end+"'");
 		return sql;		
 	}	
+	
+	public ArrayList<String> getPersonToPositionsInsertSql() {
+		ArrayList<String> retval=new ArrayList<String>();
+
+		for(Integer i:m_positions)
+		{
+			String sql = INSERT_STM;
+			String cols = "PERSON_ID," +
+					"PLACE_ID";
+			String vals="";
+			vals = "'"+ m_id + "','" + i +"'";
+			sql = sql.replace(COL_CLAUSE, cols);
+			sql = sql.replace(VAL_CLAUSE, vals);
+			
+			retval.add(sql);
+		}
+
+		
+		return retval;
+	}
+
+	public String getPersonToPositionsDeleteSql() {
+		String sql = DELETE_STM;						
+		sql=sql.replace(WHERE_CLAUSE, "PERSON_ID='"+m_id+"'");
+		return sql;		
+	}	
 
 }

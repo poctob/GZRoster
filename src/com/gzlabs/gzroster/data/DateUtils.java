@@ -226,9 +226,10 @@ public class DateUtils {
 		Calendar cal=new GregorianCalendar();
 		cal.setTime(date);
 		String retsring=String.format("%02d", cal.get(Calendar.YEAR))+"-";
-		retsring+=String.format("%02d", cal.get(Calendar.DAY_OF_MONTH))+"-";
-		retsring+=String.format("%02d", cal.get(Calendar.MONTH))+" ";
-		retsring+=String.format("%02d", cal.get(Calendar.HOUR))+":";
+	
+		retsring+=String.format("%02d", cal.get(Calendar.MONTH)+1)+"-";
+		retsring+=String.format("%02d", cal.get(Calendar.DAY_OF_MONTH))+" ";
+		retsring+=String.format("%02d", cal.get(Calendar.HOUR_OF_DAY))+":";
 		retsring+=String.format("%02d", cal.get(Calendar.MINUTE))+":";
 		retsring+=String.format("%02d", cal.get(Calendar.SECOND))+".0"	;;
 		return retsring;

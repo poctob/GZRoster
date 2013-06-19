@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.Properties;
 
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -21,6 +22,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.jface.dialogs.MessageDialog;
+
+import com.gzlabs.drosterheper.DRosterHelper;
 import com.gzlabs.drosterheper.IDisplayStatus;
 import com.gzlabs.gzroster.data.DataManager;
 import com.gzlabs.gzroster.data.Tables;
@@ -35,6 +38,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	private final FormToolkit formToolkit = new FormToolkit(
 			Display.getDefault());
 	private DataManager dman;
+	private DRosterHelper drh;
 
 	/************************************************************/
 	// Main Window Container
@@ -117,15 +121,19 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 		Menu menu_2 = new Menu(fileMenu);
 		fileMenu.setMenu(menu_2);
-
-		MenuItem quitMenuItem = new MenuItem(menu_2, SWT.NONE);
-		quitMenuItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				System.exit(0);
-			}
-		});
-		quitMenuItem.setText("Quit");
+		
+		MenuItem mntmUpload = new MenuItem(menu_2, SWT.NONE);
+	
+		mntmUpload.setText("Upload");
+		
+				MenuItem quitMenuItem = new MenuItem(menu_2, SWT.NONE);
+				quitMenuItem.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						System.exit(0);
+					}
+				});
+				quitMenuItem.setText("Quit");
 
 		MenuItem editMenu = new MenuItem(menu, SWT.CASCADE);
 		editMenu.setText("Edit");
@@ -134,7 +142,11 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		editMenu.setMenu(menu_3);
 
 		MenuItem configurationMenuItem = new MenuItem(menu_3, SWT.NONE);
+	
 		configurationMenuItem.setText("Configuration");
+		
+		MenuItem mntmPurge = new MenuItem(menu_3, SWT.NONE);
+		
 
 		MenuItem helpMenu = new MenuItem(menu, SWT.CASCADE);
 		helpMenu.setText("Help");
@@ -167,9 +179,42 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		formToolkit.adapt(lblStatus, true, true);
 		lblStatus.setText("Status");
 		dman = new DataManager(this);
+		drh=new DRosterHelper(dman.getProp(),this);
 		createDetailsTab();
 		populateData();
+		
+		final PurgeDataDialog pdd=
+				new PurgeDataDialog(shell, SWT.NONE, drh, this);
+		mntmPurge.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {				
+				pdd.open();				
+			}
+		});
+		
+		final ConfigurationDialog conf_dialog=new ConfigurationDialog(shell, SWT.NONE, dman.getProp(), this);
+		configurationMenuItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				
+				conf_dialog.open();
+			}
+		});
+		mntmPurge.setText("Purge");
+		
+		mntmUpload.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if(drh!=null)
+				{
+					drh.saveProp(dman.getProp());
+					drh.processData();
+				}
+			}
+		});
 	}
+	
+	
 
 	protected void resetScheduleControls() {
 		if (addShiftComposite != null) {
@@ -618,6 +663,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	public void deletePosition(String[] selection) {
 		if (dman != null) {
 			dman.deletePosition(selection);
+			detailsWidget = new DetailsWidget(tabFolder, SWT.NONE, this, this);
+			detailsWidget.setLayout(new GridLayout(1, false));
+			tbtmDetails.setControl(detailsWidget);
+			populateData();
 		}
 
 	}
@@ -651,6 +700,8 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	public void newTimeOffRequest(String start, String end) {
 		if (employeesWidget != null && dman != null) {
 			dman.newTimeOffRequest(start, end, employeesWidget.getNameText());
+			
+			if(employeeTimeOffComposite!=null)
 			employeeTimeOffComposite.showTimeOff(dman
 					.getTimeOff(employeesWidget.getNameText()));
 		}
@@ -669,9 +720,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 	@Override
 	public void isa_updateEmployeeList() {
-		// This is where we determine if an employee is allowed to work
-		// this position
-
 		if (addShiftComposite != null && dman != null) {
 			// This is where we determine if an employee is allowed to work
 			// this position
@@ -698,5 +746,25 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			addShiftComposite.selectEmployee(addShiftComposite.getUpd_person());
 
 		}
+	}
+
+	@Override
+	public void refreshData() {
+		if(dman!=null)
+		{
+			dman.refreshDutyList();
+		}
+		populateData();
+		
+	}
+
+	@Override
+	public void updateProperties(Properties prop) {
+		if(dman!=null)
+		{
+			dman.saveProp(prop);
+			refreshData();
+		}
+		
 	}
 }

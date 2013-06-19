@@ -227,7 +227,6 @@ public class Duty extends DB_Object {
 
 	@Override
 	void populateProperites(ResultSet rs) {
-		// TODO Auto-generated method stub
 		
 	}
 	

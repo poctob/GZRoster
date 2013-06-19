@@ -470,7 +470,7 @@ public class DB_Factory {
 		if(dbman!=null && person !=null)
 		{		
 				String sql=((Person)person).getDeleteTimeOffSql(start, end);
-				sql+=sql.replace(FROM_CLAUSE, "PERSON_NA_AVAIL_HOURS");
+				sql=sql.replace(FROM_CLAUSE, " PERSON_NA_AVAIL_HOURS ");
 				
 				ResultSet rs = runSQL(dbman,sql, false);
 				if (rs == null) {

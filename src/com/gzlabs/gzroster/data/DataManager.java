@@ -1,5 +1,7 @@
 package com.gzlabs.gzroster.data;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -198,6 +200,7 @@ public class DataManager {
 		{
 			ids.DisplayStatus("Shift added!");
 			db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions);
+			db_persons=DB_Factory.getAllRecords(ObjectType.PERSON, dbman);	
 		}
 		else
 		{
@@ -313,7 +316,6 @@ public class DataManager {
 		}		
 	}
 
-
 	/**
 	 * Updates record in the database.
 	 * @param details Object properties.
@@ -375,7 +377,7 @@ public class DataManager {
 			{
 				return persons_on_duty.toString();
 			}												
-			return "X";
+			return "";
 		}
 		return null;
 	}
@@ -414,7 +416,7 @@ public class DataManager {
 	 * @return null if something went wrong. Properties loaded from file
 	 *         otherwise.
 	 */
-	private Properties getProp() {
+	public Properties getProp() {
 		ids.DisplayStatus("Loading configuration...");
 		prop = null;
 		try {
@@ -426,7 +428,6 @@ public class DataManager {
 		ids.DisplayStatus("Done...");
 		return prop;
 	}
-
 	
 	/**
 	 * Checks if an employee has already been scheduled.
@@ -496,6 +497,7 @@ public class DataManager {
 		if(DB_Factory.addTimeOff(db_persons, start, end, nameText, dbman))
 		{
 			ids.DisplayStatus("Time Off Added!");
+			db_persons=DB_Factory.getAllRecords(ObjectType.PERSON, dbman);	
 			return true;
 		}
 		else
@@ -514,15 +516,51 @@ public class DataManager {
 	public boolean deleteTimeOffRequest(String start, String end, String nameText) {
 		if(DB_Factory.deleteTimeOff(db_persons, start, end, nameText, dbman))
 		{
-			ids.DisplayStatus("Time Off Added!");
+			ids.DisplayStatus("Time Off Deleted!");
+			db_persons=DB_Factory.getAllRecords(ObjectType.PERSON, dbman);	
 			return true;
 		}
 		else
 		{
-			ids.DisplayStatus("Unable to add Time Off!");
+			ids.DisplayStatus("Unable to delete Time Off!");
 			return false;
 		}
 		
 	}
+
+	public void refreshDutyList() {
+		db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions);
+		
+	}
+	
+	/**
+	 * Saves properties into a file.
+	 * 
+	 * @param prop
+	 *            Properties to save.
+	 * @param ids
+	 *            Information display interface.
+	 */
+	public void saveProp(Properties pprop) {
+		prop = pprop;
+		ids.DisplayStatus("Saving configuration...");
+		FileOutputStream fout = null;
+		try {
+			fout = new FileOutputStream(CONFIG_FILE_PATH);
+			prop.store(fout, "Auto-Save "
+					+ new GregorianCalendar().getTime().toString());
+		} catch (IOException e) {
+			ids.DisplayStatus(e.getMessage());
+		} finally {
+			try {
+				fout.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		ids.DisplayStatus("Done...");
+	}
+
 	
 }

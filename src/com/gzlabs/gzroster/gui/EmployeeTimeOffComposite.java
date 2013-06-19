@@ -160,8 +160,8 @@ public class EmployeeTimeOffComposite extends Composite {
 	{
 		String selection=list.getItem(list.getSelectionIndex());
 		
-		String start=selection.substring(6, 27);
-		String end=selection.substring(32, selection.length());
+		String start=selection.substring(5, 27);
+		String end=selection.substring(30, selection.length());
 		if(itof.deleteTimeOffRequest(start, end))
 		{
 			list.remove(list.getSelectionIndex());

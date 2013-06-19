@@ -277,7 +277,7 @@ public class Person extends DB_Object {
 			{
 				if(to!=null)
 				{
-					return to.isConflicting(start_time, end_time);
+					return !(to.isConflicting(start_time, end_time));
 				}
 		
 			}

@@ -5,14 +5,15 @@ package com.gzlabs.gzroster.data;
  * @author apavlune
  *
  */
-
 public class Tables
 {
+	//Positions table
 	public static final int PLACE_ID_INDEX = 0;
 	public static final int PLACE_NAME_INDEX = 1;
 	public static final int PLACE_NOTE_INDEX = 2;
 	public static final int PLACE_MAX_COLS = 3;
 	
+	//Person table
 	public static final int PERSON_MAX_COLS=9;
 	public static final int PERSON_ID_INDEX = 0;
 	public static final int PERSON_NAME_INDEX = 1;
@@ -24,6 +25,7 @@ public class Tables
 	public static final int PERSON_EMAIL_INDEX = 7;
 	public static final int PLACE_UUID_INDEX = 8;
 	
+	//Duties table
 	public static final int DUTIES_MAX_COLS=5;
 	public static final int DUTIES_START_INDEX=0;
 	public static final int DUTIES_PLACE_ID_INDEX=1;

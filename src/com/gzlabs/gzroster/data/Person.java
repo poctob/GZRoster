@@ -27,6 +27,8 @@ public class Person extends DB_Object {
 	private ArrayList<TimeOff> m_times_off;
 	private ArrayList<Integer> m_positions;
 
+	/*************************************************************************/
+
 	/**
 	 * @return the m_positions
 	 */
@@ -35,19 +37,26 @@ public class Person extends DB_Object {
 	}
 
 	/**
-	 * @param m_positions the m_positions to set
+	 * @param m_positions
+	 *            the m_positions to set
 	 */
 	public void setM_positions(ArrayList<Integer> m_positions) {
 		this.m_positions = m_positions;
 	}
-	
-	public boolean isPositionAllowed(int pos_id)
-	{
-		for(int pos:m_positions)
-		{
-			if(pos==pos_id)
-			{
-				return true;
+
+	/**
+	 * Checks if this person is allowed to work on the position
+	 * 
+	 * @param pos_id
+	 *            Primary key of the position
+	 * @return True is this person is allowed to work this position
+	 */
+	public boolean isPositionAllowed(int pos_id) {
+		if (m_positions != null) {
+			for (int pos : m_positions) {
+				if (pos == pos_id) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -58,29 +67,17 @@ public class Person extends DB_Object {
 	String getInsert_sql(int pkid) {
 
 		m_id = pkid;
-		m_uuid=UUID.randomUUID().toString();
+		m_uuid = UUID.randomUUID().toString();
 		String sql = INSERT_STM;
-		String cols = "PERSON_ID," +
-				"PERSON_NAME," +
-				"ADDRESS,"+
-				"PHONE_HOME,"+
-				"PHONE_MOBILE,"+
-				"NOTE,"+
-				"ACTIVE_PERSON,"+
-				"EMAIL_ADDRESS,"+
-				"EMPLOYEE_KEY";
-		
-		int active=m_active?1:0;
-		
-		String vals = "'" + m_id + "','" +
-				m_name + "','" +
-				m_address + "','" +
-				m_home_phone + "','" +
-				m_mobile_phone + "','" +
-				m_note + "','" +
-				active + "','" +
-				m_email + "','" +
-				m_uuid+"'";
+		String cols = "PERSON_ID," + "PERSON_NAME," + "ADDRESS,"
+				+ "PHONE_HOME," + "PHONE_MOBILE," + "NOTE," + "ACTIVE_PERSON,"
+				+ "EMAIL_ADDRESS," + "EMPLOYEE_KEY";
+
+		int active = m_active ? 1 : 0;
+
+		String vals = "'" + m_id + "','" + m_name + "','" + m_address + "','"
+				+ m_home_phone + "','" + m_mobile_phone + "','" + m_note
+				+ "','" + active + "','" + m_email + "','" + m_uuid + "'";
 
 		sql = sql.replace(COL_CLAUSE, cols);
 		sql = sql.replace(VAL_CLAUSE, vals);
@@ -89,41 +86,61 @@ public class Person extends DB_Object {
 
 	@Override
 	String getUpdate_sql() {
-		String sql = UPDATE_STM;				
-		sql=sql.replace(FROM_CLAUSE, getTableName());
-		String active=m_active?"1":"0";
-		sql=sql.replace(WHAT_CLAUSE, "PERSON_NAME='"+m_name+
-				"',ADDRESS='"+m_address+
-				"',PHONE_HOME='"+m_home_phone+
-				"',PHONE_MOBILE='"+m_mobile_phone+
-				"',NOTE='"+m_note+
-				"',ACTIVE_PERSON='"+active+
-				"',EMAIL_ADDRESS='"+m_email+
-				"',EMPLOYEE_KEY='"+m_uuid+"'");
-		sql=sql.replace(WHERE_CLAUSE, "PERSON_ID='"+m_id+"'");
-		return sql;		
+		String sql = UPDATE_STM;
+		sql = sql.replace(FROM_CLAUSE, getTableName());
+		String active = m_active ? "1" : "0";
+		sql = sql.replace(WHAT_CLAUSE, "PERSON_NAME='" + m_name + "',ADDRESS='"
+				+ m_address + "',PHONE_HOME='" + m_home_phone
+				+ "',PHONE_MOBILE='" + m_mobile_phone + "',NOTE='" + m_note
+				+ "',ACTIVE_PERSON='" + active + "',EMAIL_ADDRESS='" + m_email
+				+ "',EMPLOYEE_KEY='" + m_uuid + "'");
+		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
+		return sql;
 	}
 
 	@Override
-	String getDelete_sql() {
-		String sql = DELETE_STM;						
-		sql=sql.replace(WHERE_CLAUSE, "PERSON_ID='"+m_id+"'");
-		return sql;		
-		}
+	ArrayList<String> getDelete_sql() {
+		ArrayList<String> retval = new ArrayList<String>();
+
+		// Delete all times of
+		String sql1 = DELETE_STM;
+		sql1 = sql1.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
+		sql1 = sql1.replace(FROM_CLAUSE, " PERSON_NA_AVAIL_HOURS ");
+		retval.add(sql1);
+
+		// Delete all person to position mappings
+		String sql2 = DELETE_STM;
+		sql2 = sql2.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
+		sql2 = sql2.replace(FROM_CLAUSE, " PERSON_TO_PLACE ");
+		retval.add(sql2);
+
+		// Delete all duties
+		String sql3 = DELETE_STM;
+		sql3 = sql3.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
+		sql3 = sql3.replace(FROM_CLAUSE, " DUTIES ");
+		retval.add(sql3);
+
+		// Delete person
+		String sql4 = DELETE_STM;
+		sql4 = sql4.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
+		sql4 = sql4.replace(FROM_CLAUSE, " PERSON ");
+		retval.add(sql4);
+		return retval;
+	}
 
 	@Override
 	void populateProperites(ResultSet rs) {
 		if (rs != null) {
 			try {
-				m_id=rs.getInt("PERSON_ID");
-				m_name=rs.getString("PERSON_NAME");
-				m_address=rs.getString("ADDRESS");
-				m_home_phone=rs.getString("PHONE_HOME");
-				m_mobile_phone=rs.getString("PHONE_MOBILE");
-				m_note=rs.getString("NOTE");
-				m_active=rs.getInt("ACTIVE_PERSON")>0;
-				m_email=rs.getString("EMAIL_ADDRESS");
-				m_uuid=rs.getString("EMPLOYEE_KEY");
+				m_id = rs.getInt("PERSON_ID");
+				m_name = rs.getString("PERSON_NAME");
+				m_address = rs.getString("ADDRESS");
+				m_home_phone = rs.getString("PHONE_HOME");
+				m_mobile_phone = rs.getString("PHONE_MOBILE");
+				m_note = rs.getString("NOTE");
+				m_active = rs.getInt("ACTIVE_PERSON") > 0;
+				m_email = rs.getString("EMAIL_ADDRESS");
+				m_uuid = rs.getString("EMPLOYEE_KEY");
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -132,46 +149,47 @@ public class Person extends DB_Object {
 
 	@Override
 	void populateProperties(ArrayList<String> details) {
-		if(details == null || details.size() != Tables.PERSON_MAX_COLS)
-		{
+		if (details == null || details.size() != Tables.PERSON_MAX_COLS) {
 			return;
 		}
-		String id_str=details.get(Tables.PERSON_ID_INDEX);
-		if(id_str.length()>0)
-		{
-			m_id=Integer.parseInt(id_str);
+		String id_str = details.get(Tables.PERSON_ID_INDEX);
+		if (id_str.length() > 0) {
+			m_id = Integer.parseInt(id_str);
 		}
-		
-		m_name=details.get(Tables.PERSON_NAME_INDEX);		
-		m_address=details.get(Tables.PERSON_ADDRESS_INDEX);
-		m_home_phone=details.get(Tables.PERSON_HPHONE_INDEX);
-		m_mobile_phone=details.get(Tables.PERSON_MPHONE_INDEX);
-		m_note=details.get(Tables.PERSON_NOTE_INDEX);
-		m_active=details.get(Tables.PERSON_ACTIVE_INDEX).equals("1");
-		m_email=details.get(Tables.PERSON_EMAIL_INDEX);
-		m_uuid=details.get(Tables.PLACE_UUID_INDEX);
+
+		m_name = details.get(Tables.PERSON_NAME_INDEX);
+		m_address = details.get(Tables.PERSON_ADDRESS_INDEX);
+		m_home_phone = details.get(Tables.PERSON_HPHONE_INDEX);
+		m_mobile_phone = details.get(Tables.PERSON_MPHONE_INDEX);
+		m_note = details.get(Tables.PERSON_NOTE_INDEX);
+		m_active = details.get(Tables.PERSON_ACTIVE_INDEX).equals("1");
+		m_email = details.get(Tables.PERSON_EMAIL_INDEX);
+		m_uuid = details.get(Tables.PLACE_UUID_INDEX);
 
 	}
 
-	public void populatePositions(ResultSet rs)
-	{
-		if(rs!=null)
-		{
-			m_positions=new ArrayList<Integer>();
+	/**
+	 * Populates allowed positions list from the SQL result set
+	 * 
+	 * @param rs
+	 *            Result set with position's ids
+	 */
+	public void populatePositions(ResultSet rs) {
+		if (rs != null) {
+			m_positions = new ArrayList<Integer>();
 			try {
-				while (rs.next())
-				{
-					int pers_id=rs.getInt("PERSON_ID");
-					if(pers_id==m_id)
-					{
+				while (rs.next()) {
+					int pers_id = rs.getInt("PERSON_ID");
+					if (pers_id == m_id) {
 						m_positions.add(rs.getInt("PLACE_ID"));
 					}
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-		}	
+		}
 	}
+
 	@Override
 	String getName() {
 		return m_name;
@@ -184,33 +202,36 @@ public class Person extends DB_Object {
 
 	@Override
 	boolean matches(ArrayList<String> details, boolean use_id) {
-		if(details != null && details.size() == Tables.PERSON_MAX_COLS)
-		{
-			boolean id=true;
-			boolean uuid=true;
-			if(use_id)
-			{
-				id= m_id==Integer.parseInt(details.get(Tables.PERSON_ID_INDEX));
-				uuid=m_uuid.equals(details.get(Tables.PLACE_UUID_INDEX));
+		if (details != null && details.size() == Tables.PERSON_MAX_COLS) {
+			boolean id = true;
+			boolean uuid = true;
+			if (use_id) {
+				id = m_id == Integer.parseInt(details
+						.get(Tables.PERSON_ID_INDEX));
+				uuid = m_uuid.equals(details.get(Tables.PLACE_UUID_INDEX));
 			}
-			boolean active=details.get(Tables.PERSON_ACTIVE_INDEX).equals("1");
-			return id &&
-					m_name.equals(details.get(Tables.PERSON_NAME_INDEX)) &&
-					m_address.equals(details.get(Tables.PERSON_ADDRESS_INDEX)) &&
-					m_home_phone.equals(details.get(Tables.PERSON_HPHONE_INDEX)) &&
-					m_mobile_phone.equals(details.get(Tables.PERSON_MPHONE_INDEX)) &&
-					m_note.equals(details.get(Tables.PERSON_NOTE_INDEX)) &&
-					m_active==active &&
-					m_email.equals(details.get(Tables.PERSON_EMAIL_INDEX)) &&
-					uuid;			
+			boolean active = details.get(Tables.PERSON_ACTIVE_INDEX)
+					.equals("1");
+			return id
+					&& m_name.equals(details.get(Tables.PERSON_NAME_INDEX))
+					&& m_address.equals(details
+							.get(Tables.PERSON_ADDRESS_INDEX))
+					&& m_home_phone.equals(details
+							.get(Tables.PERSON_HPHONE_INDEX))
+					&& m_mobile_phone.equals(details
+							.get(Tables.PERSON_MPHONE_INDEX))
+					&& m_note.equals(details.get(Tables.PERSON_NOTE_INDEX))
+					&& m_active == active
+					&& m_email.equals(details.get(Tables.PERSON_EMAIL_INDEX))
+					&& uuid;
 		}
 		return false;
 	}
 
 	@Override
 	ArrayList<String> toSortedArray() {
-		ArrayList<String> properties=new ArrayList<String>();
-		String active=m_active?"1":"0";
+		ArrayList<String> properties = new ArrayList<String>();
+		String active = m_active ? "1" : "0";
 		properties.add(Integer.toString(m_id));
 		properties.add(m_name);
 		properties.add(m_address);
@@ -224,21 +245,25 @@ public class Person extends DB_Object {
 	}
 
 	@Override
-	String getTableName() {		
+	String getTableName() {
 		return "PERSON";
 	}
 
+	/**
+	 * Populates a list of time offs from the sql result set
+	 * 
+	 * @param rs
+	 *            Result set with time off data
+	 */
 	public void populateTimeOff(ResultSet rs) {
-		if(rs!=null)
-		{
-			m_times_off=new ArrayList<TimeOff>();
+		if (rs != null) {
+			m_times_off = new ArrayList<TimeOff>();
 			try {
-				while (rs.next())
-				{
-					int pers_id=rs.getInt("PERSON_ID");
-					if(pers_id==m_id)
-					{
-						TimeOff timeOff=new TimeOff(rs.getDate("PERSON_NA_START_DATE_HOUR"),
+				while (rs.next()) {
+					int pers_id = rs.getInt("PERSON_ID");
+					if (pers_id == m_id) {
+						TimeOff timeOff = new TimeOff(
+								rs.getDate("PERSON_NA_START_DATE_HOUR"),
 								rs.getDate("PERSON_NA_END_DATE_HOUR"));
 						m_times_off.add(timeOff);
 					}
@@ -246,91 +271,123 @@ public class Person extends DB_Object {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-		}	
-		
+		}
+
 	}
 
-	public ArrayList<String> getTimesOff()
-	{
-		ArrayList<String> retval=new ArrayList<String>();
-		for(TimeOff to:m_times_off)
-		{
-			if(to!=null)
-				{
-				String str_to="From:";
-				str_to+=to.getStartStr();
-				str_to+=" To:";
-				str_to+=to.getEndStr();
-				
-				retval.add(str_to);
+	/**
+	 * Returns a list of time offs in a string list format
+	 * 
+	 * @return List of times off
+	 */
+	public ArrayList<String> getTimesOff() {
+		ArrayList<String> retval = new ArrayList<String>();
+		if (m_times_off != null) {
+			for (TimeOff to : m_times_off) {
+				if (to != null) {
+					String str_to = "From:";
+					str_to += to.getStartStr();
+					str_to += " To:";
+					str_to += to.getEndStr();
+
+					retval.add(str_to);
+				}
+
 			}
-			
 		}
 		return retval;
 	}
-	
-	public boolean isTimeAllowed(String start_time, String end_time)
-	{
-		if(start_time!=null && end_time!=null)
-		{
-			for(TimeOff to:m_times_off)
-			{
-				if(to!=null)
-				{
+
+	/**
+	 * Checks if this employee is allowed to work at the specified time period
+	 * 
+	 * @param start_time
+	 *            Starting time of a shift
+	 * @param end_time
+	 *            Ending time of a shift
+	 * @return True if this person is allowed to work this shift
+	 */
+	public boolean isTimeAllowed(String start_time, String end_time) {
+		if (start_time != null && end_time != null && m_times_off != null) {
+			for (TimeOff to : m_times_off) {
+				if (to != null) {
 					return !(to.isConflicting(start_time, end_time));
 				}
-		
+
 			}
 		}
 		return true;
 	}
 
+	/**
+	 * Convenience method to get insert SQL statement for the time off table.
+	 * 
+	 * @param start
+	 *            Start of the time off
+	 * @param end
+	 *            End of the time off
+	 * @return String containing insert SQL statement.
+	 */
 	public String getTimeOffInsertSql(String start, String end) {
 		String sql = INSERT_STM;
-		String cols = "PERSON_ID," +
-				"PERSON_NA_START_DATE_HOUR," +
-				"PERSON_NA_END_DATE_HOUR";
-		
-		String vals = "'" + m_id + "','" +
-				start + "','" +
-				end +"'";
+		String cols = "PERSON_ID," + "PERSON_NA_START_DATE_HOUR,"
+				+ "PERSON_NA_END_DATE_HOUR";
+
+		String vals = "'" + m_id + "','" + start + "','" + end + "'";
 
 		sql = sql.replace(COL_CLAUSE, cols);
 		sql = sql.replace(VAL_CLAUSE, vals);
 		return sql;
 	}
 
+	/**
+	 * Delete time off SQL statement
+	 * 
+	 * @param start
+	 *            Start of the time off
+	 * @param end
+	 *            End of the time off
+	 * @return String containing sql statement.
+	 */
 	public String getDeleteTimeOffSql(String start, String end) {
-		String sql = DELETE_STM;						
-		sql=sql.replace(WHERE_CLAUSE, "PERSON_ID='"+m_id+"' AND PERSON_NA_START_DATE_HOUR='"+start+
-				"' AND PERSON_NA_END_DATE_HOUR='"+end+"'");
-		return sql;		
-	}	
-	
+		String sql = DELETE_STM;
+		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id
+				+ "' AND PERSON_NA_START_DATE_HOUR='" + start
+				+ "' AND PERSON_NA_END_DATE_HOUR='" + end + "'");
+		return sql;
+	}
+
+	/**
+	 * Generates a list of SQL statement to insert person to position mappings
+	 * 
+	 * @return SQL statement
+	 */
 	public ArrayList<String> getPersonToPositionsInsertSql() {
-		ArrayList<String> retval=new ArrayList<String>();
+		ArrayList<String> retval = new ArrayList<String>();
 
-		for(Integer i:m_positions)
-		{
-			String sql = INSERT_STM;
-			String cols = "PERSON_ID," +
-					"PLACE_ID";
-			String vals="";
-			vals = "'"+ m_id + "','" + i +"'";
-			sql = sql.replace(COL_CLAUSE, cols);
-			sql = sql.replace(VAL_CLAUSE, vals);
-			
-			retval.add(sql);
+		if (m_positions != null) {
+			for (Integer i : m_positions) {
+				String sql = INSERT_STM;
+				String cols = "PERSON_ID," + "PLACE_ID";
+				String vals = "";
+				vals = "'" + m_id + "','" + i + "'";
+				sql = sql.replace(COL_CLAUSE, cols);
+				sql = sql.replace(VAL_CLAUSE, vals);
+
+				retval.add(sql);
+			}
 		}
-
-		
 		return retval;
 	}
 
+	/**
+	 * Generates SQL statement to delete person to position mappings.
+	 * @return SQL statement.
+	 */
 	public String getPersonToPositionsDeleteSql() {
-		String sql = DELETE_STM;						
-		sql=sql.replace(WHERE_CLAUSE, "PERSON_ID='"+m_id+"'");
-		return sql;		
-	}	
+		String sql = DELETE_STM;
+		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
+		return sql;
+	}
 
 }

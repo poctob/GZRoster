@@ -24,11 +24,20 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
+/**
+ * Provides configuration dialog
+ * @author apavlune
+ *
+ */
 public class ConfigurationDialog extends Dialog {
 
 	protected Object result;
 	protected Shell shlConfigurationDialog;
+	
+	//Properties object
 	private Properties prop;
+	
+	//Interface for the callbacks
 	private IDetailsManager idm;
 	
 	private final FormToolkit m_toolkit = new FormToolkit(Display.getDefault());
@@ -75,9 +84,11 @@ public class ConfigurationDialog extends Dialog {
 	private Section db_section;
 
 	/**
-	 * Create the dialog.
-	 * @param parent
-	 * @param style
+	 * Creates the dialog and initializes member variables
+	 * @param parent Parent shell
+	 * @param style Style of the dialog
+	 * @param prop Properties object
+	 * @param idm Callback interface
 	 */
 	public ConfigurationDialog(Shell parent, int style, Properties prop, IDetailsManager idm) {
 		super(parent, style);
@@ -103,8 +114,11 @@ public class ConfigurationDialog extends Dialog {
 		return result;
 	}
 	
+	/**
+	 * Clears all data in the dialog.
+	 */
 	private void clearData()
-	{
+	{	
 		dbDriverText.setText("");
 		dbURLText.setText("");
 		dbUserNameText.setText("");
@@ -127,6 +141,9 @@ public class ConfigurationDialog extends Dialog {
 		displayIntervalCombo.clearSelection();
 	}
 	
+	/**
+	 * Expands all collapsible sections
+	 */
 	private void expandAll()
 	{
 		server_section.setExpanded(true);
@@ -172,7 +189,6 @@ public class ConfigurationDialog extends Dialog {
 		db_section.setLayoutData(gd_db_section);
 		
 		db_section.setText("Database");
-		db_section.setExpanded(true);
 		db_section.setDescription("Database configuration data.");
 		Composite db_composite=m_toolkit.createComposite(db_section);
 		db_composite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
@@ -197,7 +213,7 @@ public class ConfigurationDialog extends Dialog {
 		lblDbUrl.setText("URL");
 		
 		dbURLText = new Text(db_composite, SWT.BORDER | SWT.H_SCROLL | SWT.CANCEL);
-		dbURLText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		dbURLText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
 		m_toolkit.adapt(dbURLText, true, true);
 		
 		lblNewLabel = new Label(db_composite, SWT.NONE);
@@ -224,7 +240,6 @@ public class ConfigurationDialog extends Dialog {
 		server_section.setLayoutData(gd_server_section);
 		
 		server_section.setText("Remote Server");
-		server_section.setExpanded(true);
 		server_section.setDescription("Remote server configuration data.");
 		Composite server_composite=m_toolkit.createComposite(server_section);
 		server_composite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
@@ -276,7 +291,6 @@ public class ConfigurationDialog extends Dialog {
 		ical_section.setDescription("iCal calendar file data.");
 		m_toolkit.paintBordersFor(ical_section);
 		ical_section.setText("Calendar File");
-		ical_section.setExpanded(true);
 		
 		ical_composite = m_toolkit.createComposite(ical_section);
 		ical_composite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
@@ -292,10 +306,13 @@ public class ConfigurationDialog extends Dialog {
 		m_toolkit.adapt(icsPathText, true, true);
 		
 		iscPathButton = m_toolkit.createButton(ical_composite, "...", SWT.NONE);
+		
+		/**
+		 * Creates file selection dialog.
+		 */
 		iscPathButton.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void widgetSelected(SelectionEvent e) {
-				
+			public void widgetSelected(SelectionEvent e) {			
 				icsFileSelect(getParent());
 			}
 		});
@@ -380,6 +397,10 @@ public class ConfigurationDialog extends Dialog {
 		new Label(m_form.getBody(), SWT.NONE);
 		
 		Button btnCancel = m_toolkit.createButton(m_composite, "Cancel", SWT.NONE);
+		
+		/**
+		 * Closes this dialog
+		 */
 		btnCancel.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -392,6 +413,9 @@ public class ConfigurationDialog extends Dialog {
 		fd_btnCancel.left = new FormAttachment(0, 10);
 		btnCancel.setLayoutData(fd_btnCancel);
 		
+		/**
+		 * Expands all sections and clears the data
+		 */
 		Button btnClear = m_toolkit.createButton(m_composite, "Clear", SWT.NONE);
 		btnClear.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -407,6 +431,10 @@ public class ConfigurationDialog extends Dialog {
 		btnClear.setLayoutData(fd_btnClear);
 		
 		Button btnSave = m_toolkit.createButton(m_composite, "Save", SWT.NONE);
+		
+		/**
+		 * Saves configuration and closes this dialog.
+		 */
 		btnSave.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -425,15 +453,22 @@ public class ConfigurationDialog extends Dialog {
 		
 	}
 	
+	/**
+	 * Sets focus on a form
+	 */
 	public void setFocus()
 	{
 		m_form.setFocus();
 	}
 	
+	/**
+	 * Cleans up the toolkit as well
+	 */
 	public void dispose()
 	{
 		m_toolkit.dispose();
 	}
+	
 	/**
 	 * Presents file dialog to select ics file path
 	 * @param parent
@@ -441,10 +476,7 @@ public class ConfigurationDialog extends Dialog {
 	private void icsFileSelect(Shell parent) {
 		FileDialog dialog = new FileDialog(parent);
 		String result = dialog.open();
-		if(result!=null)
-		{
-			icsPathText.setText(result);
-		}
+		WidgetUtilities.safeTextSet(icsPathText, result);
 	}
 	
 	/**
@@ -482,31 +514,35 @@ public class ConfigurationDialog extends Dialog {
 	 */
 	private void loadConf() {
 		if (prop.size()>0) {
-			dbDriverText.setText(prop.getProperty("db_driver"));
-			dbURLText.setText(prop.getProperty("db_url"));
-			dbUserNameText.setText(prop.getProperty("db_username"));
-			dbPasswordText.setText(prop.getProperty("db_password"));
-			serverHostText.setText(prop.getProperty("ssh_host"));
-			serverUserNameText.setText(prop.getProperty("ssh_username"));
-			serverPasswordText.setText(prop.getProperty("ssh_password"));
-			serverPortServer.setText(prop.getProperty("ssh_port"));
-			serverFilePathText.setText(prop.getProperty("ssh_destination"));
-			icsPathText.setText(prop.getProperty("ical_file_path"));
-			autoPurgeDaysText.setText(prop.getProperty("auto_purge_interval"));
+			WidgetUtilities.safeTextSet(dbDriverText, prop.getProperty("db_driver"));
+			WidgetUtilities.safeTextSet(dbURLText, prop.getProperty("db_url"));
+			WidgetUtilities.safeTextSet(dbUserNameText, prop.getProperty("db_username"));
+			WidgetUtilities.safeTextSet(dbPasswordText, prop.getProperty("db_password"));
+			WidgetUtilities.safeTextSet(serverHostText, prop.getProperty("ssh_host"));
+			WidgetUtilities.safeTextSet(serverUserNameText, prop.getProperty("ssh_username"));
+			WidgetUtilities.safeTextSet(serverPasswordText, prop.getProperty("ssh_password"));
+			WidgetUtilities.safeTextSet(serverPortServer, prop.getProperty("ssh_port"));
+			WidgetUtilities.safeTextSet(serverFilePathText, prop.getProperty("ssh_destination"));
+			WidgetUtilities.safeTextSet(icsPathText, prop.getProperty("ical_file_path"));
+			WidgetUtilities.safeTextSet(autoPurgeDaysText, prop.getProperty("auto_purge_interval"));
 			
-			if(prop.getProperty("auto_purge").equals("1"))
+			String auto_purge=prop.getProperty("auto_purge");
+			if(auto_purge!=null && auto_purge.equals("1"))
 			{
 				autoPurgeCheck.setSelection(true);
 			}
 			else
 				autoPurgeCheck.setSelection(false);
-
-			displayDayStartCombo.select(displayDayStartCombo.indexOf(prop.getProperty("day_start")));
-			displayDayEndCombo.select(displayDayEndCombo.indexOf(prop.getProperty("day_end")));
-			displayIntervalCombo.select(displayIntervalCombo.indexOf(prop.getProperty("interval_minutes")));
+			
+			WidgetUtilities.safeComboSelect(displayDayStartCombo, prop.getProperty("day_start"));
+			WidgetUtilities.safeComboSelect(displayDayEndCombo, prop.getProperty("day_end"));
+			WidgetUtilities.safeComboSelect(displayIntervalCombo, prop.getProperty("interval_minutes"));
 		}
 	}
 	
+	/**
+	 * Populates combos with data
+	 */
 	private void populateCombos()
 	{
 		displayDayStartCombo.removeAll();
@@ -514,8 +550,8 @@ public class ConfigurationDialog extends Dialog {
 		displayIntervalCombo.removeAll();
 		for(int i=0; i<24; i++)
 		{
-			displayDayStartCombo.add(Integer.toString(i));
-			displayDayEndCombo.add(Integer.toString(i));			
+			WidgetUtilities.safeComboAdd(displayDayStartCombo, Integer.toString(i));
+			WidgetUtilities.safeComboAdd(displayDayEndCombo, Integer.toString(i));			
 		}
 		
 		displayIntervalCombo.add("5");

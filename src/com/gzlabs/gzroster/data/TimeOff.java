@@ -2,11 +2,24 @@ package com.gzlabs.gzroster.data;
 
 import java.util.Date;
 
+/**
+ * Time off object
+ * @author apavlune
+ *
+ */
 public class TimeOff {
 	
+	//Time off start time
 	private Date start;
+	
+	//Time off end time
 	private Date end;
 	
+	/**
+	 * Default constructor initializes member variables
+	 * @param start Start of the time off
+	 * @param end End of the time off
+	 */
 	public TimeOff(Date start, Date end) {
 		super();
 		this.start = start;
@@ -41,16 +54,30 @@ public class TimeOff {
 		this.end = end;
 	}
 	
+	/**
+	 * Returns start date as string
+	 * @return Start date as string
+	 */
 	public String getStartStr()
 	{
 		return DateUtils.DateToString(start);
 	}
 	
+	/**
+	 * 
+	 * @return End date as string
+	 */
 	public String getEndStr()
 	{
 		return DateUtils.DateToString(end);
 	}
 	
+	/**
+	 * Checks if supplied dates conflict with this object
+	 * @param start Beginning of the period
+	 * @param end End of the period
+	 * @return True if there is a conflict, false otherwise
+	 */
 	public boolean isConflicting(String start, String end)
 	{
 		return DateUtils.isCalendarBetween(this.start, this.end, start, end, true);				

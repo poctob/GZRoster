@@ -14,15 +14,19 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.wb.swt.SWTResourceManager;
 
-
+/**
+ * Widget to manipulate the positions
+ * 
+ * @author apavlune
+ * 
+ */
 public class PositionsWidget extends Composite {
 
-	
 	private final FormToolkit formToolkit = new FormToolkit(
 			Display.getDefault());
-	
+
 	private IPositionsManager ipm;
-	
+
 	/************************************************************/
 	// Positions Widget components
 	private List positionsList;
@@ -36,24 +40,32 @@ public class PositionsWidget extends Composite {
 	private Text positionNoteText;
 
 	private Label positionLblName;
-	private Label positionLblNote;		
+	private Label positionLblNote;
 	/************************************************************/
-	
+
 	private String old_name;
 	private String old_note;
-	
+
 	/**
 	 * Create the composite.
+	 * 
 	 * @param parent
 	 * @param style
+	 * @param pm
+	 *            Management callback object
 	 */
 	public PositionsWidget(Composite parent, int style, IPositionsManager pm) {
 		super(parent, style);
-		ipm=pm;
-		
-		ListViewer positionsListViewer = new ListViewer(this,
-				SWT.BORDER | SWT.V_SCROLL);
+
+		if (pm == null)
+			return;
+
+		ipm = pm;
+
+		ListViewer positionsListViewer = new ListViewer(this, SWT.BORDER
+				| SWT.V_SCROLL);
 		positionsList = positionsListViewer.getList();
+
 		positionsList.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -62,10 +74,9 @@ public class PositionsWidget extends Composite {
 				} else {
 					positionsDeleteButton.setEnabled(true);
 					clearPositionData();
-					if(ipm != null)
-					{
+					if (ipm != null) {
 						ipm.setPositionDetails(positionsList.getSelection()[0]);
-					}				
+					}
 					togglePositionEdit(true);
 					setOld_name(positionNameText.getText());
 					setOld_note(positionNoteText.getText());
@@ -75,8 +86,7 @@ public class PositionsWidget extends Composite {
 		});
 		positionsList.setBounds(10, 46, 143, 248);
 
-		positionsEditButton = formToolkit.createButton(this,
-				"Save", SWT.NONE);
+		positionsEditButton = formToolkit.createButton(this, "Save", SWT.NONE);
 		positionsEditButton.setEnabled(false);
 		positionsEditButton.setImage(SWTResourceManager.getImage(
 				MainWindow.class,
@@ -84,8 +94,7 @@ public class PositionsWidget extends Composite {
 		positionsEditButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				if (ipm!=null)
-				{
+				if (ipm != null) {
 					ipm.processPositionData();
 					clearPositionData();
 					ipm.populateData();
@@ -94,8 +103,8 @@ public class PositionsWidget extends Composite {
 		});
 		positionsEditButton.setBounds(334, 223, 77, 30);
 
-		positionsDeleteButton = formToolkit.createButton(this,
-				"Delete", SWT.NONE);
+		positionsDeleteButton = formToolkit.createButton(this, "Delete",
+				SWT.NONE);
 		positionsDeleteButton.setEnabled(false);
 		positionsDeleteButton.setImage(SWTResourceManager.getImage(
 				MainWindow.class,
@@ -105,8 +114,7 @@ public class PositionsWidget extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				if (MessageDialog.openConfirm(null, "Confirm Delete",
 						"Are you sure that you want to delete this position?")) {
-					if(ipm !=null)
-					{
+					if (ipm != null) {
 						ipm.deletePosition(positionsList.getSelection());
 						clearPositionData();
 						ipm.populateData();
@@ -193,41 +201,71 @@ public class PositionsWidget extends Composite {
 		positionNameText.setText("");
 		positionNoteText.setText("");
 	}
-	
-	public void clearPositionsList()
-	{
+
+	/**
+	 * Clears positions list
+	 */
+	public void clearPositionsList() {
 		positionsList.removeAll();
 	}
-	
-	public void addPosition(String s)
-	{
-		positionsList.add(s);
+
+	/**
+	 * Adds new position to the list
+	 * 
+	 * @param s
+	 *            Position name
+	 */
+	public void addPosition(String s) {
+		WidgetUtilities.safeListAdd(positionsList, s);
 	}
-	
-	public void setPositionNameText(String s)
-	{
-		positionNameText.setText(s);
+
+	/**
+	 * Sets positions name
+	 * 
+	 * @param s
+	 *            Name
+	 */
+	public void setPositionNameText(String s) {
+		WidgetUtilities.safeTextSet(positionNameText, s);
 	}
-	
-	public void setPositionNoteText(String s)
-	{
-		positionNoteText.setText(s);
+
+	/**
+	 * Sets position note
+	 * 
+	 * @param s
+	 *            Note
+	 */
+	public void setPositionNoteText(String s) {
+		WidgetUtilities.safeTextSet(positionNoteText, s);
 	}
-	
-	public String getPositionNameText()
-	{
+
+	/**
+	 * Retrieves position's name
+	 * 
+	 * @return Name
+	 */
+	public String getPositionNameText() {
 		return positionNameText.getText();
 	}
-	
-	public String getPositionNoteText()
-	{
+
+	/**
+	 * Retrieves positions's note
+	 * 
+	 * @return Note
+	 */
+	public String getPositionNoteText() {
 		return positionNoteText.getText();
 	}
-	
-	public int getSelectionIndex()
-	{
+
+	/**
+	 * Gets currently selected position
+	 * 
+	 * @return Currently selected position's index
+	 */
+	public int getSelectionIndex() {
 		return positionsList.getSelectionIndex();
 	}
+
 	/**
 	 * Enables and disables position edit controls.
 	 * 
@@ -245,6 +283,7 @@ public class PositionsWidget extends Composite {
 		positionLblName.setEnabled(enable);
 		positionLblNote.setEnabled(enable);
 	}
+
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
@@ -258,7 +297,8 @@ public class PositionsWidget extends Composite {
 	}
 
 	/**
-	 * @param old_name the old_name to set
+	 * @param old_name
+	 *            the old_name to set
 	 */
 	public void setOld_name(String old_name) {
 		this.old_name = old_name;
@@ -272,7 +312,8 @@ public class PositionsWidget extends Composite {
 	}
 
 	/**
-	 * @param old_note the old_note to set
+	 * @param old_note
+	 *            the old_note to set
 	 */
 	public void setOld_note(String old_note) {
 		this.old_note = old_note;

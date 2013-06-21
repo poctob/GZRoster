@@ -17,13 +17,19 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.wb.swt.SWTResourceManager;
 
+/**
+ * Handles employee manipulations
+ * 
+ * @author apavlune
+ * 
+ */
 public class EmployeesWidget extends Composite {
 
 	private final FormToolkit formToolkit = new FormToolkit(
 			Display.getDefault());
-	
+
 	private IEmployeeManager iem;
-	
+
 	/************************************************************/
 	// Employee Tab
 	private Text nameText;
@@ -46,28 +52,27 @@ public class EmployeesWidget extends Composite {
 
 	private Button activeCheck;
 	/************************************************************/
-	
+
 	private String old_name;
 	private String old_address;
 	private String old_hphone;
 	private String old_mphone;
 	private String old_active;
 	private String old_email;
-	
-	
+
 	/**
 	 * Create the composite.
+	 * 
 	 * @param parent
 	 * @param style
 	 */
 	public EmployeesWidget(Composite parent, int style, IEmployeeManager em) {
 		super(parent, style);
-		if(em == null)
-		{
+		if (em == null) {
 			return;
 		}
-		
-		iem=em;
+
+		iem = em;
 
 		ListViewer employeesListViewer = new ListViewer(this, SWT.BORDER
 				| SWT.V_SCROLL);
@@ -78,24 +83,26 @@ public class EmployeesWidget extends Composite {
 				if (employeesList.getSelectionIndex() == -1) {
 					employeesDeleteButton.setEnabled(false);
 				} else {
-					employeesDeleteButton.setEnabled(true);
-					clearEmployeeData();
-					iem.setEmployeeDetails(employeesList.getSelection()[0]);
-					toggleEmployeeEdit(true);
-					setOld_name(nameText.getText());
-					setOld_address(addressText.getText());
-					setOld_hphone(homephoneText.getText());
-					setOld_mphone(mobilePhoneText.getText());
-					setOld_active(activeCheck.getSelection()?"1":"0");
-					setOld_email(emailText.getText());
+
+					if (iem != null) {
+						employeesDeleteButton.setEnabled(true);
+						clearEmployeeData();
+						iem.setEmployeeDetails(employeesList.getSelection()[0]);
+						toggleEmployeeEdit(true);
+						setOld_name(nameText.getText());
+						setOld_address(addressText.getText());
+						setOld_hphone(homephoneText.getText());
+						setOld_mphone(mobilePhoneText.getText());
+						setOld_active(activeCheck.getSelection() ? "1" : "0");
+						setOld_email(emailText.getText());
+					}
 				}
 			}
 
 		});
 		employeesList.setBounds(10, 46, 143, 248);
 
-		employeesEditButton = formToolkit.createButton(this, "Save",
-				SWT.NONE);
+		employeesEditButton = formToolkit.createButton(this, "Save", SWT.NONE);
 		employeesEditButton.setEnabled(false);
 		employeesEditButton.setImage(SWTResourceManager.getImage(
 				MainWindow.class,
@@ -114,13 +121,18 @@ public class EmployeesWidget extends Composite {
 		employeesDeleteButton.setImage(SWTResourceManager.getImage(
 				MainWindow.class,
 				"/org/eclipse/jface/dialogs/images/message_error.gif"));
+		
+		
 		employeesDeleteButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (MessageDialog.openConfirm(null, "Confirm Delete",
 						"Are you sure that you want to delete this employee?")) {
-					iem.deleteEmployee(employeesList.getSelection());
-					iem.populateData();
+					if(iem !=null && employeesList!=null)
+					{
+						iem.deleteEmployee(employeesList.getSelection());
+						iem.populateData();
+					}
 				}
 			}
 		});
@@ -132,7 +144,9 @@ public class EmployeesWidget extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				toggleEmployeeEdit(true);
 				clearEmployeeData();
-				employeesList.deselectAll();
+				
+				if(employeesList!=null)
+					employeesList.deselectAll();
 			}
 		});
 		btnNew.setImage(SWTResourceManager.getImage(MainWindow.class,
@@ -246,24 +260,44 @@ public class EmployeesWidget extends Composite {
 		emailText.setText("");
 	}
 
-	public void clearEmployeesList()
-	{
+	/**
+	 * Removes all entries from the employees list
+	 */
+	public void clearEmployeesList() {
 		employeesList.removeAll();
 	}
-	
-	public void addEmployee(ArrayList<String> data)
-	{
-		Collections.sort(data);
-		for(String s:data)
+
+	/**
+	 * Adds new entry into the employees list
+	 * @param data
+	 */
+	public void addEmployee(ArrayList<String> data) {
+		
+		if(data!=null)
 		{
-			employeesList.add(s);
+			Collections.sort(data);
+			for (String s : data) {				
+				WidgetUtilities.safeListAdd(employeesList, s);				
+			}
 		}
 	}
-	
-	public void addEmployee(String s)
-	{
-		employeesList.add(s);
+
+	/**
+	 * Resets all controls
+	 */
+	public void resetControls() {
+		clearEmployeesList();
+		toggleEmployeeEdit(false);
 	}
+
+	/**
+	 * Adds employee to a list
+	 * @param s
+	 */
+	public void addEmployee(String s) {
+		WidgetUtilities.safeListAdd(employeesList, s);	
+	}
+
 	/**
 	 * Enables and disables employee edit controls.
 	 * 
@@ -288,43 +322,44 @@ public class EmployeesWidget extends Composite {
 		lblHomePhone.setEnabled(enable);
 		activeCheck.setEnabled(enable);
 	}
+
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
 	}
 
+	/****************************************************************************/
+	/**Accessors*/
+	/****************************************************************************/
 	public void setNameText(String value) {
-		nameText.setText(value);
-		
+		WidgetUtilities.safeTextSet(nameText, value);
+
 	}
 
 	public void setAddressText(String value) {
-		addressText.setText(value);
-		
+		WidgetUtilities.safeTextSet(addressText, value);
 	}
 
 	public void setHomephoneText(String value) {
-		homephoneText.setText(value);
-		
+		WidgetUtilities.safeTextSet(homephoneText, value);
+
 	}
 
 	public void setMobilePhoneText(String value) {
-		mobilePhoneText.setText(value);
-		
+		WidgetUtilities.safeTextSet(mobilePhoneText, value);
 	}
 
 	public void setEmailText(String value) {
-		emailText.setText(value);
-		
+		WidgetUtilities.safeTextSet(emailText, value);
+
 	}
 
 	public void setActiveCheck(boolean b) {
 		activeCheck.setSelection(b);
-		
+
 	}
-	
-	public String getNameText()
-	{
+
+	public String getNameText() {
 		return nameText.getText();
 	}
 
@@ -343,7 +378,7 @@ public class EmployeesWidget extends Composite {
 	public String getEmailText() {
 		return emailText.getText();
 	}
-	
+
 	public boolean getActiveCheck() {
 		return activeCheck.getSelection();
 	}
@@ -360,7 +395,8 @@ public class EmployeesWidget extends Composite {
 	}
 
 	/**
-	 * @param old_name the old_name to set
+	 * @param old_name
+	 *            the old_name to set
 	 */
 	public void setOld_name(String old_name) {
 		this.old_name = old_name;
@@ -374,7 +410,8 @@ public class EmployeesWidget extends Composite {
 	}
 
 	/**
-	 * @param old_address the old_address to set
+	 * @param old_address
+	 *            the old_address to set
 	 */
 	public void setOld_address(String old_address) {
 		this.old_address = old_address;
@@ -388,7 +425,8 @@ public class EmployeesWidget extends Composite {
 	}
 
 	/**
-	 * @param old_hphone the old_hphone to set
+	 * @param old_hphone
+	 *            the old_hphone to set
 	 */
 	public void setOld_hphone(String old_hphone) {
 		this.old_hphone = old_hphone;
@@ -402,7 +440,8 @@ public class EmployeesWidget extends Composite {
 	}
 
 	/**
-	 * @param old_mphone the old_mphone to set
+	 * @param old_mphone
+	 *            the old_mphone to set
 	 */
 	public void setOld_mphone(String old_mphone) {
 		this.old_mphone = old_mphone;
@@ -416,7 +455,8 @@ public class EmployeesWidget extends Composite {
 	}
 
 	/**
-	 * @param old_active the old_active to set
+	 * @param old_active
+	 *            the old_active to set
 	 */
 	public void setOld_active(String old_active) {
 		this.old_active = old_active;
@@ -430,7 +470,8 @@ public class EmployeesWidget extends Composite {
 	}
 
 	/**
-	 * @param old_email the old_email to set
+	 * @param old_email
+	 *            the old_email to set
 	 */
 	public void setOld_email(String old_email) {
 		this.old_email = old_email;

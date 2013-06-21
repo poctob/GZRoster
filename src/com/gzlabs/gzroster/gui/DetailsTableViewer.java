@@ -20,29 +20,34 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.TableColumn;
 
 /**
- * Customized table viewer.  Provides additional functionality for cell manipulation.
+ * Customized table viewer. Provides additional functionality for cell
+ * manipulation.
+ * 
  * @author apavlune
- *
+ * 
  */
 public class DetailsTableViewer extends TableViewer {
 
-	//Column labels
+	// Column labels
 	private ArrayList<TableViewerColumn> l_columns;
-	
-	//Currently selected cell.
+
+	// Currently selected cell.
 	private ViewerCell c_selected;
-	
-	//Data updater interface.
+
+	// Data updater interface.
 	final private IDutyUpdater dutyupdater;
 
-	//Some constants
+	// Some constants
 	final private String DIALOG_TITLE = "Confirm Delete";
 	final private String DIALOG_MESSAGE = "Are you sure that you want to delete this item?";
 
 	/**
-	 * Default constructor.  Initializes member variables.
-	 * @param parent Composite parent of this control.
-	 * @param dutyupdater Data updater interface.
+	 * Default constructor. Initializes member variables.
+	 * 
+	 * @param parent
+	 *            Composite parent of this control.
+	 * @param dutyupdater
+	 *            Data updater interface.
 	 */
 	public DetailsTableViewer(Composite parent, IDutyUpdater dutyupdater) {
 		super(parent, SWT.FULL_SELECTION);
@@ -57,43 +62,46 @@ public class DetailsTableViewer extends TableViewer {
 
 	/**
 	 * Initializes column properties.
-	 * @param columns Column label strings.
+	 * 
+	 * @param columns
+	 *            Column label strings.
 	 */
 	public void initiateColumns(ArrayList<String> columns) {
-		for (String s : columns) {
-			TableViewerColumn col = new TableViewerColumn(this, SWT.NONE);
-			TableColumn tc = col.getColumn();
-			tc.setWidth(60);
-			tc.setText(s);
-			l_columns.add(col);
-		}
-	}
-	
-	public void removeAllColumns()
-	{
-	
-		for(final TableColumn col:getTable().getColumns())
-		{
-			col.dispose();
-		}
-		for(int i=0; i<l_columns.size(); i++)
-		{
-			l_columns.remove(i);
+		if (columns != null && l_columns!=null) {
+			for (String s : columns) {
+				TableViewerColumn col = new TableViewerColumn(this, SWT.NONE);
+				TableColumn tc = col.getColumn();
+			
+				if(tc!=null)
+				{
+					tc.setWidth(60);
+					tc.setText(s);
+					l_columns.add(col);
+				}
+			}
 		}
 	}
 
 	/**
 	 * Sets a label provider for a column.
-	 * @param col Column id.
-	 * @param provider Provider to set.
+	 * 
+	 * @param col
+	 *            Column id.
+	 * @param provider
+	 *            Provider to set.
 	 */
 	public void setLabelProvider(int col, ColumnLabelProvider provider) {
-		l_columns.get(col).setLabelProvider(provider);
+		if(l_columns!=null && provider!=null)
+		{
+			l_columns.get(col).setLabelProvider(provider);
+		}
 	}
-	
+
 	/**
 	 * Initiates table data.
-	 * @param data Data that will be placed in the table.
+	 * 
+	 * @param data
+	 *            Data that will be placed in the table.
 	 */
 	public void initiateData(ArrayList<String> data) {
 		setInput(data);
@@ -104,31 +112,34 @@ public class DetailsTableViewer extends TableViewer {
 	 */
 	@Override
 	protected void hookEditingSupport(Control control) {
-		
-		/*** Edit action definition.
+
+		/***
+		 * Edit action definition.
 		 */
 		final Action _new = new Action("New") {
 			public void run() {
 				ViewerCell cell = getC_selected();
-				if(dutyupdater!=null && cell!=null)
-				{
-					String col_label=getTable().getColumn(cell.getColumnIndex()).getText();
-					dutyupdater.dutyNewRequest(col_label, (String)cell.getElement());
+				if (dutyupdater != null && cell != null) {
+					String col_label = getTable().getColumn(
+							cell.getColumnIndex()).getText();
+					dutyupdater.dutyNewRequest(col_label,
+							(String) cell.getElement());
 					refresh();
 				}
 			}
 		};
-		
+
 		/**
 		 * Edit action definition.
 		 */
 		final Action edit = new Action("Edit") {
 			public void run() {
 				ViewerCell cell = getC_selected();
-				if(dutyupdater!=null && cell!=null)
-				{
-					String col_label=getTable().getColumn(cell.getColumnIndex()).getText();
-					dutyupdater.dutyUpdateRequest(cell.getText(), col_label, (String)cell.getElement());
+				if (dutyupdater != null && cell != null) {
+					String col_label = getTable().getColumn(
+							cell.getColumnIndex()).getText();
+					dutyupdater.dutyUpdateRequest(cell.getText(), col_label,
+							(String) cell.getElement());
 					refresh();
 				}
 			}
@@ -142,10 +153,11 @@ public class DetailsTableViewer extends TableViewer {
 				ViewerCell cell = getC_selected();
 				if (MessageDialog.openConfirm(null, DIALOG_TITLE,
 						DIALOG_MESSAGE)) {
-					if(dutyupdater!=null && cell!=null)
-					{
-						String col_label=getTable().getColumn(cell.getColumnIndex()).getText();
-						dutyupdater.dutyDeleteRequest(cell.getText(), col_label, (String)cell.getElement());
+					if (dutyupdater != null && cell != null) {
+						String col_label = getTable().getColumn(
+								cell.getColumnIndex()).getText();
+						dutyupdater.dutyDeleteRequest(cell.getText(),
+								col_label, (String) cell.getElement());
 						refresh();
 					}
 				}
@@ -156,41 +168,40 @@ public class DetailsTableViewer extends TableViewer {
 		 * Context menu initialization.
 		 */
 		final MenuManager menumgr = new MenuManager();
-		
+
 		control.setMenu(menumgr.createContextMenu(control));
-		
+
 		/**
-		 * Here we intercept mouse click and capture a cell that is being clicked.
+		 * Here we intercept mouse click and capture a cell that is being
+		 * clicked.
 		 */
 		control.addMouseListener(new MouseAdapter() {
 			public void mouseDown(MouseEvent e) {
 				if (e.button == 3) {
 					setC_selected(getCell(new Point(e.x, e.y)));
 					menumgr.removeAll();
-					
-					//Our first column contains time labels so we ignore it.
-					if(c_selected!=null && c_selected.getColumnIndex()>0)
-					{
-						//If cell has a name already, then we allow Edit/Delete ops.
-						if(c_selected.getText().length()>1)
-						{
+
+					// Our first column contains time labels so we ignore it.
+					if (c_selected != null && c_selected.getColumnIndex() > 0) {
+						// If cell has a name already, then we allow Edit/Delete
+						// ops.
+						if (c_selected.getText().length() > 1) {
 							menumgr.add(edit);
 							menumgr.add(delete);
 						}
-						//Otherwise it's only new operation that is allowed.
-						else
-						{
+						// Otherwise it's only new operation that is allowed.
+						else {
 							menumgr.add(_new);
 						}
 					}
-					
+
 				}
 			}
 		});
 	}
 
 	/*************************************************************************/
-	/**Accessors*/
+	/** Accessors */
 	public ViewerCell getC_selected() {
 		return c_selected;
 	}

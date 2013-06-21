@@ -5,7 +5,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
-
+/**
+ * Duty object representation.
+ * @author apavlune
+ *
+ */
 public class Duty extends DB_Object {
 
 	/**
@@ -120,12 +124,23 @@ public class Duty extends DB_Object {
 	}
 
 	@Override
-	String getDelete_sql() {
+	ArrayList<String> getDelete_sql() {
+		
+		ArrayList<String> retval=new ArrayList<String>();
 		String sql = DELETE_STM;						
 		sql=sql.replace(WHERE_CLAUSE, "DUTY_KEY='"+m_uuid+"'");
-		return sql;		
+		sql=sql.replace(FROM_CLAUSE, " "+getTableName()+" ");
+		retval.add(sql);
+		return retval;		
 	}
 
+	/**
+	 * Populates data using SQL result set and list of positions and persons
+	 * @param rs Result Set with object data
+	 * @param postions List of positions
+	 * @param persons List of persons
+	 * @return populated Duty object
+	 */
 	public Duty populateProperites(ResultSet rs, ArrayList<DB_Object> postions,  ArrayList<DB_Object> persons) {
 		try {
 			m_start = rs.getDate("DUTY_START_TIME");
@@ -151,7 +166,13 @@ public class Duty extends DB_Object {
 
 	}
 
-	void populateProperties(ArrayList<String> details, ArrayList<DB_Object> postions,  ArrayList<DB_Object> persons) {
+	/**
+	 * Populates properties from String array
+	 * @param details String array with properties
+	 * @param postions List of positions
+	 * @param persons List of properties
+	 */
+	public void populateProperties(ArrayList<String> details, ArrayList<DB_Object> postions,  ArrayList<DB_Object> persons) {
 		if(details == null || details.size() != Tables.DUTIES_MAX_COLS)
 		{
 			return;
@@ -184,7 +205,6 @@ public class Duty extends DB_Object {
 
 	@Override
 	int getPKID() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -230,10 +250,16 @@ public class Duty extends DB_Object {
 		
 	}
 	
+	/**
+	 * Checks if a person is scheduled to work on specified date
+	 * @param place_id Positions id
+	 * @param date Date
+	 * @return Person id if it's found, 0 if not
+	 */
 	public int isPersonOn(int place_id, String date)
 	{
 		boolean start_b=DateUtils.isCalendarBetween(m_start, m_end, date, null, true);
-		if( place_id==m_position.getPKID() && start_b)
+		if(m_position!=null && m_person!=null && place_id==m_position.getPKID() && start_b)
 		{
 			return m_person.getPKID();
 		}
@@ -242,13 +268,19 @@ public class Duty extends DB_Object {
 
 	@Override
 	void populateProperties(ArrayList<String> details) {
-		// TODO Auto-generated method stub
 		
 	}
 	
+	/**
+	 * Checks if a conflict exists for a person in a specified period.
+	 * @param person_id Person id to check
+	 * @param start Duty start
+	 * @param end Duty end
+	 * @return True if there is a conflict, false otherwise
+	 */
 	public boolean personConflict(int person_id, String start, String end)
 	{
-		if(person_id==m_person.getPKID())
+		if(m_person != null && person_id==m_person.getPKID())
 		{
 			boolean start_match=DateUtils.isCalendarBetween(m_start, m_end, start, null, true);
 			boolean end_match=DateUtils.isCalendarBetween(m_start, m_end, end, null, true);
@@ -262,11 +294,18 @@ public class Duty extends DB_Object {
 		return false;
 	}
 	
-	public String getTotalEmpoloyeeHours(int employee_id, String start, String end)
+	/**
+	 * Calculates persons hours for a specified period
+	 * @param employee_id Employee to calculate hours for
+	 * @param start Start of a period
+	 * @param end End of a period
+	 * @return Total number of employee hours
+	 */
+	public double getTotalEmpoloyeeHours(int employee_id, String start, String end)
 	{
 		double hours = 0;
 
-		if (m_person.getPKID()==employee_id) {
+		if (m_person !=null && m_start!=null && m_end!=null && m_person.getPKID()==employee_id) {
 		
 			String start_str=DateUtils.DateToString(m_start);
 			boolean start_match = DateUtils.isCalendarBetween(start, end,
@@ -274,12 +313,17 @@ public class Duty extends DB_Object {
 			if (start_match) {
 				hours += DateUtils.getSpanMinutes(m_start, m_end);
 			}
-		}
-
-		double minutes = hours / 60;
-		return String.format("%.2f", minutes);
+		} 
+		return hours / 60;
 	}
 
+	/**
+	 * Checks if a specified data matches member variables
+	 * @param person_id Person id to check
+	 * @param position_id Position id to check
+	 * @param datetime Date/time to check
+	 * @return True if there is a match, false otherwise.
+	 */
 	public boolean matches(int person_id, int position_id, String datetime) {
 		if(m_person.getPKID()==person_id && m_position.getPKID()==position_id && 
 				DateUtils.isCalendarBetween(m_start, m_end, datetime, null, true))

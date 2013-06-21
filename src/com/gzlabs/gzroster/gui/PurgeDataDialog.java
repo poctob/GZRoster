@@ -16,13 +16,18 @@ import org.eclipse.swt.events.SelectionEvent;
 import com.gzlabs.drosterheper.DRosterHelper;
 import com.gzlabs.gzroster.data.DateUtils;
 
+/**
+ * Dialog used for purging data
+ * @author apavlune
+ *
+ */
 public class PurgeDataDialog extends Dialog {
 
 	protected Object result;
 	protected Shell shlPurgeData;
 	private final FormToolkit formToolkit = new FormToolkit(Display.getDefault());
-	private final IDetailsManager idm;
-	private final DRosterHelper drh;
+	private IDetailsManager idm;
+	private DRosterHelper drh;
 	
 	private DateTime fromDate;
 	private DateTime toDate;
@@ -31,10 +36,17 @@ public class PurgeDataDialog extends Dialog {
 	 * Create the dialog.
 	 * @param parent
 	 * @param style
+	 * @param drh DRoster helper object for purging operations
+	 * @param idm Callbacks for management
 	 */
 	public PurgeDataDialog(Shell parent, int style, DRosterHelper drh, IDetailsManager idm) {
 		super(parent, SWT.DIALOG_TRIM | SWT.MIN | SWT.MAX);
 		setText("SWT Dialog");
+		
+		if(drh==null || idm==null)
+		{
+			return;
+		}
 		this.idm=idm;
 		this.drh=drh;
 	}
@@ -101,7 +113,7 @@ public class PurgeDataDialog extends Dialog {
 		btnPurge.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				if(idm!=null)
+				if(idm!=null && drh!=null)
 				{
 					String start=DateUtils.dateStringFromWidget(fromDate, null);
 					String end=DateUtils.dateStringFromWidget(toDate, null);

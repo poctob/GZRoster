@@ -2,7 +2,6 @@ package com.gzlabs.gzroster.gui;
 
 import java.util.ArrayList;
 
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DateTime;
 import org.eclipse.swt.SWT;
@@ -15,7 +14,14 @@ import org.eclipse.swt.events.SelectionEvent;
 
 import com.gzlabs.gzroster.data.DateUtils;
 
+/**
+ * Widget to display total employee hours
+ * @author apavlune
+ *
+ */
 public class EmployeeHoursComposite extends Composite {
+	
+	//Member variables
 	private Table hoursTable;
 	private ArrayList<TableItem> tableItems;
 	private IEHoursHandler hours_handler;
@@ -23,17 +29,23 @@ public class EmployeeHoursComposite extends Composite {
 	final DateTime endDate;
 
 	/**
-	 * Create the composite.
-	 * @param parent
-	 * @param style
+	 * Creates widget
+	 * @param parent Parent composite
+	 * @param style Composite style
+	 * @param handler Callback interface object
 	 */
 	public EmployeeHoursComposite(Composite parent, int style, IEHoursHandler handler) {
 		super(parent, style);
-		hours_handler=handler;
 		startDate = new DateTime(this, SWT.BORDER | SWT.DROP_DOWN);		
+		endDate = new DateTime(this, SWT.BORDER | SWT.DROP_DOWN);
+		
+		if(handler == null)
+			return;
+		
+		hours_handler=handler;
+		
 		startDate.setBounds(57, 31, 119, 29);
 		
-		endDate = new DateTime(this, SWT.BORDER | SWT.DROP_DOWN);
 		updateDates(null);
 		
 		endDate.addSelectionListener(new SelectionAdapter() {
@@ -97,38 +109,55 @@ public class EmployeeHoursComposite extends Composite {
 		// Disable the check that prevents subclassing of SWT components
 	}
 	
+	/**
+	 * Clears all data from teh table
+	 */
 	public void clearTable()
 	{
 		hoursTable.clearAll();
 	}
 	
+	/**
+	 * Adds item to the table
+	 * @param name Name of the person
+	 * @param hours Person's hours
+	 */
 	public void addItem(String name, String hours)
 	{
 		TableItem ti=new TableItem(hoursTable, SWT.NONE);
-		ti.setText(0, name);
-		ti.setText(1, hours);
+		WidgetUtilities.safeTableItemSet(ti, 0, name);
+		WidgetUtilities.safeTableItemSet(ti, 1, hours);
 		tableItems.add(ti);
 	}
 	
+	/**
+	 * Updates an item in the table
+	 * @param name Name of the person
+	 * @param new_hours New value for hours
+	 */
 	public void updateItem(String name, String new_hours)
 	{
 		for(TableItem item : tableItems)
 		{
-			if(item.getText(0).equals(name))
+			if(item!=null && item.getText(0).equals(name))
 			{
-				item.setText(1, new_hours);
+				WidgetUtilities.safeTableItemSet(item, 1, new_hours);				
 				return;			
 			}
 		}
 		addItem(name, new_hours);
 	}
 	
+	/**
+	 * Removes item from the list
+	 * @param name Employee name to remove
+	 */
 	public void removeItem(String name)
 	{
 		for(int i=0; i< tableItems.size(); i++)
 		{
 			if(tableItems.get(i).getText(0).equals(name))
-			{
+			{				
 				hoursTable.remove(i);
 				tableItems.remove(i);
 				return;
@@ -136,16 +165,28 @@ public class EmployeeHoursComposite extends Composite {
 		}
 	}
 
+	/**
+	 * Fetches current start date
+	 * @return Start date as string
+	 */
 	public String getStartDate()
 	{
 		return DateUtils.dateStringFromWidget(startDate, null)+" 00:00:00.0";
 	}
 	
+	/**
+	 * Fetches current end date
+	 * @return End date as string
+	 */
 	public String getEndDate()
 	{
 		return DateUtils.dateStringFromWidget(endDate, null)+" 23:59:59.0";
 	}
 
+	/**
+	 * Updates start and end dates based on another datetime widget
+	 * @param dateStringFromWidget DateTime widget to use
+	 */
 	public void updateDates(String dateStringFromWidget) {
 		
 		if(startDate!=null && endDate !=null && hours_handler!=null)
@@ -161,5 +202,5 @@ public class EmployeeHoursComposite extends Composite {
 			hours_handler.rangeChanged(DateUtils.dateStringFromWidget(startDate, null),
 					DateUtils.dateStringFromWidget(endDate, null));
 		}
-	}
+	}	
 }

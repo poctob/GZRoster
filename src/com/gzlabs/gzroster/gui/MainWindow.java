@@ -30,6 +30,12 @@ import com.gzlabs.gzroster.data.Tables;
 
 import org.eclipse.swt.widgets.MenuItem;
 
+/**
+ * Main window for the application
+ * 
+ * @author apavlune
+ * 
+ */
 public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		IEHoursHandler, IShiftAdder, IPositionsManager, IDetailsManager,
 		IEmployeeManager, ITimeOffManager {
@@ -121,19 +127,19 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 		Menu menu_2 = new Menu(fileMenu);
 		fileMenu.setMenu(menu_2);
-		
+
 		MenuItem mntmUpload = new MenuItem(menu_2, SWT.NONE);
-	
+
 		mntmUpload.setText("Upload");
-		
-				MenuItem quitMenuItem = new MenuItem(menu_2, SWT.NONE);
-				quitMenuItem.addSelectionListener(new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						System.exit(0);
-					}
-				});
-				quitMenuItem.setText("Quit");
+
+		MenuItem quitMenuItem = new MenuItem(menu_2, SWT.NONE);
+		quitMenuItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				System.exit(0);
+			}
+		});
+		quitMenuItem.setText("Quit");
 
 		MenuItem editMenu = new MenuItem(menu, SWT.CASCADE);
 		editMenu.setText("Edit");
@@ -142,11 +148,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		editMenu.setMenu(menu_3);
 
 		MenuItem configurationMenuItem = new MenuItem(menu_3, SWT.NONE);
-	
+
 		configurationMenuItem.setText("Configuration");
-		
+
 		MenuItem mntmPurge = new MenuItem(menu_3, SWT.NONE);
-		
 
 		MenuItem helpMenu = new MenuItem(menu, SWT.CASCADE);
 		helpMenu.setText("Help");
@@ -179,43 +184,51 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		formToolkit.adapt(lblStatus, true, true);
 		lblStatus.setText("Status");
 		dman = new DataManager(this);
-		drh=new DRosterHelper(dman.getProp(),this);
+		drh = new DRosterHelper(dman.getProp(), this);
 		createDetailsTab();
 		populateData();
-		
-		final PurgeDataDialog pdd=
-				new PurgeDataDialog(shell, SWT.NONE, drh, this);
+
+		final PurgeDataDialog pdd = new PurgeDataDialog(shell, SWT.NONE, drh,
+				this);
+
 		mntmPurge.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void widgetSelected(SelectionEvent e) {				
-				pdd.open();				
+			public void widgetSelected(SelectionEvent e) {
+				if (pdd != null) {
+					pdd.open();
+				}
 			}
 		});
-		
-		final ConfigurationDialog conf_dialog=new ConfigurationDialog(shell, SWT.NONE, dman.getProp(), this);
+
+		final ConfigurationDialog conf_dialog = new ConfigurationDialog(shell,
+				SWT.NONE, dman.getProp(), this);
+
 		configurationMenuItem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				
-				conf_dialog.open();
+				if (conf_dialog != null) {
+					conf_dialog.open();
+				}
 			}
 		});
 		mntmPurge.setText("Purge");
-		
+
 		mntmUpload.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				if(drh!=null)
-				{
+
+				if (drh != null && dman != null) {
 					drh.saveProp(dman.getProp());
 					drh.processData();
+
 				}
 			}
 		});
 	}
-	
-	
 
+	/**
+	 * Resets add shift controls
+	 */
 	protected void resetScheduleControls() {
 		if (addShiftComposite != null) {
 			addShiftComposite.resetControls();
@@ -236,12 +249,21 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		tbtmDetails.setControl(detailsWidget);
 	}
 
+	/**
+	 * Initiates details data
+	 * 
+	 * @param data
+	 *            List of duties
+	 */
 	protected void updateDetailsData(ArrayList<String> data) {
-		if (detailsWidget != null) {
+		if (detailsWidget != null && data != null) {
 			detailsWidget.initiateData(data);
 		}
 	}
 
+	/**
+	 * Creates employees tab.
+	 */
 	protected void createEmployeesTab() {
 
 		TabItem tbtmEmployees = new TabItem(tabFolder, SWT.NONE);
@@ -281,6 +303,9 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		lblTimeOff.setText("Time Off");
 	}
 
+	/**
+	 * Creates positions tab
+	 */
 	protected void createPositionsTab() {
 		TabItem tbtmPositions = new TabItem(tabFolder, SWT.NONE);
 		tbtmPositions.setText("Positions");
@@ -299,7 +324,8 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	public void populateData() {
 		ArrayList<String> employees = dman.getEmployees();
 
-		if (addShiftComposite != null && employeesWidget != null) {
+		if (addShiftComposite != null && employeesWidget != null
+				&& employees != null) {
 			addShiftComposite.clearControls();
 			addShiftComposite.addEmployee(employees);
 
@@ -309,15 +335,17 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			Collections.sort(employees);
 			for (String s : employees) {
 
-				employeeHoursComposite.updateItem(s, dman
-						.getTotalEmpoloyeeHours(s,
-								employeeHoursComposite.getStartDate(),
-								employeeHoursComposite.getEndDate()));
+				if (employeeHoursComposite != null) {
+					employeeHoursComposite.updateItem(s, dman
+							.getTotalEmpoloyeeHours(s,
+									employeeHoursComposite.getStartDate(),
+									employeeHoursComposite.getEndDate()));
+				}
 			}
 
 			ArrayList<String> positions = dman.getPositions();
 
-			if (positionsWidget != null) {
+			if (positionsWidget != null && positions!=null) {
 				positionsWidget.clearPositionsList();
 				Collections.sort(positions);
 				for (String s : positions) {
@@ -330,8 +358,12 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			}
 
 			ArrayList<String> timespans = dman.getTimeSpan();
-			for (String s : timespans) {
-				addShiftComposite.addStart(s);
+			
+			if(timespans!=null)
+			{
+				for (String s : timespans) {
+					addShiftComposite.addStart(s);
+				}
 			}
 			updateDetailsData(timespans);
 		}
@@ -342,8 +374,9 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	 * Displays current status in a text area window.
 	 */
 	@Override
-	public void DisplayStatus(String status) {
-		lblStatus.setText(status);
+	public void DisplayStatus(String status) {		
+		WidgetUtilities.safeLabelSet(lblStatus, status);
+		System.out.println(status);
 	}
 
 	/**
@@ -445,38 +478,39 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	public void processEmployeeData() {
 		if (employeesWidget != null) {
 			ArrayList<String> new_details = new ArrayList<String>();
-			new_details.add("");
-			new_details.add(employeesWidget.getNameText());
-			new_details.add(employeesWidget.getAddressText());
-			new_details.add(employeesWidget.getHomephoneText());
-			new_details.add(employeesWidget.getMobilePhoneText());
-			new_details.add("");
-			new_details.add(employeesWidget.getActiveCheck() ? "1" : "0");
-			new_details.add(employeesWidget.getEmailText());
-			new_details.add("");
+			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getNameText(), true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getAddressText(), true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getHomephoneText(), true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getMobilePhoneText(), true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getActiveCheck() ? "1" : "0", true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getEmailText(), true);
 
 			ArrayList<String> old_details = new ArrayList<String>(
 					Tables.PLACE_MAX_COLS);
-			old_details.add("");
-			old_details.add(employeesWidget.getOld_name());
-			old_details.add(employeesWidget.getOld_address());
-			old_details.add(employeesWidget.getOld_hphone());
-			old_details.add(employeesWidget.getOld_mphone());
-			old_details.add("");
-			old_details.add(employeesWidget.getOld_active());
-			old_details.add(employeesWidget.getOld_email());
-			old_details.add("");
+			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_name(), true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_address(), true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_hphone(), true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_mphone(), true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_active(), true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_email(), true);
+			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);
 
 			ArrayList<String> position_boxes = null;
 			if (employeePositionComposite != null) {
 				position_boxes = employeePositionComposite.getBoxes();
 			}
 
-			if (employeesWidget.getSelectionIndex() >= 0) {
+			if (employeesWidget.getSelectionIndex() >= 0 && dman!=null) {
 				dman.updateEmployee(old_details, new_details, position_boxes);
 			} else {
 				dman.addEmployee(new_details, position_boxes);
 			}
+			employeesWidget.resetControls();
 			populateData();
 		}
 	}
@@ -486,7 +520,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	 */
 	@Override
 	public void processDutyData() {
-		if (addShiftComposite != null && addShiftComposite.checkTextLength()) {
+		if (addShiftComposite != null && addShiftComposite.checkTextLength() && dman!=null) {
 
 			String start_date = addShiftComposite.getSelectedDate() + " "
 					+ addShiftComposite.getSelectedStart() + ":00.0";
@@ -495,11 +529,11 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 					+ addShiftComposite.getSelectedEnd() + ":00.0";
 
 			ArrayList<String> details = new ArrayList<String>();
-			details.add(start_date);
-			details.add(addShiftComposite.getSelectedPosition());
-			details.add(addShiftComposite.getSelectedEmployee());
-			details.add(end_date);
-			details.add("");
+			WidgetUtilities.safeArrayStringListAdd(details, start_date, true);
+			WidgetUtilities.safeArrayStringListAdd(details, addShiftComposite.getSelectedPosition(), true);
+			WidgetUtilities.safeArrayStringListAdd(details, addShiftComposite.getSelectedEmployee(), true);
+			WidgetUtilities.safeArrayStringListAdd(details, end_date, true);
+			WidgetUtilities.safeArrayStringListAdd(details, "", true);	
 
 			if (dman.checkDutyConflict(addShiftComposite.getSelectedEmployee(),
 					start_date, end_date)) {
@@ -525,17 +559,17 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 		if (positionsWidget != null) {
 			ArrayList<String> new_details = new ArrayList<String>();
-			new_details.add("");
-			new_details.add(positionsWidget.getPositionNameText());
-			new_details.add(positionsWidget.getPositionNoteText());
-
+			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);	
+			WidgetUtilities.safeArrayStringListAdd(new_details, positionsWidget.getPositionNameText(), true);	
+			WidgetUtilities.safeArrayStringListAdd(new_details, positionsWidget.getPositionNoteText(), true);	
+	
 			ArrayList<String> old_details = new ArrayList<String>(
 					Tables.PLACE_MAX_COLS);
-			old_details.add("");
-			old_details.add(positionsWidget.getOld_name());
-			old_details.add(positionsWidget.getOld_note());
+			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);	
+			WidgetUtilities.safeArrayStringListAdd(old_details, positionsWidget.getOld_name(), true);	
+			WidgetUtilities.safeArrayStringListAdd(old_details, positionsWidget.getOld_note(), true);	
 
-			if (positionsWidget.getSelectionIndex() >= 0) {
+			if (positionsWidget.getSelectionIndex() >= 0 && dman!=null) {
 				dman.updatePosition(old_details, new_details);
 			} else {
 				dman.addPosition(new_details);
@@ -593,19 +627,21 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	@Override
 	public void dutyDeleteRequest(String label, String col_label,
 			String row_label) {
-		if (dman != null) {
-			String start_date = dman.getDutyStart(label, col_label, 
-					addShiftComposite.getSelectedDate()+" "+row_label+":00.0");
+		if (dman != null && addShiftComposite!=null) {
+			String start_date = dman.getDutyStart(label, col_label,
+					addShiftComposite.getSelectedDate() + " " + row_label
+							+ ":00.0");
 
-			String end_date = dman.getDutyEnd(label, col_label, 
-					addShiftComposite.getSelectedDate()+" "+row_label+":00.0");
+			String end_date = dman.getDutyEnd(label, col_label,
+					addShiftComposite.getSelectedDate() + " " + row_label
+							+ ":00.0");
 
 			ArrayList<String> details = new ArrayList<String>();
-			details.add(start_date);
-			details.add(col_label);
-			details.add(label);
-			details.add(end_date);
-			details.add("");
+			WidgetUtilities.safeArrayStringListAdd(details, start_date, true);	
+			WidgetUtilities.safeArrayStringListAdd(details, col_label, true);	
+			WidgetUtilities.safeArrayStringListAdd(details, label, true);	
+			WidgetUtilities.safeArrayStringListAdd(details, end_date, true);	
+			WidgetUtilities.safeArrayStringListAdd(details, "", true);	
 
 			dman.deleteDuty(details);
 		}
@@ -629,11 +665,15 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			String dateStringFromWidget2) {
 		if (dman != null) {
 			ArrayList<String> employees = dman.getEmployees();
-			for (String s : employees) {
-				employeeHoursComposite.updateItem(s, dman
-						.getTotalEmpoloyeeHours(s,
-								employeeHoursComposite.getStartDate(),
-								employeeHoursComposite.getEndDate()));
+			
+			if(employees!=null && employeeHoursComposite!=null )
+			{
+				for (String s : employees) {
+					employeeHoursComposite.updateItem(s, dman
+							.getTotalEmpoloyeeHours(s,
+									employeeHoursComposite.getStartDate(),
+									employeeHoursComposite.getEndDate()));
+				}
 			}
 		}
 
@@ -661,7 +701,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 	@Override
 	public void deletePosition(String[] selection) {
-		if (dman != null) {
+		if (dman != null && tbtmDetails!=null) {
 			dman.deletePosition(selection);
 			detailsWidget = new DetailsWidget(tabFolder, SWT.NONE, this, this);
 			detailsWidget.setLayout(new GridLayout(1, false));
@@ -700,10 +740,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	public void newTimeOffRequest(String start, String end) {
 		if (employeesWidget != null && dman != null) {
 			dman.newTimeOffRequest(start, end, employeesWidget.getNameText());
-			
-			if(employeeTimeOffComposite!=null)
-			employeeTimeOffComposite.showTimeOff(dman
-					.getTimeOff(employeesWidget.getNameText()));
+
+			if (employeeTimeOffComposite != null)
+				employeeTimeOffComposite.showTimeOff(dman
+						.getTimeOff(employeesWidget.getNameText()));
 		}
 
 	}
@@ -725,11 +765,11 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			// this position
 			String position = addShiftComposite.getSelectedPosition();
 			String start = addShiftComposite.getSelectedStart();
-			if (start.length() == 0) {
+			if (start!=null && start.length() == 0) {
 				start = "00:00";
 			}
 			String end = addShiftComposite.getSelectedEnd();
-			if (end.length() == 0) {
+			if (end!=null && end.length() == 0) {
 				end = "00:00";
 			}
 
@@ -750,21 +790,19 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 	@Override
 	public void refreshData() {
-		if(dman!=null)
-		{
+		if (dman != null) {
 			dman.refreshDutyList();
 		}
 		populateData();
-		
+
 	}
 
 	@Override
 	public void updateProperties(Properties prop) {
-		if(dman!=null)
-		{
+		if (dman != null && prop!=null) {
 			dman.saveProp(prop);
 			refreshData();
 		}
-		
+
 	}
 }

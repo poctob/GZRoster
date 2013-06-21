@@ -3,7 +3,11 @@ package com.gzlabs.gzroster.data;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
-
+/**
+ * Database object base class
+ * @author apavlune
+ *
+ */
 public abstract class DB_Object{
 
 	//Clauses
@@ -37,14 +41,18 @@ public abstract class DB_Object{
 	 * 
 	 * @return sql statement string.
 	 */
-	abstract String getDelete_sql();
+	abstract ArrayList<String> getDelete_sql();
 	
 	/**
 	 * Populates object properties from the result set
-	 * @param rs
+	 * @param rs Result set to get data from
 	 */
 	abstract void populateProperites(ResultSet rs);
 	
+	/**
+	 * Populates object properties using a string list
+	 * @param details Strings to get data from
+	 */
 	abstract void populateProperties(ArrayList<String> details);
 	
 	/**
@@ -66,8 +74,16 @@ public abstract class DB_Object{
 	 */
 	abstract boolean matches(ArrayList<String> details,boolean use_id);	
 
+	/**
+	 * Dumps object properties to string array
+	 * @return ArrayList with object's properties.
+	 */
 	abstract ArrayList<String> toSortedArray();
 	
+	/**
+	 * 
+	 * @return Table name associated with this object.
+	 */
 	abstract String getTableName();
 	
 }

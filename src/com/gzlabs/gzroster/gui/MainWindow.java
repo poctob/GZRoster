@@ -572,6 +572,8 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			} else {
 				dman.addPosition(new_details);
 			}
+			
+			rebuildDetailsWidget();
 		}
 	}
 
@@ -642,6 +644,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			WidgetUtilities.safeArrayStringListAdd(details, "", true);	
 
 			dman.deleteDuty(details);
+			populateData();
 		}
 
 	}
@@ -649,7 +652,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	@Override
 	public void dutyNewRequest(String col_label, String row_label) {
 
-		if (addShiftComposite != null && dman != null) {
+		if (addShiftComposite != null) {
 			addShiftComposite.selectPosition(col_label);
 			addShiftComposite.selectStart(row_label);
 			addShiftComposite.correlateEndTimeCombo();
@@ -699,14 +702,25 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 	@Override
 	public void deletePosition(String[] selection) {
-		if (dman != null && tbtmDetails!=null) {
+		if (dman != null) {
 			dman.deletePosition(selection);
-			detailsWidget = new DetailsWidget(tabFolder, SWT.NONE, this, this);
-			detailsWidget.setLayout(new GridLayout(1, false));
-			tbtmDetails.setControl(detailsWidget);
+			rebuildDetailsWidget();
 			populateData();
 		}
 
+	}
+	
+	/**
+	 * Refreshes details widget with new data
+	 */
+	private void rebuildDetailsWidget()
+	{
+		if(tbtmDetails!=null)
+		{
+			detailsWidget = new DetailsWidget(tabFolder, SWT.NONE, this, this);
+			detailsWidget.setLayout(new GridLayout(1, false));
+			tbtmDetails.setControl(detailsWidget);
+		}
 	}
 
 	@Override

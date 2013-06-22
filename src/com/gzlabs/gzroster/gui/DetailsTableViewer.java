@@ -157,7 +157,7 @@ public class DetailsTableViewer extends TableViewer {
 						String col_label = getTable().getColumn(
 								cell.getColumnIndex()).getText();
 						dutyupdater.dutyDeleteRequest(cell.getText(),
-								col_label, (String) cell.getElement());
+								col_label, (String) cell.getElement(), false);
 						refresh();
 					}
 				}

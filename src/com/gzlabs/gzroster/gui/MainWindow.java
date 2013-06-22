@@ -626,7 +626,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 	@Override
 	public void dutyDeleteRequest(String label, String col_label,
-			String row_label) {
+			String row_label, boolean update_request) {
 		if (dman != null && addShiftComposite!=null) {
 			String start_date = dman.getDutyStart(label, col_label,
 					addShiftComposite.getSelectedDate() + " " + row_label
@@ -644,7 +644,11 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			WidgetUtilities.safeArrayStringListAdd(details, "", true);	
 
 			dman.deleteDuty(details);
-			populateData();
+			
+			if(!update_request)
+			{
+				populateData();
+			}
 		}
 
 	}

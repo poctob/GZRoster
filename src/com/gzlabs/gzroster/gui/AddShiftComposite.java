@@ -172,7 +172,7 @@ public class AddShiftComposite extends Composite {
 				if (shiftadder != null) {
 					if (addButton.getText().equals("Update")) {
 						shiftadder.dutyDeleteRequest(upd_person, upd_position,
-								upd_start);
+								upd_start, true);
 					}
 					shiftadder.processDutyData();
 				}

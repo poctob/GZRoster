@@ -621,6 +621,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			addShiftComposite.selectEnd(end_time);
 			addShiftComposite.setButtonsToUpdate();
 			addShiftComposite.enableEmployeePicker();
+			isa_updateEmployeeList();
 		}
 	}
 

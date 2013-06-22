@@ -30,6 +30,14 @@ public class Person extends DB_Object {
 	/*************************************************************************/
 
 	/**
+	 * Checks if this person is active
+	 * @return True or false
+	 */
+	boolean isActive()
+	{
+		return m_active;
+	}
+	/**
 	 * @return the m_positions
 	 */
 	public ArrayList<Integer> getM_positions() {
@@ -133,14 +141,14 @@ public class Person extends DB_Object {
 		if (rs != null) {
 			try {
 				m_id = rs.getInt("PERSON_ID");
-				m_name = rs.getString("PERSON_NAME");
-				m_address = rs.getString("ADDRESS");
-				m_home_phone = rs.getString("PHONE_HOME");
-				m_mobile_phone = rs.getString("PHONE_MOBILE");
-				m_note = rs.getString("NOTE");
+				m_name=safeStringAssign( rs.getString("PERSON_NAME"));
+				m_address=safeStringAssign(rs.getString("ADDRESS"));
+				m_home_phone=safeStringAssign(rs.getString("PHONE_HOME"));
+				m_mobile_phone=safeStringAssign(rs.getString("PHONE_MOBILE"));
+				m_note=safeStringAssign(rs.getString("NOTE"));
 				m_active = rs.getInt("ACTIVE_PERSON") > 0;
-				m_email = rs.getString("EMAIL_ADDRESS");
-				m_uuid = rs.getString("EMPLOYEE_KEY");
+				m_email=safeStringAssign(rs.getString("EMAIL_ADDRESS"));
+				m_uuid=safeStringAssign(rs.getString("EMPLOYEE_KEY"));
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -157,14 +165,14 @@ public class Person extends DB_Object {
 			m_id = Integer.parseInt(id_str);
 		}
 
-		m_name = details.get(Tables.PERSON_NAME_INDEX);
-		m_address = details.get(Tables.PERSON_ADDRESS_INDEX);
-		m_home_phone = details.get(Tables.PERSON_HPHONE_INDEX);
-		m_mobile_phone = details.get(Tables.PERSON_MPHONE_INDEX);
-		m_note = details.get(Tables.PERSON_NOTE_INDEX);
+		m_name=safeStringAssign(details.get(Tables.PERSON_NAME_INDEX));
+		m_address=safeStringAssign(details.get(Tables.PERSON_ADDRESS_INDEX));
+		m_home_phone=safeStringAssign(details.get(Tables.PERSON_HPHONE_INDEX));
+		m_mobile_phone=safeStringAssign(details.get(Tables.PERSON_MPHONE_INDEX));
+		m_note=safeStringAssign(details.get(Tables.PERSON_NOTE_INDEX));
 		m_active = details.get(Tables.PERSON_ACTIVE_INDEX).equals("1");
-		m_email = details.get(Tables.PERSON_EMAIL_INDEX);
-		m_uuid = details.get(Tables.PLACE_UUID_INDEX);
+		m_email=safeStringAssign(details.get(Tables.PERSON_EMAIL_INDEX));
+		m_uuid=safeStringAssign(details.get(Tables.PLACE_UUID_INDEX));
 
 	}
 

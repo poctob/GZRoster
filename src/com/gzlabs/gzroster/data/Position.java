@@ -37,8 +37,8 @@ public class Position extends DB_Object {
 	void populateProperites(ResultSet rs) {
 		try {
 			m_id = rs.getInt("PLACE_ID");
-			m_name = rs.getString("PLACE_NAME");
-			m_note = rs.getString("NOTE");
+			m_name =safeStringAssign( rs.getString("PLACE_NAME"));
+			m_note =safeStringAssign( rs.getString("NOTE"));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -87,8 +87,8 @@ public class Position extends DB_Object {
 			m_id = Integer.parseInt(id_str);
 		}
 
-		m_name = details.get(Tables.PLACE_NAME_INDEX);
-		m_note = details.get(Tables.PLACE_NOTE_INDEX);
+		m_name =safeStringAssign( details.get(Tables.PLACE_NAME_INDEX));
+		m_note =safeStringAssign( details.get(Tables.PLACE_NOTE_INDEX));
 
 	}
 

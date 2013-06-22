@@ -86,4 +86,9 @@ public abstract class DB_Object{
 	 */
 	abstract String getTableName();
 	
+	protected String safeStringAssign(String variable)
+	{
+		return variable!=null?variable:"";
+	}
+
 }

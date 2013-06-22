@@ -555,7 +555,7 @@ public class DataManager {
 		ArrayList<DB_Object> persons=new ArrayList<DB_Object>();
 		for(DB_Object per:db_persons)
 		{
-			if(per!=null && ((Person)per).isPositionAllowed(place_id))
+			if(per!=null && ((Person)per).isActive() && ((Person)per).isPositionAllowed(place_id))
 			{
 				persons.add(per);
 			}

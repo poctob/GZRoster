@@ -191,13 +191,15 @@ public class EmployeeHoursComposite extends Composite {
 		
 		if(startDate!=null && endDate !=null && hours_handler!=null)
 		{
-			startDate.setDay(DateUtils.getWeekStartDay(false, dateStringFromWidget));
-			startDate.setMonth(DateUtils.getWeekStartMonth(false, dateStringFromWidget));
-			startDate.setYear(DateUtils.getWeekStartYear(false, dateStringFromWidget));
+			String datestr=dateStringFromWidget==null?
+					DateUtils.dateStringFromWidget(startDate, null):dateStringFromWidget;
+			startDate.setDay(DateUtils.getWeekStartDay(false, datestr));
+			startDate.setMonth(DateUtils.getWeekStartMonth(false, datestr));
+			startDate.setYear(DateUtils.getWeekStartYear(false, datestr));
 
-			endDate.setDay(DateUtils.getWeekEndDay(false, dateStringFromWidget));
-			endDate.setMonth(DateUtils.getWeekEndMonth(false, dateStringFromWidget));
-			endDate.setYear(DateUtils.getWeekEndYear(false, dateStringFromWidget));
+			endDate.setDay(DateUtils.getWeekEndDay(false, datestr));
+			endDate.setMonth(DateUtils.getWeekEndMonth(false, datestr));
+			endDate.setYear(DateUtils.getWeekEndYear(false, datestr));
 
 			hours_handler.rangeChanged(DateUtils.dateStringFromWidget(startDate, null),
 					DateUtils.dateStringFromWidget(endDate, null));

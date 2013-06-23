@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.UUID;
 /**
  * Duty object representation.
  * @author apavlune
@@ -71,14 +70,14 @@ public class Duty extends DB_Object {
 	/**
 	 * @return the m_uuid
 	 */
-	public String getM_uuid() {
+	public int getM_uuid() {
 		return m_uuid;
 	}
 
 	/**
 	 * @param m_uuid the m_uuid to set
 	 */
-	public void setM_uuid(String m_uuid) {
+	public void setM_uuid(int m_uuid) {
 		this.m_uuid = m_uuid;
 	}
 
@@ -86,24 +85,20 @@ public class Duty extends DB_Object {
 	private Date m_end;
 	private Position m_position;
 	private Person m_person;
-	private String m_uuid;
+	private int m_uuid;
 
 	@Override
-	String getInsert_sql(int pkid) {
-		m_uuid=UUID.randomUUID().toString();
+	String getInsert_sql() {
 		String sql = INSERT_STM;
-		String cols="DUTY_START_TIME," +
+		String cols="START," +
 				"PLACE_ID," +
 				"PERSON_ID,"+
-				"DUTY_END_TIME,"+
-				"DUTY_KEY,"+
-				"APPROVED";
+				"END";
 		;
 		String vals="'"+DateUtils.DateToString(m_start)+"','"+
 				m_position.getPKID()+"','"+
 				m_person.getPKID()+"','"+
-				DateUtils.DateToString(m_end)+"','"+
-				m_uuid+"','Y'";
+				DateUtils.DateToString(m_end)+"'";
 		
 		sql=sql.replace(COL_CLAUSE, cols);
 		sql=sql.replace(VAL_CLAUSE, vals);
@@ -114,12 +109,11 @@ public class Duty extends DB_Object {
 	String getUpdate_sql() {
 		String sql = UPDATE_STM;				
 		sql=sql.replace(FROM_CLAUSE, getTableName());
-		sql=sql.replace(WHAT_CLAUSE, "DUTY_START_TIME='"+DateUtils.DateToString(m_start)+
+		sql=sql.replace(WHAT_CLAUSE, "START='"+DateUtils.DateToString(m_start)+
 				"',PLACE_ID='"+m_position.getPKID()+
 				"',PERSON_ID='"+m_person.getPKID()+
-				"',DUTY_END_TIME='"+DateUtils.DateToString(m_end)+
-				"',DUTY_KEY='"+m_uuid+"'");
-		sql=sql.replace(WHERE_CLAUSE, "DUTY_KEY='"+m_uuid+"'");
+				"',END='"+DateUtils.DateToString(m_end)+"'");
+		sql=sql.replace(WHERE_CLAUSE, "DUTY_ID='"+m_uuid+"'");
 		return sql;		
 	}
 
@@ -128,7 +122,7 @@ public class Duty extends DB_Object {
 		
 		ArrayList<String> retval=new ArrayList<String>();
 		String sql = DELETE_STM;						
-		sql=sql.replace(WHERE_CLAUSE, "DUTY_KEY='"+m_uuid+"'");
+		sql=sql.replace(WHERE_CLAUSE, "DUTY_ID='"+m_uuid+"'");
 		sql=sql.replace(FROM_CLAUSE, " "+getTableName()+" ");
 		retval.add(sql);
 		return retval;		
@@ -143,9 +137,9 @@ public class Duty extends DB_Object {
 	 */
 	public Duty populateProperites(ResultSet rs, ArrayList<DB_Object> postions,  ArrayList<DB_Object> persons) {
 		try {
-			m_start = rs.getDate("DUTY_START_TIME");
-			m_end = rs.getDate("DUTY_END_TIME");
-			m_uuid = rs.getString("DUTY_KEY");
+			m_start = rs.getTimestamp("START");
+			m_end = rs.getTimestamp("END");
+			m_uuid = rs.getInt("DUTY_ID");
 			
 			int person_id = rs.getInt("PERSON_ID");
 			int place_id = rs.getInt("PLACE_ID");	
@@ -189,7 +183,14 @@ public class Duty extends DB_Object {
 		{
 			m_end=DateUtils.StringToDate(end_str);
 		}
-		m_uuid=details.get(Tables.DUTIES_KEY_INDEX);
+		try
+		{
+			m_uuid=Integer.parseInt(details.get(Tables.DUTIES_KEY_INDEX));
+		}
+		catch (NumberFormatException e)
+		{
+			e.printStackTrace();
+		}
 		
 		String person_id=details.get(Tables.DUTIES_PERSON_ID_INDEX);
 		m_person=(Person) DB_Factory.getObjectByName(persons, person_id);
@@ -215,7 +216,7 @@ public class Duty extends DB_Object {
 			boolean id=true;
 			if(use_id)
 			{
-				id= m_uuid==details.get(Tables.DUTIES_KEY_INDEX);
+				id= m_uuid==Integer.parseInt(details.get(Tables.DUTIES_KEY_INDEX));
 			}
 			
 			String start_str=DateUtils.DateToString(m_start);
@@ -236,13 +237,13 @@ public class Duty extends DB_Object {
 		properties.add(Integer.toString(m_position.getPKID()));
 		properties.add(Integer.toString(m_person.getPKID()));
 		properties.add(DateUtils.DateToString(m_end));
-		properties.add(m_uuid);
+		properties.add(Integer.toString(m_uuid));
 		return properties;
 	}
 
 	@Override
 	String getTableName() {
-		return "DUTIES";
+		return "DUTY";
 	}
 
 	@Override

@@ -23,7 +23,6 @@ public class Tables
 	public static final int PERSON_NOTE_INDEX = 5;
 	public static final int PERSON_ACTIVE_INDEX = 6;
 	public static final int PERSON_EMAIL_INDEX = 7;
-	public static final int PLACE_UUID_INDEX = 8;
 	
 	//Duties table
 	public static final int DUTIES_MAX_COLS=5;

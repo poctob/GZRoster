@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import com.gzlabs.drosterheper.DBManager;
 import com.gzlabs.drosterheper.IDisplayStatus;
 import com.gzlabs.gzroster.data.DB_Factory.ObjectType;
 
@@ -540,7 +539,7 @@ public class DataManager {
 			e.printStackTrace();
 		}
 		return null;
-	}
+	} 
 
 	/**
 	 * Gets a list of employees that are allowed to work specified positions for specified time span.

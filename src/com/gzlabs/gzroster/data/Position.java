@@ -21,8 +21,7 @@ public class Position extends DB_Object {
 	/*************************************************************************/
 
 	@Override
-	String getInsert_sql(int pkid) {
-		m_id = pkid;
+	String getInsert_sql() {
 
 		String sql = INSERT_STM;
 		String cols = "PLACE_ID,PLACE_NAME,NOTE";
@@ -99,19 +98,7 @@ public class Position extends DB_Object {
 
 	@Override
 	ArrayList<String> getDelete_sql() {
-		ArrayList<String> retval=new ArrayList<String>();
-
-		// Delete all person to position mappings
-		String sql2 = DELETE_STM;
-		sql2 = sql2.replace(WHERE_CLAUSE, "PLACE_ID='" + m_id + "'");
-		sql2 = sql2.replace(FROM_CLAUSE, " PERSON_TO_PLACE ");
-		retval.add(sql2);
-
-		// Delete all duties
-		String sql3 = DELETE_STM;
-		sql3 = sql3.replace(WHERE_CLAUSE, "PLACE_ID='" + m_id + "'");
-		sql3 = sql3.replace(FROM_CLAUSE, " DUTIES ");
-		retval.add(sql3);
+		ArrayList<String> retval=new ArrayList<String>();	
 
 		String sql = DELETE_STM;
 		sql = sql.replace(FROM_CLAUSE, getTableName());

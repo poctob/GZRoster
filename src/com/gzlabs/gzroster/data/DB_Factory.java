@@ -4,8 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import com.gzlabs.drosterheper.DBManager;
-
 /**
  * Provides utilities for database Object generation and manipulation.
  * @author apavlune
@@ -183,7 +181,7 @@ public class DB_Factory {
 			
 			if(obj!=null && dbman!=null)
 			{
-				String sql=obj.getInsert_sql(getNextPKID(dbman, obj.getTableName()));
+				String sql=obj.getInsert_sql();
 				sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
 				
 				ResultSet rs = runSQL(dbman, sql, false);
@@ -339,9 +337,9 @@ public class DB_Factory {
 				break;
 			case PERSON_TO_PLACE:table_name="PERSON_TO_PLACE";
 				break;
-			case PERSON_NA_AVAIL_HOURS:table_name="PERSON_NA_AVAIL_HOURS";
+			case PERSON_NA_AVAIL_HOURS:table_name="TIME_OFF";
 				break;
-			case DUTIES:table_name="DUTIES";
+			case DUTIES:table_name="DUTY";
 				break;
 			default:return null;
 		}
@@ -369,28 +367,7 @@ public class DB_Factory {
 		return null;
 	}
 
-	/**
-	 * Retrieves next pkid from the database (Firebird crap)
-	 * @param dbman Database manager to use.
-	 * @param table_name Name of the table to get next id for.
-	 * @return next pkid
-	 */
-	private static int getNextPKID(DBManager dbman, String table_name) {
-		
-		if(dbman!=null && table_name!=null)
-		{
-			ResultSet rs = dbman.runQuery("SELECT NEXT VALUE FOR " + table_name
-					+ "_ID_GEN FROM RDB$DATABASE", true);
-			try {
-				if (rs.next()) {
-					return rs.getInt("GEN_ID");
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		return 0;
-	}
+	
 
 	/**
 	 * Finds a database object in the list by using a name.
@@ -589,7 +566,7 @@ public class DB_Factory {
 			if(dbman!=null && person !=null && ((Person)person).isTimeAllowed(start, end))
 			{
 				String sql=((Person)person).getTimeOffInsertSql(start, end);
-				sql=sql.replace(FROM_CLAUSE, " PERSON_NA_AVAIL_HOURS ");
+				sql=sql.replace(FROM_CLAUSE, " TIME_OFF ");
 				
 				ResultSet rs = runSQL(dbman, sql, false);
 	
@@ -657,7 +634,7 @@ public class DB_Factory {
 			if(dbman!=null && person !=null)
 			{		
 					String sql=((Person)person).getDeleteTimeOffSql(start, end);
-					sql=sql.replace(FROM_CLAUSE, " PERSON_NA_AVAIL_HOURS ");
+					sql=sql.replace(FROM_CLAUSE, " TIME_OFF ");
 					
 					ResultSet rs = runSQL(dbman,sql, false);
 					if (rs == null) {
@@ -685,7 +662,7 @@ public class DB_Factory {
 			DB_Object obj = createObject(ObjectType.DUTIES);
 			((Duty)obj).populateProperties(details, db_positions, db_persons);
 			
-			String sql=obj.getInsert_sql(0);
+			String sql=obj.getInsert_sql();
 			sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
 			
 			ResultSet rs = runSQL(dbman, sql, false);

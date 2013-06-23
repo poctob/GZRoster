@@ -3,7 +3,6 @@ package com.gzlabs.gzroster.data;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.UUID;
 
 /**
  * Data representation of a person object from the database.
@@ -22,7 +21,6 @@ public class Person extends DB_Object {
 	private String m_note;
 	private boolean m_active;
 	private String m_email;
-	private String m_uuid;
 
 	private ArrayList<TimeOff> m_times_off;
 	private ArrayList<Integer> m_positions;
@@ -72,20 +70,18 @@ public class Person extends DB_Object {
 
 	/*************************************************************************/
 	@Override
-	String getInsert_sql(int pkid) {
+	String getInsert_sql() {
 
-		m_id = pkid;
-		m_uuid = UUID.randomUUID().toString();
 		String sql = INSERT_STM;
-		String cols = "PERSON_ID," + "PERSON_NAME," + "ADDRESS,"
+		String cols = "PERSON_NAME," + "ADDRESS,"
 				+ "PHONE_HOME," + "PHONE_MOBILE," + "NOTE," + "ACTIVE_PERSON,"
-				+ "EMAIL_ADDRESS," + "EMPLOYEE_KEY";
+				+ "EMAIL_ADDRESS";
 
 		int active = m_active ? 1 : 0;
 
-		String vals = "'" + m_id + "','" + m_name + "','" + m_address + "','"
+		String vals = "'" + m_name + "','" + m_address + "','"
 				+ m_home_phone + "','" + m_mobile_phone + "','" + m_note
-				+ "','" + active + "','" + m_email + "','" + m_uuid + "'";
+				+ "','" + active + "','" + m_email + "'";
 
 		sql = sql.replace(COL_CLAUSE, cols);
 		sql = sql.replace(VAL_CLAUSE, vals);
@@ -101,7 +97,7 @@ public class Person extends DB_Object {
 				+ m_address + "',PHONE_HOME='" + m_home_phone
 				+ "',PHONE_MOBILE='" + m_mobile_phone + "',NOTE='" + m_note
 				+ "',ACTIVE_PERSON='" + active + "',EMAIL_ADDRESS='" + m_email
-				+ "',EMPLOYEE_KEY='" + m_uuid + "'");
+				+ "'");
 		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
 		return sql;
 	}
@@ -109,25 +105,6 @@ public class Person extends DB_Object {
 	@Override
 	ArrayList<String> getDelete_sql() {
 		ArrayList<String> retval = new ArrayList<String>();
-
-		// Delete all times of
-		String sql1 = DELETE_STM;
-		sql1 = sql1.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
-		sql1 = sql1.replace(FROM_CLAUSE, " PERSON_NA_AVAIL_HOURS ");
-		retval.add(sql1);
-
-		// Delete all person to position mappings
-		String sql2 = DELETE_STM;
-		sql2 = sql2.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
-		sql2 = sql2.replace(FROM_CLAUSE, " PERSON_TO_PLACE ");
-		retval.add(sql2);
-
-		// Delete all duties
-		String sql3 = DELETE_STM;
-		sql3 = sql3.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
-		sql3 = sql3.replace(FROM_CLAUSE, " DUTIES ");
-		retval.add(sql3);
-
 		// Delete person
 		String sql4 = DELETE_STM;
 		sql4 = sql4.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
@@ -148,7 +125,6 @@ public class Person extends DB_Object {
 				m_note=safeStringAssign(rs.getString("NOTE"));
 				m_active = rs.getInt("ACTIVE_PERSON") > 0;
 				m_email=safeStringAssign(rs.getString("EMAIL_ADDRESS"));
-				m_uuid=safeStringAssign(rs.getString("EMPLOYEE_KEY"));
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -172,8 +148,6 @@ public class Person extends DB_Object {
 		m_note=safeStringAssign(details.get(Tables.PERSON_NOTE_INDEX));
 		m_active = details.get(Tables.PERSON_ACTIVE_INDEX).equals("1");
 		m_email=safeStringAssign(details.get(Tables.PERSON_EMAIL_INDEX));
-		m_uuid=safeStringAssign(details.get(Tables.PLACE_UUID_INDEX));
-
 	}
 
 	/**
@@ -216,7 +190,6 @@ public class Person extends DB_Object {
 			if (use_id) {
 				id = m_id == Integer.parseInt(details
 						.get(Tables.PERSON_ID_INDEX));
-				uuid = m_uuid.equals(details.get(Tables.PLACE_UUID_INDEX));
 			}
 			boolean active = details.get(Tables.PERSON_ACTIVE_INDEX)
 					.equals("1");
@@ -248,7 +221,6 @@ public class Person extends DB_Object {
 		properties.add(m_note);
 		properties.add(active);
 		properties.add(m_email);
-		properties.add(m_uuid);
 		return properties;
 	}
 
@@ -271,8 +243,8 @@ public class Person extends DB_Object {
 					int pers_id = rs.getInt("PERSON_ID");
 					if (pers_id == m_id) {
 						TimeOff timeOff = new TimeOff(
-								rs.getDate("PERSON_NA_START_DATE_HOUR"),
-								rs.getDate("PERSON_NA_END_DATE_HOUR"));
+								rs.getTimestamp("START"),
+								rs.getTimestamp("END"));
 						m_times_off.add(timeOff);
 					}
 				}
@@ -338,8 +310,8 @@ public class Person extends DB_Object {
 	 */
 	public String getTimeOffInsertSql(String start, String end) {
 		String sql = INSERT_STM;
-		String cols = "PERSON_ID," + "PERSON_NA_START_DATE_HOUR,"
-				+ "PERSON_NA_END_DATE_HOUR";
+		String cols = "PERSON_ID," + "START,"
+				+ "END";
 
 		String vals = "'" + m_id + "','" + start + "','" + end + "'";
 
@@ -360,8 +332,8 @@ public class Person extends DB_Object {
 	public String getDeleteTimeOffSql(String start, String end) {
 		String sql = DELETE_STM;
 		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id
-				+ "' AND PERSON_NA_START_DATE_HOUR='" + start
-				+ "' AND PERSON_NA_END_DATE_HOUR='" + end + "'");
+				+ "' AND START='" + start
+				+ "' AND END	='" + end + "'");
 		return sql;
 	}
 

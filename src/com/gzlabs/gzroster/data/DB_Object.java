@@ -27,7 +27,7 @@ public abstract class DB_Object{
 	 * 
 	 * @return sql statement string.
 	 */
-	abstract String getInsert_sql(int pkid);
+	abstract String getInsert_sql();
 	
 	/**
 	 * Generates Insert SQL statement

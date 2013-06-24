@@ -26,7 +26,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import com.gzlabs.drosterheper.DRosterHelper;
 import com.gzlabs.drosterheper.IDisplayStatus;
 import com.gzlabs.gzroster.data.DataManager;
-import com.gzlabs.gzroster.data.Tables;
+import com.gzlabs.gzroster.sql.Tables;
 
 import org.eclipse.swt.widgets.MenuItem;
 
@@ -166,7 +166,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		tabFolder.setBounds(10, 10, 900, 800);
 
 		addShiftComposite = new AddShiftComposite(shell, SWT.NONE, this);
-		addShiftComposite.setBounds(916, 38, 169, 336);
+		addShiftComposite.setBounds(916, 38, 191, 336);
 		formToolkit.adapt(addShiftComposite);
 		formToolkit.paintBordersFor(addShiftComposite);
 
@@ -175,7 +175,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 		employeeHoursComposite = new EmployeeHoursComposite(shell, SWT.NONE,
 				this);
-		employeeHoursComposite.setBounds(1091, 38, 227, 529);
+		employeeHoursComposite.setBounds(1120, 38, 227, 529);
 		formToolkit.adapt(employeeHoursComposite);
 		formToolkit.paintBordersFor(employeeHoursComposite);
 

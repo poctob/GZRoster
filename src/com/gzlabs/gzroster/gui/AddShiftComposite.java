@@ -1,6 +1,7 @@
 package com.gzlabs.gzroster.gui;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 
 import org.eclipse.swt.events.SelectionAdapter;
@@ -52,7 +53,7 @@ public class AddShiftComposite extends Composite {
 		this.shiftadder = sa;
 
 		datePicker = new DateTime(this, SWT.BORDER | SWT.DROP_DOWN);
-		datePicker.setBounds(10, 10, 103, 30);
+		datePicker.setBounds(43, 10, 103, 30);
 
 		/**
 		 * Triggers a callback method when date has been changed.
@@ -67,7 +68,7 @@ public class AddShiftComposite extends Composite {
 		});
 
 		employeePicker = new Combo(this, SWT.NONE);
-		employeePicker.setBounds(10, 250, 150, 30);
+		employeePicker.setBounds(10, 250, 169, 30);
 		employeePicker.setEnabled(false);
 
 		startPicker = new Combo(this, SWT.NONE);
@@ -124,7 +125,7 @@ public class AddShiftComposite extends Composite {
 				}
 			}
 		});
-		positionPicker.setBounds(10, 70, 150, 30);
+		positionPicker.setBounds(10, 70, 169, 30);
 
 		Label label = new Label(this, SWT.NONE);
 		label.setText("Position");
@@ -161,6 +162,36 @@ public class AddShiftComposite extends Composite {
 		});
 
 		cancelButton.setVisible(false);
+		
+		Button nextDayButton = new Button(this, SWT.NONE);
+		nextDayButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Calendar current=DateUtils.calendarFromWidget(datePicker, null);
+				current.add(Calendar.DAY_OF_MONTH, 1);
+				DateUtils.setWidgetFromCalendar(datePicker, current);
+				if (shiftadder != null) {
+					shiftadder.isa_DateChaged(getSelectedDate());
+				}
+			}
+		});
+		nextDayButton.setBounds(152, 10, 27, 30);
+		nextDayButton.setText(">");
+		
+		Button previousDayButton = new Button(this, SWT.NONE);
+		previousDayButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Calendar current=DateUtils.calendarFromWidget(datePicker, null);
+				current.add(Calendar.DAY_OF_MONTH, -1);			
+				DateUtils.setWidgetFromCalendar(datePicker, current);
+				if (shiftadder != null) {
+					shiftadder.isa_DateChaged(getSelectedDate());
+				}
+			}
+		});
+		previousDayButton.setText("<");
+		previousDayButton.setBounds(10, 10, 27, 30);
 
 		/**
 		 * Initiates a callback to add new duty, if it's an update request, duty
@@ -399,5 +430,4 @@ public class AddShiftComposite extends Composite {
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
 	}
-
 }

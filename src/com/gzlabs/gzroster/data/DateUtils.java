@@ -59,6 +59,51 @@ public class DateUtils {
 	}
 	
 	/**
+	 * Gets a date from the supplied widget.
+	 * @param date Date widget
+	 * @param time Time widget (optional)
+	 * @return Calendar date/time representation.
+	 */
+	public static Calendar calendarFromWidget(DateTime date, DateTime time)
+	{
+		Calendar cal=new GregorianCalendar();
+		if(date!=null)
+		{
+			cal.set(Calendar.YEAR, date.getYear());
+			cal.set(Calendar.MONTH, date.getMonth());
+			cal.set(Calendar.DAY_OF_MONTH, date.getDay());
+		}
+		
+		if(time!=null)
+		{
+			cal.set(Calendar.HOUR, time.getHours());
+			cal.set(Calendar.MINUTE, time.getMinutes());
+			cal.set(Calendar.SECOND, time.getSeconds());
+		}
+		return cal;
+	}
+	
+	/**
+	 * Sets widget values from the calendar
+	 * @param widget Widget to operate on.
+	 * @param cal Calendar values
+	 */
+	public static void setWidgetFromCalendar(DateTime widget, Calendar cal)
+	{
+		if(widget!=null && cal !=null)
+		{		
+			//this is necessary to avoid conflicts with months not matching number of days
+			widget.setDay(1);
+			
+			widget.setYear(cal.get(Calendar.YEAR));
+			widget.setMonth(cal.get(Calendar.MONTH));
+			widget.setDay(cal.get(Calendar.DAY_OF_MONTH));
+	
+	
+		}
+	}
+	
+	/**
 	 * Performs save string formatting.
 	 * @param input Integer to format.
 	 * @return formated string if there is not issues, empty string otherwise.

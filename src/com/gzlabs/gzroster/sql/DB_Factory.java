@@ -1,8 +1,13 @@
-package com.gzlabs.gzroster.data;
+package com.gzlabs.gzroster.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
+import com.gzlabs.gzroster.data.DB_Object;
+import com.gzlabs.gzroster.data.Duty;
+import com.gzlabs.gzroster.data.Person;
+import com.gzlabs.gzroster.data.Position;
 
 /**
  * Provides utilities for database Object generation and manipulation.
@@ -11,21 +16,14 @@ import java.util.ArrayList;
  */
 public class DB_Factory {
 
-	// Clauses
-	protected final static String WHAT_CLAUSE = " %WHAT% ";
-	protected final static String FROM_CLAUSE = " %FROM% ";
-	protected final static String WHERE_CLAUSE = " %WHERE% ";
-
 	// Statements
-	protected final static String SELECT_STM = "SELECT" + WHAT_CLAUSE + "FROM"
-			+ FROM_CLAUSE + "WHERE" + WHERE_CLAUSE;
-
+	
 	/**
 	 * Table names.  Nothing special.
 	 * @author apavlune
 	 *
 	 */
-	enum ObjectType {
+	public enum ObjectType {
 		POSITION,
 		PERSON,
 		PERSON_TO_PLACE,
@@ -58,7 +56,8 @@ public class DB_Factory {
 	 * @param positions List of the positions to use for reference.
 	 * @return List of the duties in the database.
 	 */
-	public static ArrayList<DB_Object> getAllDuties(DBManager dbman, ArrayList<DB_Object> persons, ArrayList<DB_Object> positions) {
+	public static ArrayList<DB_Object> getAllDuties(DBManager dbman, ArrayList<DB_Object> persons,
+			ArrayList<DB_Object> positions, boolean usingFB) {
 		if(dbman !=null && persons!=null && positions !=null)
 		{
 			ResultSet records = runSQL(dbman, getSelect_sql("1","1",ObjectType.DUTIES),
@@ -73,6 +72,7 @@ public class DB_Factory {
 						obj=obj.populateProperites(records, positions, persons);
 						if(obj!=null)
 						{
+							obj.setUsingFB(usingFB);
 							objects.add(obj);
 						}
 					}
@@ -93,10 +93,11 @@ public class DB_Factory {
 	 * @param dbman Database manager
 	 * @param column Column for the WHERE clause
 	 * @param value value for the WHERE clause
+	 * @param usingFB flag indicating if we are using FB database
 	 * @return List of the database objects the were fetched.
 	 */
 	public static ArrayList<DB_Object> getAllRecords(ObjectType type,
-			DBManager dbman, String column, String value) {
+			DBManager dbman, String column, String value, boolean usingFB) {
 		
 		if(dbman!=null)
 		{
@@ -110,9 +111,9 @@ public class DB_Factory {
 					while (records.next()) {
 						DB_Object obj = createObject(type);
 						obj.populateProperites(records);	
-						
 						if(obj!=null)
-						{
+						{							
+							obj.setUsingFB(usingFB);
 							objects.add(obj);
 						}
 					}
@@ -161,8 +162,8 @@ public class DB_Factory {
 	 * @return populated array list with DB_Objects
 	 */
 	public static ArrayList<DB_Object> getAllRecords(ObjectType type,
-			DBManager dbman) {
-		return getAllRecords(type, dbman, "1", "1");
+			DBManager dbman, boolean usingFB) {
+		return getAllRecords(type, dbman, "1", "1", usingFB);
 	}
 
 	/**
@@ -173,7 +174,7 @@ public class DB_Factory {
 	 * @return True if success, false otherwise
 	 */
 	public static boolean insertRecord(ObjectType type, DBManager dbman,
-			ArrayList<String> details) {
+			ArrayList<String> details, boolean usingFB) {
 		if(details !=null)
 		{
 			DB_Object obj = createObject(type);
@@ -181,9 +182,9 @@ public class DB_Factory {
 			
 			if(obj!=null && dbman!=null)
 			{
-				String sql=obj.getInsert_sql();
-				sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
-				
+				int next_pkid=getNextPKID(dbman, obj.getNexPKID_sql());
+				obj.setUsingFB(usingFB);
+				String sql=obj.getInsert_sql(next_pkid);
 				ResultSet rs = runSQL(dbman, sql, false);
 		
 				if (rs != null) {
@@ -331,25 +332,19 @@ public class DB_Factory {
 		String table_name=null;
 		switch(type)
 		{
-			case POSITION:table_name="PLACE";
+			case POSITION:table_name=Tables.POSITION_TABLE_NAME;
 					break;
-			case PERSON:table_name="PERSON";
+			case PERSON:table_name=Tables.PERSON_TABLE_NAME;
 				break;
-			case PERSON_TO_PLACE:table_name="PERSON_TO_PLACE";
+			case PERSON_TO_PLACE:table_name=Tables.PERSON_TO_PLACE_TABLE_NAME;
 				break;
-			case PERSON_NA_AVAIL_HOURS:table_name="TIME_OFF";
+			case PERSON_NA_AVAIL_HOURS:table_name=Tables.TIME_OFF_TABLE_NAME;
 				break;
-			case DUTIES:table_name="DUTY";
+			case DUTIES:table_name=Tables.DUTY_TABLE_NAME;
 				break;
 			default:return null;
-		}
-		
-		String sql = SELECT_STM;
-		String where_cls = column + "=" + value;
-		sql = sql.replace(WHAT_CLAUSE, " * ");
-		sql = sql.replace(WHERE_CLAUSE, " " + where_cls + " ");
-		sql = sql.replace(FROM_CLAUSE, " " + table_name + " ");
-		return sql;
+		}		
+		return QueryFactory.getSelect("*", column, value, table_name);
 	}
 
 	/**
@@ -366,8 +361,6 @@ public class DB_Factory {
 		}
 		return null;
 	}
-
-	
 
 	/**
 	 * Finds a database object in the list by using a name.
@@ -565,9 +558,7 @@ public class DB_Factory {
 			DB_Object person=getObjectByName(objects, nameText);
 			if(dbman!=null && person !=null && ((Person)person).isTimeAllowed(start, end))
 			{
-				String sql=((Person)person).getTimeOffInsertSql(start, end);
-				sql=sql.replace(FROM_CLAUSE, " TIME_OFF ");
-				
+				String sql=((Person)person).getTimeOffInsertSql(start, end);				
 				ResultSet rs = runSQL(dbman, sql, false);
 	
 				if (rs != null) {
@@ -594,8 +585,7 @@ public class DB_Factory {
 			if(dbman!=null && person !=null)
 			{
 				((Person)person).setM_positions(place_ids);
-				String sql=((Person)person).getPersonToPositionsDeleteSql();
-				sql=sql.replace(FROM_CLAUSE, " PERSON_TO_PLACE ");			
+				String sql=((Person)person).getPersonToPositionsDeleteSql();		
 				
 				ResultSet rs = runSQL(dbman,sql, false);
 				if (rs == null) {
@@ -605,7 +595,6 @@ public class DB_Factory {
 				ArrayList<String> insert_sql=((Person)person).getPersonToPositionsInsertSql();
 				for(String s: insert_sql)
 				{
-					s=s.replace(FROM_CLAUSE, " PERSON_TO_PLACE ");	
 					rs = runSQL(dbman,s, false);
 					if (rs == null) {
 						return false;
@@ -634,7 +623,6 @@ public class DB_Factory {
 			if(dbman!=null && person !=null)
 			{		
 					String sql=((Person)person).getDeleteTimeOffSql(start, end);
-					sql=sql.replace(FROM_CLAUSE, " TIME_OFF ");
 					
 					ResultSet rs = runSQL(dbman,sql, false);
 					if (rs == null) {
@@ -661,10 +649,8 @@ public class DB_Factory {
 		{
 			DB_Object obj = createObject(ObjectType.DUTIES);
 			((Duty)obj).populateProperties(details, db_positions, db_persons);
-			
-			String sql=obj.getInsert_sql();
-			sql=sql.replace(FROM_CLAUSE, " "+obj.getTableName()+" ");
-			
+
+			String sql=obj.getInsert_sql(0);			
 			ResultSet rs = runSQL(dbman, sql, false);
 	
 			if (rs != null) {
@@ -672,6 +658,32 @@ public class DB_Factory {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Retrieves next pkid from the database (Firebird crap)
+	 * @param dbman Database manager to use.
+	 * @param table_name Name of the table to get next id for.
+	 * @return next pkid
+	 */
+	private static int getNextPKID(DBManager dbman, String sql) {
+
+		if(dbman!=null && sql!=null)
+		{
+			
+			ResultSet rs = dbman.runQuery(sql, true);
+			if(rs!=null)
+			{
+				try {
+					if (rs.next()) {
+						return rs.getInt("GEN_ID");
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return 0;
 	}
 	
 	

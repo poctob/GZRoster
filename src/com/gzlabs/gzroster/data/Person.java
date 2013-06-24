@@ -4,6 +4,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import com.gzlabs.gzroster.sql.QueryFactory;
+import com.gzlabs.gzroster.sql.Tables;
+
 /**
  * Data representation of a person object from the database.
  * 
@@ -70,50 +73,50 @@ public class Person extends DB_Object {
 
 	/*************************************************************************/
 	@Override
-	String getInsert_sql() {
-
-		String sql = INSERT_STM;
+	public
+	String getInsert_sql(int pkid) {	
+		m_id=pkid;
 		String cols = "PERSON_NAME," + "ADDRESS,"
 				+ "PHONE_HOME," + "PHONE_MOBILE," + "NOTE," + "ACTIVE_PERSON,"
 				+ "EMAIL_ADDRESS";
-
+		
+		if(isUsingFB())
+			cols+=",PERSON_ID";
+		
 		int active = m_active ? 1 : 0;
 
 		String vals = "'" + m_name + "','" + m_address + "','"
 				+ m_home_phone + "','" + m_mobile_phone + "','" + m_note
 				+ "','" + active + "','" + m_email + "'";
+		
+		if(isUsingFB())
+			vals+=",'"+m_id+"'";
 
-		sql = sql.replace(COL_CLAUSE, cols);
-		sql = sql.replace(VAL_CLAUSE, vals);
-		return sql;
+		return QueryFactory.getInsert(cols, vals, Tables.PERSON_TABLE_NAME);
 	}
 
 	@Override
-	String getUpdate_sql() {
-		String sql = UPDATE_STM;
-		sql = sql.replace(FROM_CLAUSE, getTableName());
+	public String getUpdate_sql() {	
 		String active = m_active ? "1" : "0";
-		sql = sql.replace(WHAT_CLAUSE, "PERSON_NAME='" + m_name + "',ADDRESS='"
+		String what = "PERSON_NAME='" + m_name + "',ADDRESS='"
 				+ m_address + "',PHONE_HOME='" + m_home_phone
 				+ "',PHONE_MOBILE='" + m_mobile_phone + "',NOTE='" + m_note
 				+ "',ACTIVE_PERSON='" + active + "',EMAIL_ADDRESS='" + m_email
-				+ "'");
-		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
-		return sql;
+				+ "'";
+		return QueryFactory.getUpdate(what, "PERSON_ID", m_id, Tables.PERSON_TABLE_NAME);
 	}
 
 	@Override
-	ArrayList<String> getDelete_sql() {
+	public ArrayList<String> getDelete_sql() {
 		ArrayList<String> retval = new ArrayList<String>();
-		// Delete person
-		String sql4 = DELETE_STM;
-		sql4 = sql4.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
-		sql4 = sql4.replace(FROM_CLAUSE, " PERSON ");
-		retval.add(sql4);
+		String sql = QueryFactory.getDelete
+				("PERSON_ID", m_id, Tables.PERSON_TABLE_NAME);
+		retval.add(sql);
 		return retval;
 	}
 
 	@Override
+	public
 	void populateProperites(ResultSet rs) {
 		if (rs != null) {
 			try {
@@ -132,6 +135,7 @@ public class Person extends DB_Object {
 	}
 
 	@Override
+	public
 	void populateProperties(ArrayList<String> details) {
 		if (details == null || details.size() != Tables.PERSON_MAX_COLS) {
 			return;
@@ -173,17 +177,18 @@ public class Person extends DB_Object {
 	}
 
 	@Override
+	public
 	String getName() {
 		return m_name;
 	}
 
 	@Override
-	int getPKID() {
+	public int getPKID() {
 		return m_id;
 	}
 
 	@Override
-	boolean matches(ArrayList<String> details, boolean use_id) {
+	public boolean matches(ArrayList<String> details, boolean use_id) {
 		if (details != null && details.size() == Tables.PERSON_MAX_COLS) {
 			boolean id = true;
 			boolean uuid = true;
@@ -210,6 +215,7 @@ public class Person extends DB_Object {
 	}
 
 	@Override
+	public
 	ArrayList<String> toSortedArray() {
 		ArrayList<String> properties = new ArrayList<String>();
 		String active = m_active ? "1" : "0";
@@ -222,11 +228,6 @@ public class Person extends DB_Object {
 		properties.add(active);
 		properties.add(m_email);
 		return properties;
-	}
-
-	@Override
-	String getTableName() {
-		return "PERSON";
 	}
 
 	/**
@@ -243,8 +244,8 @@ public class Person extends DB_Object {
 					int pers_id = rs.getInt("PERSON_ID");
 					if (pers_id == m_id) {
 						TimeOff timeOff = new TimeOff(
-								rs.getTimestamp("START"),
-								rs.getTimestamp("END"));
+								rs.getTimestamp("PERSON_NA_START_DATE_HOUR"),
+								rs.getTimestamp("PERSON_NA_END_DATE_HOUR"));
 						m_times_off.add(timeOff);
 					}
 				}
@@ -309,15 +310,13 @@ public class Person extends DB_Object {
 	 * @return String containing insert SQL statement.
 	 */
 	public String getTimeOffInsertSql(String start, String end) {
-		String sql = INSERT_STM;
-		String cols = "PERSON_ID," + "START,"
-				+ "END";
+
+		String cols = "PERSON_ID," + "PERSON_NA_START_DATE_HOUR,"
+				+ "PERSON_NA_END_DATE_HOUR";
 
 		String vals = "'" + m_id + "','" + start + "','" + end + "'";
 
-		sql = sql.replace(COL_CLAUSE, cols);
-		sql = sql.replace(VAL_CLAUSE, vals);
-		return sql;
+		return QueryFactory.getInsert(cols, vals, Tables.TIME_OFF_TABLE_NAME);
 	}
 
 	/**
@@ -330,11 +329,17 @@ public class Person extends DB_Object {
 	 * @return String containing sql statement.
 	 */
 	public String getDeleteTimeOffSql(String start, String end) {
-		String sql = DELETE_STM;
-		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id
-				+ "' AND START='" + start
-				+ "' AND END	='" + end + "'");
-		return sql;
+		ArrayList<String> cols=new ArrayList<String>();
+		cols.add("PERSON_ID");
+		cols.add("PERSON_NA_START_DATE_HOUR");
+		cols.add("PERSON_NA_END_DATE_HOUR");
+		
+		ArrayList<String> vals=new ArrayList<String>();
+		vals.add(Integer.toString(m_id));
+		vals.add(start);
+		vals.add(end);
+		
+		return QueryFactory.getDelete(cols, vals, Tables.TIME_OFF_TABLE_NAME);		
 	}
 
 	/**
@@ -347,14 +352,10 @@ public class Person extends DB_Object {
 
 		if (m_positions != null) {
 			for (Integer i : m_positions) {
-				String sql = INSERT_STM;
 				String cols = "PERSON_ID," + "PLACE_ID";
 				String vals = "";
 				vals = "'" + m_id + "','" + i + "'";
-				sql = sql.replace(COL_CLAUSE, cols);
-				sql = sql.replace(VAL_CLAUSE, vals);
-
-				retval.add(sql);
+				retval.add(QueryFactory.getInsert(cols, vals, Tables.PERSON_TO_PLACE_TABLE_NAME));
 			}
 		}
 		return retval;
@@ -365,9 +366,12 @@ public class Person extends DB_Object {
 	 * @return SQL statement.
 	 */
 	public String getPersonToPositionsDeleteSql() {
-		String sql = DELETE_STM;
-		sql = sql.replace(WHERE_CLAUSE, "PERSON_ID='" + m_id + "'");
-		return sql;
+		return QueryFactory.getDelete
+				("PERSON_ID", m_id, Tables.PERSON_TO_PLACE_TABLE_NAME);
+	}
+	@Override
+	public String getNexPKID_sql() {
+		return QueryFactory.getNextPKIDFB(Tables.PERSON_TABLE_NAME);
 	}
 
 }

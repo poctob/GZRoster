@@ -24,6 +24,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
+import com.gzlabs.gzroster.sql.Tables;
+
 /**
  * Provides configuration dialog
  * @author apavlune
@@ -43,6 +45,7 @@ public class ConfigurationDialog extends Dialog {
 	private final FormToolkit m_toolkit = new FormToolkit(Display.getDefault());
 	private ScrolledForm m_form;
 	private Composite m_composite;
+	private Label lblDbType;
 	private Label lblDbDriver;
 	private Label lblDbUrl;
 	private Label lblNewLabel;
@@ -82,6 +85,7 @@ public class ConfigurationDialog extends Dialog {
 	private Label lblInterval;
 	private Combo displayIntervalCombo;
 	private Section db_section;
+	private Combo dbTypeCombo;
 
 	/**
 	 * Creates the dialog and initializes member variables
@@ -197,6 +201,26 @@ public class ConfigurationDialog extends Dialog {
 		db_composite.setLayout(gl_db_composite);
 		
 		db_section.setClient(db_composite);
+		
+		lblDbType = new Label(db_composite, SWT.NONE);
+		lblDbType.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
+		m_toolkit.adapt(lblDbType, true, true);
+		lblDbType.setText("Type");
+		
+		dbTypeCombo = new Combo(db_composite, SWT.NONE);
+		dbTypeCombo.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				int selected=dbTypeCombo.getSelectionIndex();
+				if(Tables.DB_DRIVERS.length>selected)
+				{
+					WidgetUtilities.safeTextSet(dbDriverText, Tables.DB_DRIVERS[selected]);
+				}
+			}
+		});
+		dbTypeCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		m_toolkit.adapt(dbTypeCombo);
+		m_toolkit.paintBordersFor(dbTypeCombo);
 		
 		lblDbDriver = new Label(db_composite, SWT.NONE);
 		lblDbDriver.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
@@ -501,6 +525,7 @@ public class ConfigurationDialog extends Dialog {
 		prop.setProperty("day_start",displayDayStartCombo.getText());
 		prop.setProperty("day_end",displayDayEndCombo.getText());
 		prop.setProperty("interval_minutes",displayIntervalCombo.getText());
+		prop.setProperty("db_type", dbTypeCombo.getText());
 		
 		if(idm!=null)
 		{
@@ -537,6 +562,7 @@ public class ConfigurationDialog extends Dialog {
 			WidgetUtilities.safeComboSelect(displayDayStartCombo, prop.getProperty("day_start"));
 			WidgetUtilities.safeComboSelect(displayDayEndCombo, prop.getProperty("day_end"));
 			WidgetUtilities.safeComboSelect(displayIntervalCombo, prop.getProperty("interval_minutes"));
+			WidgetUtilities.safeComboSelect(dbTypeCombo, prop.getProperty("db_type"));
 		}
 	}
 	
@@ -559,6 +585,11 @@ public class ConfigurationDialog extends Dialog {
 		displayIntervalCombo.add("15");
 		displayIntervalCombo.add("30");
 		displayIntervalCombo.add("60");
+		
+		for(String s: Tables.DB_TYPES)
+		{
+			WidgetUtilities.safeComboAdd(dbTypeCombo,s);
+		}
 	}
 	
 }

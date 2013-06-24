@@ -1,4 +1,4 @@
-package com.gzlabs.gzroster.data;
+package com.gzlabs.gzroster.sql;
 
 /**
  * Provides SQL tables templates
@@ -32,4 +32,24 @@ public class Tables
 	public static final int DUTIES_END_INDEX=3;
 	public static final int DUTIES_KEY_INDEX=4;
 	
+	//TmeOff table
+	public static final String TIME_OFF_TABLE_NAME="PERSON_NA_AVAIL_HOURS";
+	
+	//Person to place table
+	public static final String PERSON_TO_PLACE_TABLE_NAME="PERSON_TO_PLACE";
+	
+	//Positions table
+	public static final String POSITION_TABLE_NAME="PLACE";
+	
+	//Person table
+	public static final String PERSON_TABLE_NAME="PERSON";
+	
+	//Duty table
+	public static final String DUTY_TABLE_NAME="DUTIES";
+	
+	public static final String [] DB_TYPES={"MySQL", "FireBird"};
+	public static final String [] DB_DRIVERS={"com.mysql.jdbc.Driver",
+		"org.firebirdsql.jdbc.FBDriver"};
+	
+	public static final String FB_DB_FLAG = "FireBird";
 }

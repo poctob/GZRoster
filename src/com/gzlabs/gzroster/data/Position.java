@@ -4,6 +4,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import com.gzlabs.gzroster.sql.QueryFactory;
+import com.gzlabs.gzroster.sql.Tables;
+
 /**
  * Position table representation.  Straight abstract class representation.
  * @author apavlune
@@ -21,19 +24,21 @@ public class Position extends DB_Object {
 	/*************************************************************************/
 
 	@Override
-	String getInsert_sql() {
-
-		String sql = INSERT_STM;
-		String cols = "PLACE_ID,PLACE_NAME,NOTE";
-		String vals = "'" + m_id + "','" + m_name + "','" + m_note + "'";
-
-		sql = sql.replace(COL_CLAUSE, cols);
-		sql = sql.replace(VAL_CLAUSE, vals);
-		return sql;
+	public String getInsert_sql(int id) {
+		m_id=id;
+		String cols = "PLACE_NAME,NOTE";
+		if(isUsingFB())
+			cols+=",PLACE_ID";
+		
+		String vals = "'" + m_name + "','" + m_note + "'";
+		if(isUsingFB())
+			vals+=",'"+m_id+"'";
+		
+		return QueryFactory.getInsert(cols, vals, Tables.POSITION_TABLE_NAME);
 	}
 
 	@Override
-	void populateProperites(ResultSet rs) {
+	public void populateProperites(ResultSet rs) {
 		try {
 			m_id = rs.getInt("PLACE_ID");
 			m_name =safeStringAssign( rs.getString("PLACE_NAME"));
@@ -44,17 +49,17 @@ public class Position extends DB_Object {
 	}
 
 	@Override
-	String getName() {
+	public String getName() {
 		return m_name;
 	}
 
 	@Override
-	int getPKID() {
+	public int getPKID() {
 		return m_id;
 	}
 
 	@Override
-	boolean matches(ArrayList<String> details, boolean use_id) {
+	public boolean matches(ArrayList<String> details, boolean use_id) {
 		if (details != null && details.size() == Tables.PLACE_MAX_COLS) {
 			boolean id = true;
 			if (use_id) {
@@ -68,7 +73,7 @@ public class Position extends DB_Object {
 	}
 
 	@Override
-	ArrayList<String> toSortedArray() {
+	public ArrayList<String> toSortedArray() {
 		ArrayList<String> properties = new ArrayList<String>();
 		properties.add(Integer.toString(m_id));
 		properties.add(m_name);
@@ -77,7 +82,7 @@ public class Position extends DB_Object {
 	}
 
 	@Override
-	void populateProperties(ArrayList<String> details) {
+	public void populateProperties(ArrayList<String> details) {
 		if (details == null || details.size() != Tables.PLACE_MAX_COLS) {
 			return;
 		}
@@ -92,29 +97,24 @@ public class Position extends DB_Object {
 	}
 
 	@Override
-	String getTableName() {
-		return "PLACE";
-	}
-
-	@Override
-	ArrayList<String> getDelete_sql() {
+	public ArrayList<String> getDelete_sql() {
 		ArrayList<String> retval=new ArrayList<String>();	
-
-		String sql = DELETE_STM;
-		sql = sql.replace(FROM_CLAUSE, getTableName());
-		sql = sql.replace(WHERE_CLAUSE, "PLACE_ID='" + m_id + "'");
+		String sql = QueryFactory.getDelete
+				("PLACE_ID", m_id, Tables.POSITION_TABLE_NAME);
 		retval.add(sql);
 		return retval;
 	}
 
 	@Override
-	String getUpdate_sql() {
-		String sql = UPDATE_STM;
-		sql = sql.replace(FROM_CLAUSE, getTableName());
-		sql = sql.replace(WHAT_CLAUSE, "PLACE_NAME='" + m_name + "',NOTE='"
-				+ m_note + "'");
-		sql = sql.replace(WHERE_CLAUSE, "PLACE_ID='" + m_id + "'");
-		return sql;
+	public String getUpdate_sql() {
+		String what="PLACE_NAME='" + m_name + "',NOTE='"
+				+ m_note + "'";
+		return QueryFactory.getUpdate(what, "PLACE_ID", m_id, Tables.POSITION_TABLE_NAME);
+	}
+
+	@Override
+	public String getNexPKID_sql() {		
+		return QueryFactory.getNextPKIDFB(Tables.POSITION_TABLE_NAME);
 	}
 
 }

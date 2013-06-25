@@ -35,6 +35,8 @@ public class DataManager {
 	private ArrayList<DB_Object> db_positions;
 	
 	private ArrayList<DB_Object> db_duties;
+	
+	private boolean usingFB;
 
 	
 	/**
@@ -50,6 +52,11 @@ public class DataManager {
 		
 		if(prop != null && !prop.isEmpty())
 		{
+			String db_type=(String) prop.get("db_type");
+			if(db_type!=null)				
+			{
+				usingFB=db_type.equals(Tables.FB_DB_FLAG);
+			}
 			safeDisplayStatus("Attempting to connect to the databse...");
 	
 			if (initDBMan()) {
@@ -188,7 +195,6 @@ public class DataManager {
 	{
 		if(details != null && position_boxes!=null)
 		{
-			boolean usingFB=prop.get("db_type").equals(Tables.FB_DB_FLAG);
 			if(DB_Factory.insertRecord(ObjectType.PERSON, dbman, details,usingFB))
 			{
 				updatePersonToPositionMap(details.get(Tables.PERSON_NAME_INDEX), position_boxes);
@@ -300,7 +306,6 @@ public class DataManager {
 	{	
 		if(details != null)
 		{
-			boolean usingFB=prop.get("db_type").equals(Tables.FB_DB_FLAG);
 			if(DB_Factory.insertRecord(ObjectType.POSITION, dbman, details, usingFB))
 			{
 				safeDisplayStatus("Positions added!");	
@@ -426,12 +431,12 @@ public class DataManager {
 	 */
 	private void updateDBObjects()
 	{
-		boolean usingFB=prop.get("db_type").equals(Tables.FB_DB_FLAG);
 		db_positions=DB_Factory.getAllRecords(ObjectType.POSITION, dbman, usingFB);	
 		db_persons=DB_Factory.getAllRecords(ObjectType.PERSON, dbman, usingFB);	
 		db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions, usingFB);
 		
 	}
+
 	
 	/**
 	 * Determines a label for specified cell.
@@ -639,7 +644,6 @@ public class DataManager {
 	 * Fetches most recent records from the database for duties.
 	 */
 	public void refreshDutyList() {
-		boolean usingFB=prop.get("db_type").equals(Tables.FB_DB_FLAG);
 		db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions, usingFB);
 	}
 	

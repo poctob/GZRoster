@@ -17,6 +17,8 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.wb.swt.SWTResourceManager;
 
+import com.gzlabs.utils.WidgetUtilities;
+
 /**
  * Handles employee manipulations
  * 

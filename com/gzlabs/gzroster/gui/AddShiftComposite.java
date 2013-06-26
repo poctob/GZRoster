@@ -13,7 +13,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Button;
 
-import com.gzlabs.gzroster.data.DateUtils;
+import com.gzlabs.utils.DateUtils;
+import com.gzlabs.utils.WidgetUtilities;
 
 /**
  * Widget for adding new shift.

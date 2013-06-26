@@ -8,8 +8,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Button;
 
-import com.gzlabs.drosterheper.DRosterHelper;
-import com.gzlabs.drosterheper.IDisplayStatus;
+import com.gzlabs.gzroster.data.UploadManager;
+
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
@@ -107,7 +107,7 @@ public class SSHStatusShell extends Shell implements IDisplayStatus{
 	{
 		if(prop!=null)
 		{
-			DRosterHelper drh=new DRosterHelper(prop, this);
+			UploadManager drh=new UploadManager(prop, this);
 			drh.processData();
 		}
 		else

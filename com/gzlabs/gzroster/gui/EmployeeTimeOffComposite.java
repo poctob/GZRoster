@@ -11,7 +11,9 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
-import com.gzlabs.gzroster.data.DateUtils;
+import com.gzlabs.utils.DateUtils;
+import com.gzlabs.utils.WidgetUtilities;
+
 import org.eclipse.wb.swt.SWTResourceManager;
 
 /**

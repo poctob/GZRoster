@@ -12,7 +12,8 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
-import com.gzlabs.gzroster.data.DateUtils;
+import com.gzlabs.utils.DateUtils;
+import com.gzlabs.utils.WidgetUtilities;
 
 /**
  * Widget to display total employee hours

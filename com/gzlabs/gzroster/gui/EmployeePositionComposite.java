@@ -7,6 +7,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.custom.ScrolledComposite;
 
+import com.gzlabs.utils.WidgetUtilities;
+
 /**
  * Provides a checkbox collection with positions that an employee is allowed to
  * hold.

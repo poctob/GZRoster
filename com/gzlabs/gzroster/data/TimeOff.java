@@ -2,6 +2,8 @@ package com.gzlabs.gzroster.data;
 
 import java.util.Date;
 
+import com.gzlabs.utils.DateUtils;
+
 /**
  * Time off object
  * @author apavlune

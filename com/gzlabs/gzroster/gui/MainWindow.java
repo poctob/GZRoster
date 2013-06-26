@@ -23,10 +23,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.jface.dialogs.MessageDialog;
 
-import com.gzlabs.drosterheper.DRosterHelper;
-import com.gzlabs.drosterheper.IDisplayStatus;
+import com.gzlabs.gzroster.data.UploadManager;
 import com.gzlabs.gzroster.data.DataManager;
 import com.gzlabs.gzroster.sql.Tables;
+import com.gzlabs.utils.WidgetUtilities;
 
 import org.eclipse.swt.widgets.MenuItem;
 
@@ -44,7 +44,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	private final FormToolkit formToolkit = new FormToolkit(
 			Display.getDefault());
 	private DataManager dman;
-	private DRosterHelper drh;
+	private UploadManager drh;
 
 	/************************************************************/
 	// Main Window Container
@@ -184,7 +184,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		formToolkit.adapt(lblStatus, true, true);
 		lblStatus.setText("Status");
 		dman = new DataManager(this);
-		drh = new DRosterHelper(dman.getProp(), this);
+		drh = new UploadManager(dman.getProp(), this);
 		createDetailsTab();
 		populateData();
 

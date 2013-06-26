@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.gzlabs.gzroster.sql.DB_Factory;
 import com.gzlabs.gzroster.sql.QueryFactory;
 import com.gzlabs.gzroster.sql.Tables;
+import com.gzlabs.utils.DateUtils;
 /**
  * Duty object representation.
  * @author apavlune

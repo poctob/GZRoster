@@ -13,8 +13,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
-import com.gzlabs.drosterheper.DRosterHelper;
-import com.gzlabs.gzroster.data.DateUtils;
+import com.gzlabs.gzroster.data.UploadManager;
+import com.gzlabs.utils.DateUtils;
 
 /**
  * Dialog used for purging data
@@ -27,7 +27,7 @@ public class PurgeDataDialog extends Dialog {
 	protected Shell shlPurgeData;
 	private final FormToolkit formToolkit = new FormToolkit(Display.getDefault());
 	private IDetailsManager idm;
-	private DRosterHelper drh;
+	private UploadManager drh;
 	
 	private DateTime fromDate;
 	private DateTime toDate;
@@ -39,7 +39,7 @@ public class PurgeDataDialog extends Dialog {
 	 * @param drh DRoster helper object for purging operations
 	 * @param idm Callbacks for management
 	 */
-	public PurgeDataDialog(Shell parent, int style, DRosterHelper drh, IDetailsManager idm) {
+	public PurgeDataDialog(Shell parent, int style, UploadManager drh, IDetailsManager idm) {
 		super(parent, SWT.DIALOG_TRIM | SWT.MIN | SWT.MAX);
 		setText("SWT Dialog");
 		

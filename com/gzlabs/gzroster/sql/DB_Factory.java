@@ -37,6 +37,10 @@ public class DB_Factory {
 	 * @return Newly created DB_Object.
 	 */
 	public static DB_Object createObject(ObjectType type) {
+		if(type==null)
+		{
+			return null;
+		}
 		switch (type) {
 		case POSITION:
 			return new Position();
@@ -178,11 +182,17 @@ public class DB_Factory {
 		if(details !=null)
 		{
 			DB_Object obj = createObject(type);
-			obj.populateProperties(details);
-			
+						
 			if(obj!=null && dbman!=null)
 			{
-				int next_pkid=getNextPKID(dbman, obj.getNexPKID_sql());
+				obj.populateProperties(details);
+				int next_pkid=0;
+				
+				if(usingFB)
+				{
+					next_pkid=getNextPKID(dbman, obj.getNexPKID_sql());
+				}
+				
 				obj.setUsingFB(usingFB);
 				String sql=obj.getInsert_sql(next_pkid);
 				ResultSet rs = runSQL(dbman, sql, false);
@@ -330,20 +340,23 @@ public class DB_Factory {
 	private static String getSelect_sql(String column, 
 			String value, ObjectType type) {	
 		String table_name=null;
-		switch(type)
+		if(type!=null)
 		{
-			case POSITION:table_name=Tables.POSITION_TABLE_NAME;
+			switch(type)
+			{
+				case POSITION:table_name=Tables.POSITION_TABLE_NAME;
+						break;
+				case PERSON:table_name=Tables.PERSON_TABLE_NAME;
 					break;
-			case PERSON:table_name=Tables.PERSON_TABLE_NAME;
-				break;
-			case PERSON_TO_PLACE:table_name=Tables.PERSON_TO_PLACE_TABLE_NAME;
-				break;
-			case PERSON_NA_AVAIL_HOURS:table_name=Tables.TIME_OFF_TABLE_NAME;
-				break;
-			case DUTIES:table_name=Tables.DUTY_TABLE_NAME;
-				break;
-			default:return null;
-		}		
+				case PERSON_TO_PLACE:table_name=Tables.PERSON_TO_PLACE_TABLE_NAME;
+					break;
+				case PERSON_NA_AVAIL_HOURS:table_name=Tables.TIME_OFF_TABLE_NAME;
+					break;
+				case DUTIES:table_name=Tables.DUTY_TABLE_NAME;
+					break;
+				default:return null;
+			}		
+		}
 		return QueryFactory.getSelect("*", column, value, table_name);
 	}
 

@@ -198,6 +198,7 @@ public class DataManager {
 		{
 			if(DB_Factory.insertRecord(ObjectType.PERSON, dbman, details,usingFB))
 			{
+				updateDBObjects();
 				updatePersonToPositionMap(details.get(Tables.PERSON_NAME_INDEX), position_boxes);
 				safeDisplayStatus("Employee added!");	
 				updateDBObjects();
@@ -381,6 +382,7 @@ public class DataManager {
 		{
 			updatePersonToPositionMap(new_val.get(Tables.PERSON_NAME_INDEX), position_boxes);
 			safeDisplayStatus("Record updated!");
+			updateDBObjects();
 		}
 		else
 		{
@@ -407,6 +409,7 @@ public class DataManager {
 			}
 			
 			DB_Factory.updatePersonToPosition(db_persons, place_ids, person_name, dbman);
+			updateDBObjects();
 		}
 	}
 	

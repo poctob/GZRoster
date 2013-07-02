@@ -2,6 +2,8 @@ package com.gzlabs.gzroster.sql;
 
 import java.util.ArrayList;
 
+import com.gzlabs.utils.WidgetUtilities;
+
 /**
  * Provides query generation routines based on the currently used database types.
  * @author apavlune
@@ -48,9 +50,9 @@ public class QueryFactory {
 	private static String get_insert_sql(String cols, String vals, String table)
 	{
 		String sql = INSERT_STM;
-		sql = sql.replace(COL_CLAUSE, cols);
-		sql = sql.replace(VAL_CLAUSE, vals);
-		sql=sql.replace(FROM_CLAUSE, table);
+		sql=WidgetUtilities.safeStringReplace(sql, COL_CLAUSE, cols);
+		sql=WidgetUtilities.safeStringReplace(sql, VAL_CLAUSE, vals);
+		sql=WidgetUtilities.safeStringReplace(sql, FROM_CLAUSE, table);
 		return sql;
 	}	
 	
@@ -90,8 +92,8 @@ public class QueryFactory {
 	private static String get_delete_sql(String cols, String vals, String table)
 	{
 		String sql = DELETE_STM;
-		sql = sql.replace(FROM_CLAUSE, table);
-		sql = sql.replace(WHERE_CLAUSE, cols+"='" +vals + "'");
+		sql=WidgetUtilities.safeStringReplace(sql, FROM_CLAUSE, table);
+		sql=WidgetUtilities.safeStringReplace(sql, WHERE_CLAUSE, cols+"='" +vals + "'");
 		return sql;
 	}
 	
@@ -117,7 +119,7 @@ public class QueryFactory {
 	 */
 	private static String get_delete_sql(ArrayList<String> cols, ArrayList<String> vals, String table)
 	{
-		if(cols.size()!=vals.size())
+		if(cols==null || vals==null || cols.size()!=vals.size())
 		{
 			return null;
 		}
@@ -129,8 +131,8 @@ public class QueryFactory {
 			where+=cols.get(i)+"='"+vals.get(i)+"'"+AND_CLAUSE;			
 		}
 		where=where.substring(0, where.length()-AND_CLAUSE.length());
-		sql = sql.replace(FROM_CLAUSE, table);
-		sql = sql.replace(WHERE_CLAUSE, where);
+		sql=WidgetUtilities.safeStringReplace(sql, FROM_CLAUSE, table);
+		sql=WidgetUtilities.safeStringReplace(sql, WHERE_CLAUSE, where);
 		return sql;
 	}
 	
@@ -171,9 +173,9 @@ public class QueryFactory {
 	private static String get_update_sql(String what, String col, String val,String table)
 	{
 		String sql = UPDATE_STM;
-		sql = sql.replace(FROM_CLAUSE, table);
-		sql = sql.replace(WHAT_CLAUSE, what);
-		sql = sql.replace(WHERE_CLAUSE, col+"='" + val + "'");
+		sql = WidgetUtilities.safeStringReplace(sql, FROM_CLAUSE, table);
+		sql = WidgetUtilities.safeStringReplace(sql, WHAT_CLAUSE, what);
+		sql = WidgetUtilities.safeStringReplace(sql, WHERE_CLAUSE, col+"='" + val + "'");
 		return sql;
 	}
 	
@@ -202,10 +204,9 @@ public class QueryFactory {
 	{
 		
 		String sql = SELECT_STM;
-		String where_cls = col + "=" + val;
-		sql = sql.replace(WHAT_CLAUSE, what);
-		sql = sql.replace(WHERE_CLAUSE, " " + where_cls + " ");
-		sql = sql.replace(FROM_CLAUSE, " " + table + " ");
+		sql = WidgetUtilities.safeStringReplace(sql, WHAT_CLAUSE, what);
+		sql = WidgetUtilities.safeStringReplace(sql, WHERE_CLAUSE, col+"='" + val + "'");
+		sql = WidgetUtilities.safeStringReplace(sql, FROM_CLAUSE, table);
 		return sql;
 	}
 	
@@ -217,7 +218,7 @@ public class QueryFactory {
 	public static String getNextPKIDFB(String table)
 	{
 		String sql = NEXT_PKID_STM;
-		sql = sql.replace(FROM_CLAUSE, table);
+		sql = WidgetUtilities.safeStringReplace(sql, FROM_CLAUSE, table);
 		return sql;
 	}
 	

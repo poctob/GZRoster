@@ -158,7 +158,7 @@ public class EmployeeTimeOffComposite extends Composite {
 	public void toggleButtonVisibility(boolean visible) {
 		btnAdd.setVisible(visible);
 
-		if (list.getItemCount() == 0) {
+		if (list.getItemCount() == 0 || list.getSelectionIndex()==-1) {
 			btnEdit.setVisible(false);
 			btnDelete.setVisible(false);
 		} else {
@@ -176,12 +176,14 @@ public class EmployeeTimeOffComposite extends Composite {
 		if (selected >= 0) {
 			String selection = list.getItem(selected);
 
-			String start = selection.substring(5, 27);
+			String start = selection.substring(5, 26);
 			String end = selection.substring(30, selection.length());
 			if (itof!=null && itof.deleteTimeOffRequest(start, end)) {
 				list.remove(selected);
 			}
 		}
+		list.deselectAll();
+		toggleButtonVisibility(true);
 	}
 
 	/**
@@ -194,6 +196,8 @@ public class EmployeeTimeOffComposite extends Composite {
 		{
 			itof.newTimeOffRequest(start, end);
 		}
+		list.deselectAll();
+		toggleButtonVisibility(true);
 	}
 
 	/**

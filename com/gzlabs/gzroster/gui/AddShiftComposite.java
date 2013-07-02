@@ -68,7 +68,7 @@ public class AddShiftComposite extends Composite {
 			}
 		});
 
-		employeePicker = new Combo(this, SWT.NONE);
+		employeePicker = new Combo(this, SWT.READ_ONLY);
 		employeePicker.setBounds(10, 250, 169, 30);
 		employeePicker.setEnabled(false);
 

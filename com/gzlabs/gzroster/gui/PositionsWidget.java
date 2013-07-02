@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.wb.swt.SWTResourceManager;
@@ -97,9 +98,16 @@ public class PositionsWidget extends Composite {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (ipm != null) {
-					ipm.processPositionData();
-					clearPositionData();
-					ipm.populateData();
+					if(checkNameValidity())
+					{
+						ipm.processPositionData();
+						clearPositionData();
+						ipm.populateData();
+					}
+					else
+					{
+						MessageDialog.openError(new Shell(), "Invalid Name", "Invalid or Duplicate Name detected");
+					}
 				}
 			}
 		});
@@ -195,6 +203,29 @@ public class PositionsWidget extends Composite {
 		positionsCancelButton.setText("Cancel");
 
 	}
+	
+	/**
+	 * Checks for the name not to be empty or duplicate.
+	 * @return
+	 */
+	protected boolean checkNameValidity() {
+		int selection_idx=positionsList.getSelectionIndex();
+		String newname=positionNameText.getText();
+
+		if(newname.length()>0)
+		{
+			if(positionsList.indexOf(newname)==-1)
+			{
+				return true;
+			}
+			else if(selection_idx>=0 && newname.equals(positionsList.getItem(selection_idx)))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
 
 	/**
 	 * Clears position data controls
@@ -240,6 +271,15 @@ public class PositionsWidget extends Composite {
 	public void setPositionNoteText(String s) {
 		WidgetUtilities.safeTextSet(positionNoteText, s);
 	}
+	
+	/**
+	 * Resets all controls
+	 */
+	public void resetControls() {
+		clearPositionsList();
+		togglePositionEdit(false);
+	}
+
 
 	/**
 	 * Retrieves position's name

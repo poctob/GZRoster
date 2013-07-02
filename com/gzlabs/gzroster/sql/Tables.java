@@ -14,7 +14,7 @@ public class Tables
 	public static final int PLACE_MAX_COLS = 3;
 	
 	//Person table
-	public static final int PERSON_MAX_COLS=9;
+	public static final int PERSON_MAX_COLS=8;
 	public static final int PERSON_ID_INDEX = 0;
 	public static final int PERSON_NAME_INDEX = 1;
 	public static final int PERSON_ADDRESS_INDEX = 2;

@@ -48,6 +48,14 @@ public class DBManager {
 	{
 		if(dbman==null)
 			dbman=new DBManager(driver, dbURL, user, password);
+		else
+		{
+			dbman.driver = driver;
+			dbman.dbURL = dbURL;
+			dbman.user = user;
+			dbman.password = password;
+		}
+			
 		return dbman;
 	}
 
@@ -57,7 +65,12 @@ public class DBManager {
 	 * @return true if all operations were successful
 	 */
 	public boolean init() {
-		return registerDriver() && initializeDriver() && connect();
+		boolean success=registerDriver();
+		if(success)
+			success=initializeDriver();
+		if(success)
+			success=connect();
+		return success;
 	}
 
 	/**
@@ -68,7 +81,7 @@ public class DBManager {
 	private boolean registerDriver() {
 		try {
 			Class.forName(driver);
-		} catch (ClassNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -88,7 +101,7 @@ public class DBManager {
 			System.out.println("Using the driver version"
 					+ +d.getMajorVersion() + "." + d.getMinorVersion());
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -104,7 +117,7 @@ public class DBManager {
 	private boolean connect() {
 		try {
 			c = DriverManager.getConnection(dbURL, user, password);
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -132,7 +145,7 @@ public class DBManager {
 			}
 			tables.close();
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -147,6 +160,10 @@ public class DBManager {
 	 * @return query results.
 	 */
 	public ResultSet runQuery(String query, boolean wantresults) {
+		if(query==null || query.length()==0)
+		{
+			return null;
+		}
 		if(c==null)
 		{
 			init();

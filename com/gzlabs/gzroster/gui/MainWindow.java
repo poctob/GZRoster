@@ -482,8 +482,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getHomephoneText(), true);
 			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getMobilePhoneText(), true);
 			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getActiveCheck() ? "1" : "0", true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);
+			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getActiveCheck() ? "1" : "0", true);		
 			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getEmailText(), true);
 
 			ArrayList<String> old_details = new ArrayList<String>(
@@ -496,7 +495,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);
 			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_active(), true);
 			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_email(), true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);
 
 			ArrayList<String> position_boxes = null;
 			if (employeePositionComposite != null) {
@@ -710,6 +708,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		if (dman != null) {
 			dman.deletePosition(selection);
 			rebuildDetailsWidget();
+			positionsWidget.resetControls();
 			populateData();
 		}
 
@@ -749,6 +748,8 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	public void deleteEmployee(String[] selection) {
 		if (dman != null) {
 			dman.deleteEmployee(selection);
+			employeesWidget.resetControls();
+			employeeHoursComposite.removeItem(selection);
 		}
 
 	}

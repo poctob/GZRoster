@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.wb.swt.SWTResourceManager;
@@ -112,7 +113,14 @@ public class EmployeesWidget extends Composite {
 		employeesEditButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				iem.processEmployeeData();
+				if(checkNameValidity())
+				{
+					iem.processEmployeeData();
+				}
+				else
+				{
+					MessageDialog.openError(new Shell(), "Invalid Name", "Invalid or Duplicate Name detected");
+				}
 			}
 		});
 		employeesEditButton.setBounds(471, 256, 88, 30);
@@ -249,6 +257,29 @@ public class EmployeesWidget extends Composite {
 		formToolkit.adapt(btnEmployeeCancel, true, true);
 		btnEmployeeCancel.setText("Cancel");
 
+	}
+
+	/**
+	 * Checks for the name not to be empty or duplicate.
+	 * @return
+	 */
+	protected boolean checkNameValidity() {
+		int selection_idx=employeesList.getSelectionIndex();
+		String newname=nameText.getText();
+
+		if(newname.length()>0)
+		{
+			if(employeesList.indexOf(newname)==-1)
+			{
+				return true;
+			}
+			else if(selection_idx>=0 && newname.equals(employeesList.getItem(selection_idx)))
+			{
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	/**

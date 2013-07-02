@@ -34,7 +34,7 @@ public class Person extends DB_Object {
 	 * Checks if this person is active
 	 * @return True or false
 	 */
-	boolean isActive()
+	public boolean isActive()
 	{
 		return m_active;
 	}

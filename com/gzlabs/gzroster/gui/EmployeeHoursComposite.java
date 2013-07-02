@@ -153,15 +153,18 @@ public class EmployeeHoursComposite extends Composite {
 	 * Removes item from the list
 	 * @param name Employee name to remove
 	 */
-	public void removeItem(String name)
+	public void removeItem(String[] name)
 	{
-		for(int i=0; i< tableItems.size(); i++)
+		for(int j=0; j<name.length; j++)
 		{
-			if(tableItems.get(i).getText(0).equals(name))
-			{				
-				hoursTable.remove(i);
-				tableItems.remove(i);
-				return;
+			for(int i=0; i< tableItems.size(); i++)
+			{
+				if(tableItems.get(i).getText(0).equals(name[j]))
+				{				
+					hoursTable.remove(i);
+					tableItems.remove(i);
+					return;
+				}
 			}
 		}
 	}

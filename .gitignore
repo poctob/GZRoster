@@ -9,3 +9,5 @@
 *.classpath
 *.config*
 /bin
+/.settings
+/.project

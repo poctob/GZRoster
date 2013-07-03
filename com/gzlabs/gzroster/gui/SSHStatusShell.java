@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Button;
@@ -12,6 +13,7 @@ import com.gzlabs.gzroster.data.UploadManager;
 
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Rectangle;
 
 /**
  * Performs calendar upload to the server and displays upload status
@@ -26,14 +28,23 @@ public class SSHStatusShell extends Shell implements IDisplayStatus{
 	//Close button
 	private Button btnClose;
 	
+	protected Shell parent;
+	
 	/**
 	 * Launch the application.
 	 * @param args
 	 */
-	public static void launch(Properties prop) {
+	public static void launch(Properties prop, Shell parent) {
 		try {
-			Display display = Display.getDefault();
-			SSHStatusShell shell = new SSHStatusShell(display);
+			Display display = Display.getDefault();			
+			SSHStatusShell shell = new SSHStatusShell(display, parent);
+		    Rectangle bounds = parent.getBounds();
+		    Rectangle rect = shell.getBounds();		    
+		    
+		    int x = bounds.x + (bounds.width - rect.width) / 2;
+		    int y = bounds.y + (bounds.height - rect.height) / 2;
+		    
+		    shell.setLocation(x, y);
 			shell.open();
 			shell.layout();
 			shell.startUpload(prop);
@@ -51,9 +62,9 @@ public class SSHStatusShell extends Shell implements IDisplayStatus{
 	 * Create the shell.
 	 * @param display
 	 */
-	public SSHStatusShell(Display display) {
-		super(display, SWT.SHELL_TRIM);
-		
+	public SSHStatusShell(Display display, Shell parent) {
+		super(display, SWT.SHELL_TRIM | SWT.SYSTEM_MODAL | SWT.ON_TOP);
+		this.parent=parent;
 		styledText = new StyledText(this, SWT.BORDER | SWT.V_SCROLL);
 		styledText.setBounds(10, 10, 428, 231);
 		
@@ -107,8 +118,13 @@ public class SSHStatusShell extends Shell implements IDisplayStatus{
 	{
 		if(prop!=null)
 		{
-			UploadManager drh=new UploadManager(prop, this);
-			drh.processData();
+			SSHPasswordDialog pd=new SSHPasswordDialog(parent,SWT.NONE);
+			String result=(String)pd.open();
+			if(result!=null)
+			{			
+				UploadManager drh=new UploadManager(prop, this);
+				drh.processData(result);
+			}
 		}
 		else
 		{
@@ -116,4 +132,5 @@ public class SSHStatusShell extends Shell implements IDisplayStatus{
 		}
 		btnClose.setEnabled(true);
 	}
+
 }

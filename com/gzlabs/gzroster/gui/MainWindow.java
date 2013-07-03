@@ -218,7 +218,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			public void widgetSelected(SelectionEvent e) {
 
 				if (dman != null) {
-					SSHStatusShell.launch(dman.getProp());
+					SSHStatusShell.launch(dman.getProp(),shell);
 				}
 			}
 		});

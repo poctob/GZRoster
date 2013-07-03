@@ -51,12 +51,10 @@ public class UploadManager {
 	 * Performs data processing such as retrieving data from the db, purging if
 	 * needed, creation and upload of the calendar.
 	 * 
-	 * @param prop
-	 *            Properties to use.
-	 * @param ids
-	 *            Information display callback interface
+	 * @param password
+	 *            SSH server password
 	 */
-	public void processData() {
+	public void processData(String password) {
 		ids.DisplayStatus("Attempting to connect to the databse...");
 
 		if (initDBMan()) {
@@ -95,14 +93,13 @@ public class UploadManager {
 
 		success = uploadCalendar(prop.getProperty("ssh_host"),
 				prop.getProperty("ssh_username"),
-				prop.getProperty("ssh_password"),
+				password,
 				Integer.parseInt(prop.getProperty("ssh_port")),
 				prop.getProperty("ical_file_path"),
 				prop.getProperty("ssh_destination"));
 
 		if (!success) {
 			ids.DisplayStatus("Something went wrong.  Unable to upload calendar file!");
-			System.exit(1);
 		}
 		dbman.disconnect();
 		ids.DisplayStatus("Done...");
@@ -124,6 +121,7 @@ public class UploadManager {
 	 * Creates a copy of the data in the database.
 	 * 
 	 * @return true if copy is good, false otherwise.
+	 * @param usingFB flag to show that we are using FirebirdDatabase.
 	 */
 	private boolean archiveData() {
 		ids.DisplayStatus("Archiving data...");
@@ -131,24 +129,9 @@ public class UploadManager {
 			if (!initDBMan())
 				ids.DisplayStatus("Error archiving data!");
 			return false;
-		}
+		}		
 
-		dbman.runQuery("EXECUTE BLOCK AS BEGIN "
-				+ "if (not exists(select 1 from rdb$relations"
-				+ " where rdb$relation_name = 'DUTIES_ARCHIVE')) then"
-				+ " execute statement 'CREATE TABLE DUTIES_ARCHIVE" + "("
-				+ " DUTY_START_TIME timestamp NOT NULL,"
-				+ "  PLACE_ID integer NOT NULL,"
-				+ "  PERSON_ID integer NOT NULL,"
-				+ "  DUTY_END_TIME timestamp NOT NULL,"
-				+ "  DUTY_KEY varchar(40) NOT NULL,"
-				+ "  DUTY_NOTE varchar(1010),"
-				+ "  RULE_IDS_VIOLATION blob sub_type 1,"
-				+ "  APPROVED char(1)," + "  APPROVED_TIME timestamp,"
-				+ "  CONSTRAINT PK_DUTIES_ARCHIVE PRIMARY KEY (DUTY_KEY)"
-				+ ");';" + " END", false);
-
-		ResultSet rs = dbman.runQuery("SELECT * FROM DUTIES", true);
+		ResultSet rs = dbman.runQuery("SELECT DUTY_START_TIME, PLACE_ID, PERSON_ID, DUTY_END_TIME, DUTY_KEY FROM DUTIES", true);
 		if (rs == null) {
 			ids.DisplayStatus("No data to archive!");
 			return true;
@@ -169,8 +152,8 @@ public class UploadManager {
 					if (rs_count == 0) {
 						dbman.runQuery(
 								"INSERT INTO DUTIES_ARCHIVE "
-										+ "(DUTY_START_TIME, PLACE_ID, PERSON_ID, DUTY_END_TIME, DUTY_KEY, DUTY_NOTE, RULE_IDS_VIOLATION, APPROVED, APPROVED_TIME) "
-										+ "SELECT DUTY_START_TIME, PLACE_ID, PERSON_ID, DUTY_END_TIME, DUTY_KEY, DUTY_NOTE, RULE_IDS_VIOLATION, APPROVED, APPROVED_TIME "
+										+ "(DUTY_START_TIME, PLACE_ID, PERSON_ID, DUTY_END_TIME, DUTY_KEY) "
+										+ "SELECT DUTY_START_TIME, PLACE_ID, PERSON_ID, DUTY_END_TIME, DUTY_KEY "
 										+ "FROM DUTIES WHERE DUTY_KEY='" + s
 										+ "'", false);
 					}
@@ -209,9 +192,9 @@ public class UploadManager {
 			int interval = Integer.parseInt(howfarback);
 			interval--;
 			dbman.runQuery(
-					"DELETE FROM DUTIES WHERE DUTY_START_TIME < DATEADD(-"
+					"DELETE FROM DUTIES WHERE DUTY_START_TIME < DATE_ADD(NOW(), INTERVAL "
 							+ Integer.toString(interval)
-							+ "day to current_date)", false);
+							+ " DAY)", false);
 		} else if (start != null && end != null) {
 			dbman.runQuery("DELETE FROM DUTIES WHERE DUTY_START_TIME "
 					+ "between '" + start + "' and '" + end + "'", false);
@@ -239,8 +222,7 @@ public class UploadManager {
 								+ "FROM DUTIES "
 								+ "LEFT JOIN PERSON ON DUTIES.PERSON_ID=PERSON.PERSON_ID "
 								+ "LEFT JOIN PLACE ON DUTIES.PLACE_ID=PLACE.PLACE_ID "
-								// + "WHERE APPROVED='Y' "
-								+ "ORDER BY DUTY_START_TIME ascending", true);
+								+ "ORDER BY DUTY_START_TIME ASC", true);
 
 		return rs;
 	}
@@ -262,7 +244,6 @@ public class UploadManager {
 		} catch (Exception e) {
 			ids.DisplayStatus("Unable to load configuration file!");
 			ids.DisplayStatus("Exiting...");
-			// System.exit(1);
 		}
 		ids.DisplayStatus("Done...");
 		return prop;

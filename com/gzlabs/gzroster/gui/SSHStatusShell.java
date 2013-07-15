@@ -4,7 +4,6 @@ import java.util.Properties;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Button;
@@ -13,6 +12,7 @@ import com.gzlabs.gzroster.data.UploadManager;
 
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Rectangle;
 
 /**
@@ -118,6 +118,7 @@ public class SSHStatusShell extends Shell implements IDisplayStatus{
 	{
 		if(prop!=null)
 		{
+			setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 			SSHPasswordDialog pd=new SSHPasswordDialog(parent,SWT.NONE);
 			String result=(String)pd.open();
 			if(result!=null)
@@ -125,6 +126,7 @@ public class SSHStatusShell extends Shell implements IDisplayStatus{
 				UploadManager drh=new UploadManager(prop, this);
 				drh.processData(result);
 			}
+			setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 		}
 		else
 		{

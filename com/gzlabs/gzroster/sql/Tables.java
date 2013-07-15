@@ -52,4 +52,11 @@ public class Tables
 		"org.firebirdsql.jdbc.FBDriver"};
 	
 	public static final String FB_DB_FLAG = "FireBird";
+	
+	public static final String PROC_TODAY_SCHEDULE="getTodaySchedule";
+	public static final String PROC_CLOCKIN="ClockIn";
+	public static final String PROC_CLOCKOUT="ClockOut";
+	public static final String PROC_ISCLOCKEDIN="isClockedIn";
+	public static final String PROC_TOTALSCHEDULEDHOURS="getTotalScheduledHours";
+	public static final String PROC_WEEKLYWORKEDDHOURS="getWeeklyWorkedHours";
 }

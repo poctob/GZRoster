@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -38,7 +39,7 @@ import org.eclipse.swt.widgets.MenuItem;
  */
 public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		IEHoursHandler, IShiftAdder, IPositionsManager, IDetailsManager,
-		IEmployeeManager, ITimeOffManager {
+		IEmployeeManager, ITimeOffManager, IConnectionStatus {
 
 	protected Shell shell;
 	private final FormToolkit formToolkit = new FormToolkit(
@@ -77,6 +78,9 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	private Label lblAllowedPositions;
 
 	/************************************************************/
+	
+	private volatile boolean isInitialized;
+	private volatile boolean isError;
 
 	/**
 	 * Launch the application.
@@ -98,12 +102,51 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	 */
 	public void open() {
 		Display display = Display.getDefault();
-		createContents();
-		shell.open();
-		shell.layout();
-		while (!shell.isDisposed()) {
+		isInitialized=false;	
+		isError=false;
+		
+		dman = new DataManager(this, this);
+		Thread worker=new Thread(dman);
+		worker.setName("DataManager");
+		worker.start();
+		
+		SplashShell splash=new SplashShell(display);
+		splash.open();
+		splash.layout();
+		while (!isInitialized) {
 			if (!display.readAndDispatch()) {
-				display.sleep();
+				//display.sleep();
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		}
+		
+		if(isError)
+		{
+			splash.activateError();
+			while (!splash.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
+			}
+		}
+		else
+		{
+			splash.close();		
+			drh = new UploadManager(dman.getProp(), this);
+			createContents();
+			shell.open();
+			shell.layout();
+			shell.setCursor(new Cursor(display, SWT.CURSOR_ARROW));
+			while (!shell.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
 			}
 		}
 	}
@@ -113,6 +156,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	 */
 	protected void createContents() {
 		shell = new Shell();
+		shell.setBackground(SWTResourceManager.getColor(51, 153, 153));
 		shell.setImage(SWTResourceManager.getImage(MainWindow.class,
 				"/com/gzlabs/gzroster/gui/1370647295_60814.ico"));
 		shell.setSize(1420, 928);
@@ -163,9 +207,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		helpAboutMenuItem.setText("About");
 
 		tabFolder = new TabFolder(shell, SWT.NONE);
+		tabFolder.setBackground(SWTResourceManager.getColor(51, 153, 204));
 		tabFolder.setBounds(10, 10, 900, 800);
 
-		addShiftComposite = new AddShiftComposite(shell, SWT.NONE, this);
+		addShiftComposite = new AddShiftComposite(shell, SWT.NO_MERGE_PAINTS, this);
 		addShiftComposite.setBounds(916, 38, 191, 336);
 		formToolkit.adapt(addShiftComposite);
 		formToolkit.paintBordersFor(addShiftComposite);
@@ -175,16 +220,17 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 		employeeHoursComposite = new EmployeeHoursComposite(shell, SWT.NONE,
 				this);
+		employeeHoursComposite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		employeeHoursComposite.setBounds(1120, 38, 227, 529);
 		formToolkit.adapt(employeeHoursComposite);
 		formToolkit.paintBordersFor(employeeHoursComposite);
 
 		lblStatus = new Label(shell, SWT.NONE);
+		lblStatus.setBackground(SWTResourceManager.getColor(SWT.COLOR_LIST_SELECTION));
 		lblStatus.setBounds(10, 816, 1398, 18);
 		formToolkit.adapt(lblStatus, true, true);
 		lblStatus.setText("Status");
-		dman = new DataManager(this);
-		drh = new UploadManager(dman.getProp(), this);
+	
 		createDetailsTab();
 		populateData();
 
@@ -222,6 +268,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 				}
 			}
 		});
+		isInitialized=true;
 	}
 
 	/**
@@ -243,6 +290,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		tbtmDetails.setText("Details");
 
 		detailsWidget = new DetailsWidget(tabFolder, SWT.NONE, this, this);
+		detailsWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		detailsWidget.setLayout(new GridLayout(1, false));
 		tbtmDetails.setControl(detailsWidget);
 	}
@@ -268,18 +316,21 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		tbtmEmployees.setText("Employees");
 
 		Composite composite_1 = new Composite(tabFolder, SWT.NONE);
+		composite_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_LIST_SELECTION));
 		tbtmEmployees.setControl(composite_1);
 		composite_1.setBounds(0, 27, 900, 800);
 		formToolkit.adapt(composite_1);
 		formToolkit.paintBordersFor(composite_1);
 
 		employeesWidget = new EmployeesWidget(composite_1, SWT.NONE, this);
+		employeesWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		employeesWidget.setBounds(10, 10, 640, 376);
 		formToolkit.adapt(employeesWidget);
 		formToolkit.paintBordersFor(employeesWidget);
 
 		employeePositionComposite = new EmployeePositionComposite(composite_1,
 				SWT.NONE);
+		employeePositionComposite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		employeePositionComposite.setBounds(680, 32, 182, 390);
 		formToolkit.adapt(employeePositionComposite);
 		formToolkit.paintBordersFor(employeePositionComposite);
@@ -291,6 +342,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 		employeeTimeOffComposite = new EmployeeTimeOffComposite(composite_1,
 				SWT.NONE, this);
+		employeeTimeOffComposite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		employeeTimeOffComposite.setBounds(10, 428, 418, 303);
 		formToolkit.adapt(employeeTimeOffComposite);
 		formToolkit.paintBordersFor(employeeTimeOffComposite);
@@ -308,6 +360,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		TabItem tbtmPositions = new TabItem(tabFolder, SWT.NONE);
 		tbtmPositions.setText("Positions");
 		positionsWidget = new PositionsWidget(tabFolder, SWT.NONE, this);
+		positionsWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		tbtmPositions.setControl(positionsWidget);
 		positionsWidget.setBounds(10, 10, 431, 341);
 		formToolkit.adapt(positionsWidget);
@@ -822,5 +875,17 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			refreshData();
 		}
 
+	}
+
+	@Override
+	public synchronized void setInitialized()
+	{
+		isInitialized=true;
+	}
+
+	@Override
+	public synchronized void setError() {
+		isError=true;
+		
 	}
 }

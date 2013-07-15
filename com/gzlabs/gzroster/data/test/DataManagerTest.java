@@ -13,17 +13,18 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.gzlabs.gzroster.data.DataManager;
+import com.gzlabs.gzroster.gui.IConnectionStatus;
 import com.gzlabs.gzroster.gui.IDisplayStatus;
 import com.gzlabs.utils.DateUtils;
 
 
-public class DataManagerTest implements IDisplayStatus {
+public class DataManagerTest implements IDisplayStatus, IConnectionStatus {
 
 	DataManager dman;
 	private static final String CONFIG_FILE_PATH = "GZRoster.config";
 	@Before
 	public void setUp() throws Exception {
-		dman=new DataManager(this);
+		dman=new DataManager(this, this);
 	}
 
 	@After
@@ -36,7 +37,7 @@ public class DataManagerTest implements IDisplayStatus {
 
 	@Test
 	public void testDataManager() {
-		dman=new DataManager(this);
+		dman=new DataManager(this, this);
 		assertNotNull("object should be created", dman);
 	}
 
@@ -570,6 +571,18 @@ public class DataManagerTest implements IDisplayStatus {
 				DateUtils.DateToString(start.getTime()), 
 				DateUtils.DateToString(end.getTime()),
 				"Test Name 123");
+	}
+
+	@Override
+	public void setInitialized() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setError() {
+		// TODO Auto-generated method stub
+		
 	}
 	
 

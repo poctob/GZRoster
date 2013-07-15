@@ -5,6 +5,7 @@ import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -100,9 +101,11 @@ public class PositionsWidget extends Composite {
 				if (ipm != null) {
 					if(checkNameValidity())
 					{
+						setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 						ipm.processPositionData();
 						clearPositionData();
 						ipm.populateData();
+						setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 					}
 					else
 					{
@@ -125,9 +128,11 @@ public class PositionsWidget extends Composite {
 				if (MessageDialog.openConfirm(null, "Confirm Delete",
 						"Are you sure that you want to delete this position?")) {
 					if (ipm != null) {
+						setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 						ipm.deletePosition(positionsList.getSelection());
 						clearPositionData();
 						ipm.populateData();
+						setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 					}
 				}
 			}

@@ -245,6 +245,12 @@ public class Duty extends DB_Object {
 
 	@Override
 	public void populateProperites(ResultSet rs) {
+		try {
+			m_start = rs.getTimestamp("DUTY_START_TIME");
+			m_end = rs.getTimestamp("DUTY_END_TIME");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	

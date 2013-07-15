@@ -289,10 +289,14 @@ public class Person extends DB_Object {
 	 * @return True if this person is allowed to work this shift
 	 */
 	public boolean isTimeAllowed(String start_time, String end_time) {
+		
 		if (start_time != null && end_time != null && m_times_off != null) {
 			for (TimeOff to : m_times_off) {
 				if (to != null) {
-					return !(to.isConflicting(start_time, end_time));
+					if(to.isConflicting(start_time, end_time))
+					{
+						return false;
+					}
 				}
 
 			}

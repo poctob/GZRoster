@@ -6,6 +6,7 @@ import java.util.Collections;
 
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DateTime;
 import org.eclipse.swt.SWT;
@@ -15,6 +16,7 @@ import org.eclipse.swt.widgets.Button;
 
 import com.gzlabs.utils.DateUtils;
 import com.gzlabs.utils.WidgetUtilities;
+import org.eclipse.wb.swt.SWTResourceManager;
 
 /**
  * Widget for adding new shift.
@@ -51,6 +53,7 @@ public class AddShiftComposite extends Composite {
 	 */
 	public AddShiftComposite(Composite parent, int style, IShiftAdder sa) {
 		super(parent, style);
+		setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		this.shiftadder = sa;
 
 		datePicker = new DateTime(this, SWT.BORDER | SWT.DROP_DOWN);
@@ -129,18 +132,22 @@ public class AddShiftComposite extends Composite {
 		positionPicker.setBounds(10, 70, 169, 30);
 
 		Label label = new Label(this, SWT.NONE);
+		label.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		label.setText("Position");
 		label.setBounds(10, 46, 69, 18);
 
 		Label label_1 = new Label(this, SWT.NONE);
+		label_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		label_1.setText("Employee");
 		label_1.setBounds(10, 226, 69, 18);
 
 		Label label_2 = new Label(this, SWT.NONE);
+		label_2.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		label_2.setText("Start Time");
 		label_2.setBounds(10, 106, 69, 18);
 
 		Label label_3 = new Label(this, SWT.NONE);
+		label_3.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		label_3.setText("End Time");
 		label_3.setBounds(10, 166, 69, 18);
 
@@ -201,6 +208,7 @@ public class AddShiftComposite extends Composite {
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 				if (shiftadder != null) {
 					if (addButton.getText().equals("Update")) {
 						shiftadder.dutyDeleteRequest(upd_person, upd_position,
@@ -209,6 +217,7 @@ public class AddShiftComposite extends Composite {
 					shiftadder.processDutyData();
 				}
 				resetControls();
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 
 			}
 		});

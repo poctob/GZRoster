@@ -23,6 +23,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 
 import com.gzlabs.gzroster.sql.Tables;
 import com.gzlabs.utils.WidgetUtilities;
@@ -463,8 +464,11 @@ public class ConfigurationDialog extends Dialog {
 		btnSave.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				shlConfigurationDialog.setCursor(new Cursor(shlConfigurationDialog.getDisplay(), SWT.CURSOR_WAIT));
 				saveConfig();
+				shlConfigurationDialog.setCursor(new Cursor(shlConfigurationDialog.getDisplay(), SWT.CURSOR_ARROW));
 				shlConfigurationDialog.close();
+				
 			}
 		});
 		FormData fd_btnSave = new FormData();

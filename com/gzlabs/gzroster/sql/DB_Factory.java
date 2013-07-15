@@ -698,6 +698,172 @@ public class DB_Factory {
 		}
 		return 0;
 	}
+		
+	/**
+	 * Get today's schedule for a specified employee.
+	 * @param dbman Database manager
+	 * @param name Employee's name
+	 * @param positions Positions list (to populate duties object)
+	 * @param persons Persons list (to populate duties object)
+	 * @return List of database duties.
+	 */
+	public static ArrayList<DB_Object> getTodaysDuty(DBManager dbman, String name, ArrayList<DB_Object> positions,
+			ArrayList<DB_Object> persons) {
+		if(dbman !=null && name!=null)
+		{
+			ResultSet records = runSproc(dbman, Tables.PROC_TODAY_SCHEDULE, name, true);
+			ArrayList<DB_Object> objects = new ArrayList<DB_Object>();
+			
+			if(records!=null)
+			{
+				try {
+					while (records.next()) {
+						Duty obj = (Duty) createObject(ObjectType.DUTIES);
+						obj=obj.populateProperites(records,positions,persons);
+						if(obj!=null)
+						{
+							obj.setUsingFB(false);
+							objects.add(obj);
+						}
+					}
+					
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				return objects;
+			}
+		}
+		return null;		
+	}
+	
+	/**
+	 * Inserts clockin/out event.
+	 * @param dbman Database manager
+	 * @param name Person's name
+	 * @param isClockIn Whether this is a clock in event.
+	 * @return True is operation was a success.
+	 */
+	public static boolean insertClockEvent(DBManager dbman, String name, boolean isClockIn)
+	{
+		boolean retval=false;
+		if(dbman !=null && name!=null)
+		{
+			ResultSet records =runSproc(dbman, isClockIn?Tables.PROC_CLOCKIN:Tables.PROC_CLOCKOUT, name, true); 
+			return records!=null;
+		}
+		return retval;
+	}
+	
+	/**
+	 * Checks if a person is clocked in.
+	 * @param dbman Database manager
+	 * @param name Person's name
+	 * @return True if person is clocked in.
+	 */
+	public static boolean isClockedIn(DBManager dbman, String name)
+	{
+		return runSprocBoolean(dbman, Tables.PROC_ISCLOCKEDIN, name, "isClockedIN");
+	}
+	
+	/**
+	 * Fetches scheduled hours for current week.
+	 * @param dbman Database manager
+	 * @param name Person's name
+	 * @return Scheduled hours for a week.
+	 */
+	public static int getWeekScheduledHours(DBManager dbman, String name)
+	{
+		return runSprocInt(dbman, Tables.PROC_TOTALSCHEDULEDHOURS, name, "TOTAL_SCHEDULED");
+	}
+	
+	/**
+	 * Fetches worked hours for current week.
+	 * @param dbman Database manager
+	 * @param name Person's name
+	 * @return Worked hours for a week.
+	 */
+	public static int getWeekWorkeddHours(DBManager dbman, String name)
+	{
+		return runSprocInt(dbman, Tables.PROC_WEEKLYWORKEDDHOURS, name, "total_minutes");
+	}
+	
+	/**
+	 * Runs stored procedure where a boolean is returned as a result
+	 * @param dbman Database manager
+	 * @param sproc_name Procedure's name
+	 * @param args Procedure's arguments
+	 * @param col_name Column name to return
+	 * @return Boolean contained in the specified column
+	 */
+	private static boolean runSprocBoolean(DBManager dbman, String sproc_name, String args, String col_name)
+	{
+		if(dbman !=null && sproc_name!=null && col_name !=null)
+		{
+			ResultSet records = runSproc(dbman, sproc_name, args, true);
+			if(records!=null)
+			{
+				try {
+					while (records.next()) {
+						if(records.getInt(col_name)==1)
+						{
+							return true;
+						}
+					}
+					
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Runs stored procedure where a single integer is returned as a result
+	 * @param dbman Database manager
+	 * @param sproc_name Procedure's name
+	 * @param args Procedure's arguments
+	 * @param col_name Column name to return
+	 * @return Integer contained in the specified column
+	 */
+	private static int runSprocInt(DBManager dbman, String sproc_name, String args, String col_name)
+	{
+		if(dbman !=null && sproc_name!=null && col_name !=null)
+		{
+			ResultSet records = runSproc(dbman, sproc_name, args, true);
+			if(records!=null)
+			{
+				try {
+					while (records.next()) {
+						return records.getInt(col_name);
+					}
+					
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return 0;
+	}
+	
+	/**
+	 * Runs sql stored procedure
+	 * @param dbman Database manager
+	 * @param sproc_name Procedure's name
+	 * @param args Procedure's arguments
+	 * @param wantresult Whether a result is wanted
+	 * @return Resultset is wanted, null otherwise.
+	 */
+	private static ResultSet runSproc(DBManager dbman, String sproc_name, String args, boolean wantresult)
+	{
+		ResultSet retval=null;
+		if(dbman !=null && sproc_name!=null)
+		{
+			String sql=QueryFactory.getProc(sproc_name, args);
+			retval=runSQL(dbman, sql,	wantresult);
+		}
+		return retval;
+	}
 	
 	
 }

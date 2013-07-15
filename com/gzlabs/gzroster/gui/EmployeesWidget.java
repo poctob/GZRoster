@@ -8,6 +8,7 @@ import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -71,6 +72,7 @@ public class EmployeesWidget extends Composite {
 	 */
 	public EmployeesWidget(Composite parent, int style, IEmployeeManager em) {
 		super(parent, style);
+		setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		if (em == null) {
 			return;
 		}
@@ -80,6 +82,7 @@ public class EmployeesWidget extends Composite {
 		ListViewer employeesListViewer = new ListViewer(this, SWT.BORDER
 				| SWT.V_SCROLL);
 		employeesList = employeesListViewer.getList();
+		employeesList.setBackground(SWTResourceManager.getColor(255, 255, 255));
 		employeesList.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -113,6 +116,7 @@ public class EmployeesWidget extends Composite {
 		employeesEditButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 				if(checkNameValidity())
 				{
 					iem.processEmployeeData();
@@ -121,6 +125,7 @@ public class EmployeesWidget extends Composite {
 				{
 					MessageDialog.openError(new Shell(), "Invalid Name", "Invalid or Duplicate Name detected");
 				}
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 			}
 		});
 		employeesEditButton.setBounds(471, 256, 88, 30);
@@ -140,8 +145,10 @@ public class EmployeesWidget extends Composite {
 						"Are you sure that you want to delete this employee?")) {
 					if(iem !=null && employeesList!=null)
 					{
+						setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 						iem.deleteEmployee(employeesList.getSelection());
 						iem.populateData();
+						setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 					}
 				}
 			}
@@ -171,6 +178,7 @@ public class EmployeesWidget extends Composite {
 		formToolkit.adapt(nameText, true, true);
 
 		lblName = new Label(this, SWT.NONE);
+		lblName.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		lblName.setEnabled(false);
 		lblName.setBounds(168, 22, 69, 18);
 		formToolkit.adapt(lblName, true, true);
@@ -193,12 +201,14 @@ public class EmployeesWidget extends Composite {
 		formToolkit.adapt(homephoneText, true, true);
 
 		lblHomePhone = new Label(this, SWT.NONE);
+		lblHomePhone.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		lblHomePhone.setEnabled(false);
 		lblHomePhone.setText("Home Phone");
 		lblHomePhone.setBounds(168, 80, 130, 18);
 		formToolkit.adapt(lblHomePhone, true, true);
 
 		lblMobilePhone = new Label(this, SWT.NONE);
+		lblMobilePhone.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		lblMobilePhone.setEnabled(false);
 		lblMobilePhone.setText("Mobile Phone");
 		lblMobilePhone.setBounds(168, 138, 130, 18);
@@ -222,6 +232,7 @@ public class EmployeesWidget extends Composite {
 		formToolkit.adapt(emailText, true, true);
 
 		lblWebName = new Label(this, SWT.NONE);
+		lblWebName.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		lblWebName.setEnabled(false);
 		lblWebName.setText("Email");
 		lblWebName.setBounds(168, 198, 130, 18);

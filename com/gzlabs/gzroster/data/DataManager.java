@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import com.gzlabs.gzroster.gui.IConnectionStatus;
 import com.gzlabs.gzroster.gui.IDisplayStatus;
 import com.gzlabs.gzroster.sql.DBManager;
 import com.gzlabs.gzroster.sql.DB_Factory;
@@ -17,7 +18,7 @@ import com.gzlabs.utils.DateUtils;
  * @author apavlune
  *
  */
-public class DataManager {
+public class DataManager implements Runnable{
 	
 	private static final String CONFIG_FILE_PATH = "GZRoster.config";
 
@@ -39,42 +40,16 @@ public class DataManager {
 	
 	private boolean usingFB;
 
+	private IConnectionStatus iconn;
 	
 	/**
 	 * Default constructor. Initializes member variables.
 	 * @param pprop  Properties object.
 	 * @param pids Status display
 	 */
-	public DataManager(IDisplayStatus pids) {
-
-		
+	public DataManager(IDisplayStatus pids, IConnectionStatus conn) {
 		ids = pids;
-		getProp();
-		
-		if(prop != null && !prop.isEmpty())
-		{
-			String db_type=(String) prop.get("db_type");
-			if(db_type!=null)				
-			{
-				usingFB=db_type.equals(Tables.FB_DB_FLAG);
-			}
-			safeDisplayStatus("Attempting to connect to the databse...");
-	
-			if (initDBMan()) {
-				safeDisplayStatus("Connected to the Database!");
-				
-				updateDBObjects();
-				
-			} else {
-				safeDisplayStatus("Database connection failed. Exiting...");
-				return;
-			}
-		}
-		else
-		{
-			safeDisplayStatus("Empty config file. Unable to continiue...");
-			return;
-		}
+		iconn=conn;
 	}
 	
 	/**
@@ -694,6 +669,53 @@ public class DataManager {
 		{
 			ids.DisplayStatus(status);
 		}
+	}
+
+	@Override
+	public void run() {
+		
+		if(iconn==null)
+		{
+			safeDisplayStatus("Main window is not available! Exiting...");
+			System.exit(0);
+		}
+		
+		getProp();
+		
+		if(prop != null && !prop.isEmpty())
+		{
+			String db_type=(String) prop.get("db_type");
+			if(db_type!=null)				
+			{
+				usingFB=db_type.equals(Tables.FB_DB_FLAG);
+			}
+			safeDisplayStatus("Attempting to connect to the databse...");
+	
+			if (initDBMan()) {
+				safeDisplayStatus("Connected to the Database!");
+				
+				updateDBObjects();
+				
+			} else {
+				safeDisplayStatus("Database connection failed. Exiting...");
+				iconn.setError();
+				iconn.setInitialized();
+				
+				return;
+			}
+		}
+		else
+		{
+			safeDisplayStatus("Empty config file. Unable to continiue...");
+			iconn.setError();
+			iconn.setInitialized();
+			
+			return;
+		}
+			
+		iconn.setInitialized();
+		return;
+		
 	}
 
 	

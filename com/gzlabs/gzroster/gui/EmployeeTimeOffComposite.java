@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 
 import com.gzlabs.utils.DateUtils;
 import com.gzlabs.utils.WidgetUtilities;
@@ -120,7 +121,9 @@ public class EmployeeTimeOffComposite extends Composite {
 		btnAdd.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 				addEntry();
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 			}
 		});
 		btnAdd.setBounds(10, 88, 88, 30);
@@ -141,7 +144,9 @@ public class EmployeeTimeOffComposite extends Composite {
 		btnDelete.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_WAIT));
 				deleteEntry();
+				setCursor(new Cursor(getDisplay(), SWT.CURSOR_ARROW));
 			}
 		});
 		btnDelete.setBounds(10, 161, 88, 30);

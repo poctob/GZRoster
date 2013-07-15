@@ -26,6 +26,8 @@ public class QueryFactory {
 	protected final static String INSERT_STM="INSERT INTO "+FROM_CLAUSE+" ("+COL_CLAUSE+") VALUES ("+VAL_CLAUSE+")";
 	protected final static String SELECT_STM = "SELECT " + WHAT_CLAUSE + " FROM "+ FROM_CLAUSE + " WHERE " + WHERE_CLAUSE;
 	protected final static String NEXT_PKID_STM ="SELECT NEXT VALUE FOR " + FROM_CLAUSE	+ "_ID_GEN FROM RDB$DATABASE";
+	
+	protected final static String CALL_PROC="CALL "+WHAT_CLAUSE+" ("+VAL_CLAUSE+")";
 
 	
 	/**
@@ -38,6 +40,30 @@ public class QueryFactory {
 	public static String getInsert(String cols, String vals, String table)
 	{
 		return get_insert_sql(cols, vals, table);
+	}
+	
+	/**
+	 * Generates MySQL Stored procedure execute clause.
+	 * @param name Procedure name
+	 * @param vals Variable list of parameters
+	 * @return Call sproc statement
+	 */
+	public static String getProc(String name, String ... vals)
+	{
+		String args="";
+		for(int i=0; i<vals.length; i++)
+		{
+			args+="'"+vals[i]+"',";
+		}
+		if(args.length()>0)
+		{
+			args=args.substring(0, args.length()-1);
+		}
+		
+		String sql = CALL_PROC;
+		sql=WidgetUtilities.safeStringReplace(sql, WHAT_CLAUSE, name);
+		sql=WidgetUtilities.safeStringReplace(sql, VAL_CLAUSE, args);
+		return sql;
 	}
 	
 	/**

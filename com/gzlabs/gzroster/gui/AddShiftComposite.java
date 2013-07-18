@@ -414,14 +414,14 @@ public class AddShiftComposite extends Composite {
 		if (endPicker != null && shiftadder != null) {
 			endPicker.removeAll();
 			endPicker.setEnabled(true);
-			ArrayList<String> timespans = shiftadder.getTimeSpan();
+			ArrayList<Object> timespans = shiftadder.getTimeSpan();
 			if (timespans == null) {
 				return;
 			}
 			int index = startPicker.getSelectionIndex();
 
 			for (int i = index + 1; i < timespans.size(); i++) {
-				WidgetUtilities.safeComboAdd(endPicker, timespans.get(i));
+				WidgetUtilities.safeComboAdd(endPicker, (String)timespans.get(i));
 			}
 			endPicker.select(0);
 		}

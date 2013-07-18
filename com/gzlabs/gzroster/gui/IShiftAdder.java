@@ -19,7 +19,7 @@ public interface IShiftAdder {
 	 * Fetches time spans for the shifts
 	 * @return List of times
 	 */
-	ArrayList<String> getTimeSpan();
+	ArrayList<Object> getTimeSpan();
 
 	/**
 	 * Handles duty delete operation

@@ -21,7 +21,7 @@ public class TimeOffTest {
 		start=new Date();
 		end = new Date();
 		end.setDate(end.getDate()+1);
-		timeoff=new TimeOff(start, end);
+		timeoff=new TimeOff(start, end, "Pending","Test Subject 1");
 		
 	}
 

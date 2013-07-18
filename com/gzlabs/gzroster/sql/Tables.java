@@ -33,7 +33,7 @@ public class Tables
 	public static final int DUTIES_KEY_INDEX=4;
 	
 	//TmeOff table
-	public static final String TIME_OFF_TABLE_NAME="PERSON_NA_AVAIL_HOURS";
+	public static final String TIME_OFF_TABLE_NAME="VIEW_TIME_OFF";
 	
 	//Person to place table
 	public static final String PERSON_TO_PLACE_TABLE_NAME="PERSON_TO_PLACE";
@@ -59,4 +59,12 @@ public class Tables
 	public static final String PROC_ISCLOCKEDIN="isClockedIn";
 	public static final String PROC_TOTALSCHEDULEDHOURS="getTotalScheduledHours";
 	public static final String PROC_WEEKLYWORKEDDHOURS="getWeeklyWorkedHours";
+	public static final String PROC_REQUESTTIMEOFF="RequestTimeOff";
+	public static final String PROC_SETPIN="setPin";
+	public static final String PROC_GETPIN="getPin";
+	public static final String PROC_UPDATEPERSON="updatePerson";
+	public static final String PROC_GET_TIME_OFF_STATUS_OPTIONS = "getTimeOffStatusOptions";
+	public static final String PROC_DELETE_TIME_OFFS = "deleteTimeOffs";
+	public static final String PROC_GET_CLOCK_OUT_REASONS = "getClockOutReasons";
+	
 }

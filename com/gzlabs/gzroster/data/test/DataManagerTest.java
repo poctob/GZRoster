@@ -215,7 +215,7 @@ public class DataManagerTest implements IDisplayStatus, IConnectionStatus {
 
 	@Test
 	public void testGetTimeSpan() {
-		ArrayList<String> results=dman.getTimeSpan();
+		ArrayList<Object> results=dman.getTimeSpan();
 		assertTrue("There should be data", results.size()>0);
 		
 	}

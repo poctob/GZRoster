@@ -9,7 +9,7 @@ import com.gzlabs.utils.DateUtils;
  * @author apavlune
  *
  */
-public class TimeOff {
+public class TimeOff{
 	
 	//Time off start time
 	private Date start;
@@ -17,15 +17,36 @@ public class TimeOff {
 	//Time off end time
 	private Date end;
 	
+	//request's status
+	private String status;
+	
+	//person's name
+	private String name;
+	
 	/**
 	 * Default constructor initializes member variables
 	 * @param start Start of the time off
 	 * @param end End of the time off
 	 */
-	public TimeOff(Date start, Date end) {
+	public TimeOff(Date start, Date end, String status, String name) {
 		super();
 		this.start = start;
 		this.end = end;
+		this.status=status;
+		this.name=name;
+	}
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	/**
@@ -56,6 +77,11 @@ public class TimeOff {
 		this.end = end;
 	}
 	
+	public void setStatus(String status)
+	{
+		this.status=status;
+	}
+	
 	/**
 	 * Returns start date as string
 	 * @return Start date as string
@@ -72,6 +98,34 @@ public class TimeOff {
 	public String getEndStr()
 	{
 		return DateUtils.DateToString(end);
+	}
+	
+	public boolean setStart(String start)
+	{
+		Date st_date=DateUtils.StringToDate(start);
+		if(st_date!=null)
+		{
+			this.start=st_date;
+			return true;
+		}
+		return false;
+		
+	}
+	
+	public boolean setEnd(String end)
+	{
+		Date end_date=DateUtils.StringToDate(end);
+		if(end_date!=null)
+		{
+			this.end=end_date;
+			return true;
+		}
+		return false;		
+	}
+	
+	public String getStatus()
+	{
+		return status;
 	}
 	
 	/**

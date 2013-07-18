@@ -55,6 +55,7 @@ public class EmployeesWidget extends Composite {
 	private Label lblHomePhone;
 
 	private Button activeCheck;
+	private Button pinButton;
 	/************************************************************/
 
 	private String old_name;
@@ -267,6 +268,13 @@ public class EmployeesWidget extends Composite {
 		btnEmployeeCancel.setBounds(313, 256, 88, 30);
 		formToolkit.adapt(btnEmployeeCancel, true, true);
 		btnEmployeeCancel.setText("Cancel");
+		
+		pinButton = new Button(this, SWT.NONE);
+
+		pinButton.setEnabled(false);
+		pinButton.setBounds(471, 162, 88, 30);
+		formToolkit.adapt(pinButton, true, true);
+		pinButton.setText("Reset Pin");
 
 	}
 
@@ -365,6 +373,18 @@ public class EmployeesWidget extends Composite {
 		lblMobilePhone.setEnabled(enable);
 		lblHomePhone.setEnabled(enable);
 		activeCheck.setEnabled(enable);
+		pinButton.setEnabled(enable);
+		
+		if(enable)
+		{
+			pinButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					PinDialog pd=new PinDialog(new Shell(), iem, nameText.getText());
+					pd.open();
+				}
+			});
+		}
 	}
 
 	@Override
@@ -520,5 +540,4 @@ public class EmployeesWidget extends Composite {
 	public void setOld_email(String old_email) {
 		this.old_email = old_email;
 	}
-
 }

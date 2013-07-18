@@ -711,7 +711,7 @@ public class DB_Factory {
 			ArrayList<DB_Object> persons) {
 		if(dbman !=null && name!=null)
 		{
-			ResultSet records = runSproc(dbman, Tables.PROC_TODAY_SCHEDULE, name, true);
+			ResultSet records = runSproc(dbman, Tables.PROC_TODAY_SCHEDULE, true,name);
 			ArrayList<DB_Object> objects = new ArrayList<DB_Object>();
 			
 			if(records!=null)
@@ -726,7 +726,7 @@ public class DB_Factory {
 							objects.add(obj);
 						}
 					}
-					
+				records.close();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -743,12 +743,12 @@ public class DB_Factory {
 	 * @param isClockIn Whether this is a clock in event.
 	 * @return True is operation was a success.
 	 */
-	public static boolean insertClockEvent(DBManager dbman, String name, boolean isClockIn)
+	public static boolean insertClockEvent(DBManager dbman, String name, boolean isClockIn, String reason)
 	{
 		boolean retval=false;
 		if(dbman !=null && name!=null)
 		{
-			ResultSet records =runSproc(dbman, isClockIn?Tables.PROC_CLOCKIN:Tables.PROC_CLOCKOUT, name, true); 
+			ResultSet records =runSproc(dbman, isClockIn?Tables.PROC_CLOCKIN:Tables.PROC_CLOCKOUT, true, name, reason); 
 			return records!=null;
 		}
 		return retval;
@@ -787,6 +787,17 @@ public class DB_Factory {
 		return runSprocInt(dbman, Tables.PROC_WEEKLYWORKEDDHOURS, name, "total_minutes");
 	}
 	
+	public static boolean requestTimeOff(DBManager dbman, String name, String start, String end, String status)
+	{
+		boolean retval=false;
+		if(dbman !=null && name!=null)
+		{
+			ResultSet records =runSproc(dbman, Tables.PROC_REQUESTTIMEOFF, true, name, start, end, status); 
+			return records!=null;
+		}
+		return retval;
+	}
+	
 	/**
 	 * Runs stored procedure where a boolean is returned as a result
 	 * @param dbman Database manager
@@ -799,7 +810,7 @@ public class DB_Factory {
 	{
 		if(dbman !=null && sproc_name!=null && col_name !=null)
 		{
-			ResultSet records = runSproc(dbman, sproc_name, args, true);
+			ResultSet records = runSproc(dbman, sproc_name, true, args);
 			if(records!=null)
 			{
 				try {
@@ -830,7 +841,7 @@ public class DB_Factory {
 	{
 		if(dbman !=null && sproc_name!=null && col_name !=null)
 		{
-			ResultSet records = runSproc(dbman, sproc_name, args, true);
+			ResultSet records = runSproc(dbman, sproc_name, true, args);
 			if(records!=null)
 			{
 				try {
@@ -846,6 +857,7 @@ public class DB_Factory {
 		return 0;
 	}
 	
+	
 	/**
 	 * Runs sql stored procedure
 	 * @param dbman Database manager
@@ -854,7 +866,7 @@ public class DB_Factory {
 	 * @param wantresult Whether a result is wanted
 	 * @return Resultset is wanted, null otherwise.
 	 */
-	private static ResultSet runSproc(DBManager dbman, String sproc_name, String args, boolean wantresult)
+	private static ResultSet runSproc(DBManager dbman, String sproc_name, boolean wantresult, String ... args)
 	{
 		ResultSet retval=null;
 		if(dbman !=null && sproc_name!=null)
@@ -864,6 +876,84 @@ public class DB_Factory {
 		}
 		return retval;
 	}
+
+	public static ArrayList<String> getActiveNames(
+			ArrayList<DB_Object> objects) {
+		ArrayList<String> names=new ArrayList<String>();
+		if(objects!=null)
+		{
+			for(DB_Object obj:objects)
+			{
+				if(obj!=null && ((Person)obj).isActive())
+				{
+					names.add(obj.getName());
+				}
+			}
+		}
+		return names;
+	}
+
+	public static void setPin(DBManager dbman, String pin, String salt, String name) {
+		runSproc(dbman, Tables.PROC_SETPIN, false, name, pin, salt); 
+		
+	}
+
+	public static ArrayList<String> getPin(DBManager dbman, String login) {
+		return runSprocList(dbman, Tables.PROC_GETPIN, login, "pass","salt");			
+	}
+
+	public static void updatePerson(DBManager dbman, String nameLabel,
+			String address, String homephone, String cellphone, String email) {
+		runSproc
+		(dbman, Tables.PROC_UPDATEPERSON, false,nameLabel, address, homephone, cellphone, email);
+		
+	}
 	
+	public static ArrayList<String> getTimeOffStatusOptions(DBManager dbman)
+	{
+		return runSprocList(dbman, Tables.PROC_GET_TIME_OFF_STATUS_OPTIONS, null, "Status");		
+	}
 	
+	public static ArrayList<String> getClockOutReasons(DBManager dbman)
+	{
+		return runSprocList(dbman, Tables.PROC_GET_CLOCK_OUT_REASONS, null, "Name");		
+	}
+
+	public static void deleteTimeOffs(DBManager dbman) {
+		runSproc(dbman, Tables.PROC_DELETE_TIME_OFFS, true); 
+		
+	}	
+	
+	/**
+	 * Runs stored procedure where a list of strings is returned as a result
+	 * @param dbman Database manager
+	 * @param sproc_name Procedure's name
+	 * @param col_name Column name(s) to return
+	 * @return ArrayList of strings contained in the specified column
+	 */
+	private static ArrayList<String> runSprocList(DBManager dbman, String sproc_name, String arg, String ...col_names)
+	{
+		ArrayList<String> retval=new ArrayList<String>();
+		ResultSet records =arg!=null?runSproc(dbman, sproc_name, true, arg):runSproc(dbman, sproc_name, true);
+		if(records!=null)
+		{
+			try {
+				while (records.next()) {					
+					for(int i=0; i<col_names.length; i++)
+					{
+						retval.add(records.getString(col_names[i]));		
+					}
+							
+				}
+				records.close();
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return retval;
+	}
+	
+
+
 }

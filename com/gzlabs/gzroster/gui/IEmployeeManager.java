@@ -29,4 +29,6 @@ public interface IEmployeeManager {
 	 */
 	void populateData();
 
+	void setPin(String pin, String name);
+
 }

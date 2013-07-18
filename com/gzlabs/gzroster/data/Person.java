@@ -19,6 +19,30 @@ public class Person extends DB_Object {
 	private int m_id;
 	private String m_name;
 	private String m_address;
+	/**
+	 * @return the m_address
+	 */
+	public String getM_address() {
+		return m_address;
+	}
+	/**
+	 * @return the m_home_phone
+	 */
+	public String getM_home_phone() {
+		return m_home_phone;
+	}
+	/**
+	 * @return the m_mobile_phone
+	 */
+	public String getM_mobile_phone() {
+		return m_mobile_phone;
+	}
+	/**
+	 * @return the m_email
+	 */
+	public String getM_email() {
+		return m_email;
+	}
 	private String m_home_phone;
 	private String m_mobile_phone;
 	private String m_note;
@@ -241,11 +265,13 @@ public class Person extends DB_Object {
 			m_times_off = new ArrayList<TimeOff>();
 			try {
 				while (rs.next()) {
-					int pers_id = rs.getInt("PERSON_ID");
-					if (pers_id == m_id) {
+					String pers_name = rs.getString("PERSON_NAME");
+					if (pers_name.equals(m_name)) {
 						TimeOff timeOff = new TimeOff(
-								rs.getTimestamp("PERSON_NA_START_DATE_HOUR"),
-								rs.getTimestamp("PERSON_NA_END_DATE_HOUR"));
+								rs.getTimestamp("START"),
+								rs.getTimestamp("END"),
+								rs.getString("STATUS"),
+								pers_name);
 						m_times_off.add(timeOff);
 					}
 				}
@@ -277,6 +303,11 @@ public class Person extends DB_Object {
 			}
 		}
 		return retval;
+	}
+	
+	public ArrayList<TimeOff> getTimeOffs()
+	{
+		return m_times_off;
 	}
 
 	/**

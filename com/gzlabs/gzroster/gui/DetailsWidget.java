@@ -16,7 +16,7 @@ public class DetailsWidget extends Composite {
 	private IDetailsManager idm;
 	/************************************************************/
 	// Details Tab
-	private DetailsTableViewer tv;
+	private GZTableViewer tv;
 
 	/************************************************************/
 
@@ -40,7 +40,7 @@ public class DetailsWidget extends Composite {
 		}
 
 		cols.add(0, "Time");
-		tv.initiateColumns(cols);
+		tv.initiateColumns(cols,80);
 		tv.setLabelProvider(0, new ColumnLabelProvider() {
 			public String getText(Object element) {
 
@@ -81,7 +81,7 @@ public class DetailsWidget extends Composite {
 	 * @param data
 	 *            Data to pass to the table viewer
 	 */
-	public void initiateData(ArrayList<String> data) {
+	public void initiateData(ArrayList<Object> data) {
 		if (tv != null) {
 			tv.initiateData(data);
 		}

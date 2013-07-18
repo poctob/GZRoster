@@ -11,10 +11,11 @@ import com.gzlabs.gzroster.sql.DBManager;
 import com.gzlabs.gzroster.sql.DB_Factory;
 import com.gzlabs.gzroster.sql.Tables;
 import com.gzlabs.gzroster.sql.DB_Factory.ObjectType;
+import com.gzlabs.utils.CryptoUtils;
 import com.gzlabs.utils.DateUtils;
 
 /**
- * Manages data.  Get data from the database and populates objects with it.
+ * Manages application data. Gets data from the database and populates objects with it.
  * @author apavlune
  *
  */
@@ -448,7 +449,7 @@ public class DataManager implements Runnable{
 	 * from the configuration, using an interval from the configuration.
 	 * @return List of time spans.
 	 */
-	public ArrayList<String> getTimeSpan()
+	public ArrayList<Object> getTimeSpan()
 	{
 		return DateUtils.getTimeSpan
 				(prop.getProperty("day_start"), prop.getProperty("day_end"), prop.getProperty("interval_minutes"));		
@@ -715,6 +716,47 @@ public class DataManager implements Runnable{
 			
 		iconn.setInitialized();
 		return;
+		
+	}
+
+	public void setPin(String pin, String name) {
+		String salt=CryptoUtils.generateRandomSalt(120, 32);
+		String hash=CryptoUtils.hashPasswordSHA512(pin, salt);
+		DB_Factory.setPin(dbman, hash, salt, name);
+		
+	}
+
+	public ArrayList<Object> getAllTimesOff() {
+		ArrayList<Object> retval=new ArrayList<Object>();
+		for(DB_Object p : db_persons)
+		{
+			retval.addAll(((Person)p).getTimeOffs());
+		}
+		return retval;
+	}
+
+	public ArrayList<String> getTimeOffStatusOptions() {		
+		return DB_Factory.getTimeOffStatusOptions(dbman);
+	}
+	
+	/**
+	 * Retrieves a list of Active employees stored in the database
+	 * @return List of employees
+	 */
+	public ArrayList<String> getActiveEmployees()
+	{		
+		return DB_Factory.getActiveNames(db_persons);
+	}
+
+	public void updateTimesOff(ArrayList<Object> timeOff) {
+		DB_Factory.deleteTimeOffs(dbman);
+		for(Object obj:timeOff)
+		{
+			TimeOff toff=(TimeOff)obj;
+			DB_Factory.requestTimeOff
+			(dbman, toff.getName(), toff.getStartStr(), toff.getEndStr(), toff.getStatus());
+		}
+		updateDBObjects();
 		
 	}
 

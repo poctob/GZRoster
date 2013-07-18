@@ -26,6 +26,8 @@ import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.gzlabs.gzroster.data.UploadManager;
 import com.gzlabs.gzroster.data.DataManager;
+import com.gzlabs.gzroster.gui.time_off.ITimeOffManager;
+import com.gzlabs.gzroster.gui.time_off.TimeOffWidget;
 import com.gzlabs.gzroster.sql.Tables;
 import com.gzlabs.utils.WidgetUtilities;
 
@@ -59,7 +61,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	/************************************************************/
 	// Employee Tab
 	private EmployeesWidget employeesWidget;
-	private EmployeeTimeOffComposite employeeTimeOffComposite;
 	/************************************************************/
 
 	/************************************************************/
@@ -70,8 +71,9 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	/************************************************************/
 
 	/************************************************************/
-	// Details Tab
+	// Details and Timeoff Tab
 	private DetailsWidget detailsWidget;
+	private TimeOffWidget timeOffWidget;
 	/************************************************************/
 
 	/************************************************************/
@@ -115,11 +117,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		splash.layout();
 		while (!isInitialized) {
 			if (!display.readAndDispatch()) {
-				//display.sleep();
+
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
@@ -293,6 +294,14 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		detailsWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		detailsWidget.setLayout(new GridLayout(1, false));
 		tbtmDetails.setControl(detailsWidget);
+		
+		TabItem tbtmTimeOff = new TabItem(tabFolder, SWT.NONE);
+		tbtmTimeOff.setText("Time Off");
+		
+		timeOffWidget = new TimeOffWidget(tabFolder, SWT.NONE, this);
+		timeOffWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
+		timeOffWidget.setLayout(new GridLayout(1, false));
+		tbtmTimeOff.setControl(timeOffWidget);
 	}
 
 	/**
@@ -301,9 +310,16 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	 * @param data
 	 *            List of duties
 	 */
-	protected void updateDetailsData(ArrayList<String> data) {
+	protected void updateDetailsData(ArrayList<Object> data) {
 		if (detailsWidget != null && data != null) {
 			detailsWidget.initiateData(data);
+		}
+	}
+	
+	protected void updateTimeOffData(ArrayList<Object> data)
+	{
+		if (timeOffWidget != null && data != null) {
+			timeOffWidget.initiateData(data);
 		}
 	}
 
@@ -339,18 +355,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		lblAllowedPositions.setBounds(701, 10, 130, 18);
 		formToolkit.adapt(lblAllowedPositions, true, true);
 		lblAllowedPositions.setText("Allowed Positions");
-
-		employeeTimeOffComposite = new EmployeeTimeOffComposite(composite_1,
-				SWT.NONE, this);
-		employeeTimeOffComposite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
-		employeeTimeOffComposite.setBounds(10, 428, 418, 303);
-		formToolkit.adapt(employeeTimeOffComposite);
-		formToolkit.paintBordersFor(employeeTimeOffComposite);
-
-		Label lblTimeOff = new Label(composite_1, SWT.CENTER);
-		lblTimeOff.setBounds(168, 404, 69, 18);
-		formToolkit.adapt(lblTimeOff, true, true);
-		lblTimeOff.setText("Time Off");
 	}
 
 	/**
@@ -408,15 +412,16 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 				}
 			}
 
-			ArrayList<String> timespans = dman.getTimeSpan();
+			ArrayList<Object> timespans = dman.getTimeSpan();
 			
 			if(timespans!=null)
 			{
-				for (String s : timespans) {
-					addShiftComposite.addStart(s);
+				for (Object s : timespans) {
+					addShiftComposite.addStart((String)s);
 				}
 			}
 			updateDetailsData(timespans);
+			updateTimeOffData(dman.getAllTimesOff());
 		}
 
 	}
@@ -488,11 +493,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 									.getNameText()));
 				}
 
-				if (employeeTimeOffComposite != null) {
-					employeeTimeOffComposite.toggleButtonVisibility(true);
-					employeeTimeOffComposite.showTimeOff(dman
-							.getTimeOff(string));
-				}
 			}
 
 		}
@@ -748,7 +748,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	}
 
 	@Override
-	public ArrayList<String> getTimeSpan() {
+	public ArrayList<Object> getTimeSpan() {
 		if (dman != null) {
 			return dman.getTimeSpan();
 		}
@@ -804,28 +804,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			employeesWidget.resetControls();
 			employeeHoursComposite.removeItem(selection);
 		}
-
-	}
-
-	@Override
-	public void newTimeOffRequest(String start, String end) {
-		if (employeesWidget != null && dman != null) {
-			dman.newTimeOffRequest(start, end, employeesWidget.getNameText());
-
-			if (employeeTimeOffComposite != null)
-				employeeTimeOffComposite.showTimeOff(dman
-						.getTimeOff(employeesWidget.getNameText()));
-		}
-
-	}
-
-	@Override
-	public boolean deleteTimeOffRequest(String start, String end) {
-		if (employeesWidget != null && dman != null) {
-			return dman.deleteTimeOffRequest(start, end,
-					employeesWidget.getNameText());
-		}
-		return false;
 
 	}
 
@@ -886,6 +864,39 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	@Override
 	public synchronized void setError() {
 		isError=true;
+		
+	}
+
+	@Override
+	public void setPin(String pin, String name)
+	{
+		dman.setPin(pin, name);
+	}
+
+	@Override
+	public ArrayList<String> getTimeOffStatusOptions() {
+		if(dman!=null)
+		{
+			return dman.getTimeOffStatusOptions();
+		}
+		return null;
+	}
+
+	@Override
+	public ArrayList<String> getNameOptions() {
+		if(dman!=null)
+		{
+			return dman.getActiveEmployees();
+		}
+		return null;
+	}
+
+	@Override
+	public void updateTimesOff(ArrayList<Object> timeOff) {
+		if(dman!=null)
+		{
+			dman.updateTimesOff(timeOff);
+		}
 		
 	}
 }

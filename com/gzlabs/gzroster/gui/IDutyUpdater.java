@@ -41,7 +41,6 @@ public interface IDutyUpdater {
 	 * @param row_label
 	 *            Time
 	 */
-	public void dutyDeleteRequest(String label, String col_label,
-			String row_label, boolean update_request);
-
+	void dutyDeleteRequest(String upd_person, String upd_position,
+			String upd_start, boolean update_request);	
 }

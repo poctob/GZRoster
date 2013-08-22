@@ -1,7 +1,6 @@
 package com.gzlabs.gzroster.data;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
 
 /**
  * Database object base class
@@ -10,19 +9,12 @@ import java.util.ArrayList;
  */
 public abstract class DB_Object{
 	
-	private boolean usingFB;
 	/**
 	 * Generates Insert SQL statement
 	 * 
 	 * @return sql statement string.
 	 */
-	public abstract String getInsert_sql(int pkid);
-	
-	/**
-	 * Generate nextPKID SQL statement
-	 * @return sql statement string.
-	 */
-	public abstract String getNexPKID_sql();
+	public abstract String getInsert_sql();
 	
 	/**
 	 * Generates Insert SQL statement
@@ -36,7 +28,7 @@ public abstract class DB_Object{
 	 * 
 	 * @return sql statement string.
 	 */
-	public abstract ArrayList<String> getDelete_sql();
+	public abstract String getDelete_sql();
 	
 	/**
 	 * Populates object properties from the result set
@@ -48,7 +40,7 @@ public abstract class DB_Object{
 	 * Populates object properties using a string list
 	 * @param details Strings to get data from
 	 */
-	public abstract void populateProperties(ArrayList<String> details);
+	public abstract void populateProperties(DB_Object details);
 	
 	/**
 	 * Gets object's name.
@@ -63,17 +55,20 @@ public abstract class DB_Object{
 	public abstract int getPKID();
 	
 	/**
+	 * String representation of the primary key.
+	 * @return Primary key as string.
+	 */
+	public String getPKIDStr()
+	{
+		return Integer.toString(getPKID()); 
+	}
+	
+	/**
 	 * Checks if the item matches to the supplied hash.
 	 * @param details Hash with properties to match.
 	 * @return True if matches, false otherwise.
 	 */
-	public abstract boolean matches(ArrayList<String> details,boolean use_id);	
-
-	/**
-	 * Dumps object properties to string array
-	 * @return ArrayList with object's properties.
-	 */
-	public abstract ArrayList<String> toSortedArray();
+	public abstract boolean matches(DB_Object details,boolean use_id);	
 
 	/**
 	 * Set a sting to the value, if the value is null, string is set to empty.
@@ -84,19 +79,11 @@ public abstract class DB_Object{
 	{
 		return variable!=null?variable:"";
 	}
-
+	
 	/**
-	 * @return the usingFB
+	 * Converts object to string array.  Sort of a serialization.
+	 * @return String array containing object's properties.
 	 */
-	public boolean isUsingFB() {
-		return usingFB;
-	}
-
-	/**
-	 * @param usingFB the usingFB to set
-	 */
-	public void setUsingFB(boolean usingFB) {
-		this.usingFB = usingFB;
-	}
+	public abstract String [] toStringArray();
 
 }

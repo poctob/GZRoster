@@ -2,9 +2,6 @@ package com.gzlabs.gzroster.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-
-import com.gzlabs.gzroster.sql.QueryFactory;
 import com.gzlabs.gzroster.sql.Tables;
 
 /**
@@ -17,104 +14,180 @@ public class Position extends DB_Object {
 	/**************************************************************************
 	 * Member variables
 	 */
+	
+	/**
+	 * Primary key.
+	 */
 	private int m_id;
+	
+	/**
+	 * Position name.
+	 */
 	private String m_name;
+	
+	/**
+	 * Note? Not sure if user ever.
+	 */
 	private String m_note;
 
 	/*************************************************************************/
-
-	@Override
-	public String getInsert_sql(int id) {
-		m_id=id;
-		String cols = "PLACE_NAME,NOTE";
-		if(isUsingFB())
-			cols+=",PLACE_ID";
-		
-		String vals = "'" + m_name + "','" + m_note + "'";
-		if(isUsingFB())
-			vals+=",'"+m_id+"'";
-		
-		return QueryFactory.getInsert(cols, vals, Tables.POSITION_TABLE_NAME);
+	
+	/**
+	 * Default constructor.
+	 */
+	public Position()
+	{
+		this("","",0);
 	}
+	
+	/**
+	 * Overloaded constructor.  Sets all variables sans the primary key.
+	 * @param m_name Name of the position
+	 * @param m_note Note
+	 */
+	public Position(String m_name, String m_note) {
+		this(m_name, m_note, 0);
+	}
+	
+	/**
+	 * Overloaded constructor.  Sets all variables.
+	 * @param m_name Name of the position
+	 * @param m_note Note
+	 * @param p_pkid Primary key.
+	 */
+	public Position(String m_name, String m_note, int p_pkid) {
+		super();
+		this.m_name = m_name;
+		this.m_note = m_note;
+		this.m_id=p_pkid;
+	}
+	
 
+	/**
+	 * @see DB_Object#populateProperites(ResultSet)
+	 */
 	@Override
 	public void populateProperites(ResultSet rs) {
 		try {
 			m_id = rs.getInt("PLACE_ID");
-			m_name =safeStringAssign( rs.getString("PLACE_NAME"));
+ 			m_name =safeStringAssign( rs.getString("PLACE_NAME"));
 			m_note =safeStringAssign( rs.getString("NOTE"));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
+	 /*-------------------------------------------------------------------*/
+	 /*  Setters and getters start
+	 /*--------------------------------------------------------------------*/
+
+	/**
+	 * Note getter.
+	 * @return m_note variable
+	 */
+	public String getNote() {		
+		return m_note;
+	}
+		
+	/**
+	 * @see DB_Object#getName()
+	 */
 	@Override
 	public String getName() {
 		return m_name;
 	}
 
+	/**
+	 * @see DB_Object#getPKID()
+	 */
 	@Override
 	public int getPKID() {
 		return m_id;
 	}
+	
+	
+	/*-------------------------------------------------------------------*/
+	/*  Setters and getters end
+	/*--------------------------------------------------------------------*/
+	
+	
+	/*-------------------------------------------------------------------*/
+	/* SQL getters start
+	/*--------------------------------------------------------------------*/
 
+	/**
+	 * @see DB_Object#getDelete_sql()
+	 */
 	@Override
-	public boolean matches(ArrayList<String> details, boolean use_id) {
-		if (details != null && details.size() == Tables.PLACE_MAX_COLS) {
+	public String getDelete_sql() {
+		return Tables.PROC_DELETE_POSITION;
+	}
+
+	/**
+	 * @see DB_Object#getUpdate_sql()
+	 */
+	@Override
+	public String getUpdate_sql() {
+		return Tables.PROC_UPDATE_POSITION;
+	}
+
+	/**
+	 * @see DB_Object#getInsert_sql()
+	 */
+	@Override
+	public String getInsert_sql() {
+		return Tables.PROC_INSERT_POSITION;
+	}
+	/*-------------------------------------------------------------------*/
+	/* SQL getters end
+	/*--------------------------------------------------------------------*/
+	
+	/**
+	 * @see DB_Object#matches(DB_Object, boolean)
+	 */
+	@Override
+	public boolean matches(DB_Object details, boolean use_id) {
+		if (details != null) {
 			boolean id = true;
+			Position position=(Position)details;
 			if (use_id) {
-				id = m_id == Integer.parseInt(details
-						.get(Tables.PLACE_ID_INDEX));
+				id = m_id == position.getPKID();
 			}
-			return id && m_name.equals(details.get(Tables.PLACE_NAME_INDEX))
-					&& m_note.equals(details.get(Tables.PLACE_NOTE_INDEX));
+			return id && m_name.equals(position.getName())
+					&& m_note.equals(position.getNote());
 		}
 		return false;
 	}
 
+	/**
+	 * @see DB_Object#populateProperites(ResultSet)
+	 */
 	@Override
-	public ArrayList<String> toSortedArray() {
-		ArrayList<String> properties = new ArrayList<String>();
-		properties.add(Integer.toString(m_id));
-		properties.add(m_name);
-		properties.add(m_note);
-		return properties;
-	}
-
-	@Override
-	public void populateProperties(ArrayList<String> details) {
-		if (details == null || details.size() != Tables.PLACE_MAX_COLS) {
+	public void populateProperties(DB_Object details) {
+		if (details == null) {
 			return;
 		}
-		String id_str = details.get(Tables.PLACE_ID_INDEX);
-		if (id_str.length() > 0) {
-			m_id = Integer.parseInt(id_str);
+		Position position=(Position)details;
+		if(position.getPKID()!=0)
+		{
+			m_id = position.getPKID();
 		}
-
-		m_name =safeStringAssign( details.get(Tables.PLACE_NAME_INDEX));
-		m_note =safeStringAssign( details.get(Tables.PLACE_NOTE_INDEX));
+		m_name =position.getName();
+		m_note =position.getNote();
 
 	}
 
+	/**
+	 * @see DB_Object#toStringArray()
+	 */
 	@Override
-	public ArrayList<String> getDelete_sql() {
-		ArrayList<String> retval=new ArrayList<String>();	
-		String sql = QueryFactory.getDelete
-				("PLACE_ID", m_id, Tables.POSITION_TABLE_NAME);
-		retval.add(sql);
-		return retval;
+	public String[] toStringArray() {
+		String[] str_array=	{m_name,
+				m_note,
+				getPKIDStr()};
+		return str_array;
 	}
+	
 
-	@Override
-	public String getUpdate_sql() {
-		String what="PLACE_NAME='" + m_name + "',NOTE='"
-				+ m_note + "'";
-		return QueryFactory.getUpdate(what, "PLACE_ID", m_id, Tables.POSITION_TABLE_NAME);
-	}
-
-	@Override
-	public String getNexPKID_sql() {		
-		return QueryFactory.getNextPKIDFB(Tables.POSITION_TABLE_NAME);
-	}
 
 }

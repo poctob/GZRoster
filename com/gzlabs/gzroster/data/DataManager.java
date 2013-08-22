@@ -1,60 +1,67 @@
 package com.gzlabs.gzroster.data;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Properties;
 
 import com.gzlabs.gzroster.gui.IConnectionStatus;
 import com.gzlabs.gzroster.gui.IDisplayStatus;
 import com.gzlabs.gzroster.sql.DBManager;
+import com.gzlabs.gzroster.sql.DBObjectType;
 import com.gzlabs.gzroster.sql.DB_Factory;
-import com.gzlabs.gzroster.sql.Tables;
-import com.gzlabs.gzroster.sql.DB_Factory.ObjectType;
 import com.gzlabs.utils.CryptoUtils;
 import com.gzlabs.utils.DateUtils;
 
 /**
- * Manages application data. Gets data from the database and populates objects with it.
+ * Manages application data. Gets data from the database and populates objects
+ * with it.
+ * 
  * @author apavlune
- *
+ * 
  */
-public class DataManager implements Runnable{
-	
+public class DataManager implements Runnable {
+
 	private static final String CONFIG_FILE_PATH = "GZRoster.config";
 
-	//Database manager.
+	// Database manager.
 	private DBManager dbman;
-	
-	//Application properties.
+
+	// Application properties.
 	private Properties prop = null;
-	
-	//Status display
+
+	// Status display
 	private IDisplayStatus ids = null;
-	
-	//DB Objects
-	private ArrayList<DB_Object> db_persons;
-	
-	private ArrayList<DB_Object> db_positions;
-	
-	private ArrayList<DB_Object> db_duties;
-	
-	private boolean usingFB;
 
 	private IConnectionStatus iconn;
+
+	// DB Factory
+	private DB_Factory db_factory;
 	
+	//Config file
+	String config_file;
+
 	/**
 	 * Default constructor. Initializes member variables.
-	 * @param pprop  Properties object.
-	 * @param pids Status display
+	 * 
+	 * @param pprop
+	 *            Properties object.
+	 * @param pids
+	 *            Status display
+	 * @param p_conf_file
+	 * 			   Config file           
 	 */
-	public DataManager(IDisplayStatus pids, IConnectionStatus conn) {
+	public DataManager(IDisplayStatus pids, IConnectionStatus conn, String p_conf_file) {
 		ids = pids;
-		iconn=conn;
+		iconn = conn;
+		config_file=p_conf_file!=null?p_conf_file:CONFIG_FILE_PATH;
 	}
-	
+
 	/**
 	 * Initialized database manager
+	 * 
 	 * @return true if initialization was success, false otherwise
 	 */
 	private boolean initDBMan() {
@@ -63,403 +70,225 @@ public class DataManager implements Runnable{
 				prop.getProperty("db_password"));
 		return dbman.init();
 	}
-	
+
 	/**
 	 * Retrieves a list of employees stored in the database
+	 * 
 	 * @return List of employees
 	 */
-	public ArrayList<String> getEmployees()
-	{		
-		return DB_Factory.getNames(db_persons);
+	public ArrayList<String> getElementsNames(DBObjectType type) {
+		return db_factory.getElementsNames(type);
 	}
-	
+
 	/**
-	 * Retrieves detailed information for a single employee.
-	 * @param name Employee name to get the data for.
+	 * Retrieves detailed information for a single element.
+	 * 
+	 * @param name
+	 *            Employee name to get the data for.
+	 * @param type
+	 *            Type of the element
 	 * @return ArrayList of employee details.
 	 */
-	public ArrayList<String> getEmployeeDetails(String name)
-	{
-		return name!=null?DB_Factory.geDetaislByName(db_persons, name):null;
+	public DB_Object getElementDetails(String name, DBObjectType type) {
+		return name != null ? db_factory.getElementByName(name, type) : null;
 	}
-	
-	/**
-	 * Retrieves a list of positions stored in the database
-	 * @return List of positions
-	 */
-	public ArrayList<String> getPositions()
-	{
-		return DB_Factory.getNames(db_positions);
-	}
-	
+
 	/**
 	 * Retrieves a list of positions that this person is mapped to.
+	 * 
 	 * @return List of position names
 	 */
-	public ArrayList<String> getPersonToPosMapping(String person_name)
-	{	
-		if(person_name!=null)
-		{
-			Person person=(Person)DB_Factory.getObjectByName(db_persons, person_name);
-			
-			if(person!=null)
-			{
-				ArrayList<Integer> position_ids=person.getM_positions();
-				
-				ArrayList<String> retval=new ArrayList<String>();
-				for(Integer s : position_ids)
-				{
-					retval.add(DB_Factory.getObjectNameByPKID(db_positions, s));
+	public ArrayList<String> getPersonToPosMapping(String person_name) {
+		if (person_name != null) {
+			Person person = (Person) db_factory.getElementByName(person_name,
+					DBObjectType.PERSON);
+
+			if (person != null) {
+				ArrayList<String> position_ids = person.getM_positions();
+				ArrayList<String> retval = new ArrayList<String>();
+
+				if (position_ids != null) {
+					for (String s : position_ids) {
+						retval.add(s);
+					}
 				}
-				
-			return retval;
+				return retval;
 			}
 		}
 		return null;
 	}
-		
-	/**
-	 * Retrieves detailed information for a single position.
-	 * @param name Positions name to get the data for.
-	 * @return ArrayList of positions details.
-	 */
-	public ArrayList<String> getPositionDetailsByName(String name)
-	{		
-		return name!=null?DB_Factory.geDetaislByName(db_positions, name):null;
-	}
-	
-	/**
-	 * Retrieves a list of duty shifts stored in the database
-	 * @return List of duties
-	 */
-	public ArrayList<String> getDuties()
-	{	
-		return DB_Factory.getNames(db_duties);
-	}
-	
+
 	/**
 	 * Gets a list of people scheduled on a specified position and date/time
-	 * @param date Date/time duty is scheduled on.
-	 * @param postion_id Duty position.
+	 * 
+	 * @param date
+	 *            Date/time duty is scheduled on.
+	 * @param postion_id
+	 *            Duty position.
 	 * @return A List of people scheduled on that date.
 	 */
-	public ArrayList<String> isDutyOn(String date, String postion_id)
-	{
-		if(date!=null && postion_id != null)
-		{
-			ArrayList<String> retval=new ArrayList<String> ();
-			int place_id=DB_Factory.getObjectPKIDByName(db_positions, postion_id);
-			
-			for(DB_Object d: db_duties)
-			{
-				int person_id=d==null?0:((Duty)d).isPersonOn(place_id, date);
-				if(person_id>0)
-				{
-					retval.add(DB_Factory.getObjectNameByPKID(db_persons,person_id));
-				}
-			}
-			return retval;
-		}
-		return null;
+	public ArrayList<String> isDutyOn(String date, String postion_id) {
+		return db_factory.isDutyOn(date, postion_id);
 	}
-	
+
 	/**
-	 * Adds new employee to the database, note that the name should be unique
-	 * @param details ArrayList with the details to add to the database.
-	 * @param position_boxes Names of the positions that are checked for this employee. 
+	 * Adds new record to the database
+	 * 
+	 * @param details
+	 *            Object to add to the database.
+	 * 
+	 * @param type
+	 *            Object type
 	 */
-	public void addEmployee(ArrayList<String>details, ArrayList<String> position_boxes)
-	{
-		if(details != null && position_boxes!=null)
-		{
-			if(DB_Factory.insertRecord(ObjectType.PERSON, dbman, details,usingFB))
-			{
-				updateDBObjects();
-				updatePersonToPositionMap(details.get(Tables.PERSON_NAME_INDEX), position_boxes);
-				safeDisplayStatus("Employee added!");	
-				updateDBObjects();
-			}
-			else
-			{
-				safeDisplayStatus("Unable to add employee!");
+	public void addRecord(DB_Object details, DBObjectType type) {
+		if (details != null) {
+			if (db_factory.insertRecord(details, type)) {
+				safeDisplayStatus("Record added!");
+			} else {
+				safeDisplayStatus("Unable to add record!");
 			}
 		}
 	}
-	
-	/**
-	 * Adds new duty to the database, note that the name should be unique
-	 * @param details ArrayList with the details to add to the database.
-	 */
-	public void addDuty(ArrayList<String> details)
-	{		
-		if(details != null)
-		{
-			if(DB_Factory.insertDuty(dbman, details, db_positions, db_persons))
-			{
-				safeDisplayStatus("Shift added!");
-				updateDBObjects();
-			}
-			else
-			{
-				safeDisplayStatus("Unable to add shift!");
-			}
-		}
-	}
-	
-	/**
-	 * Deletes a duty from the database.
-	 * @param details ArrayList with the details to add to the database.
-	 */
-	public void deleteDuty(ArrayList<String> details)
-	{
-		if(details!=null)
-		{
-			if(DB_Factory.deleteDuty(db_duties, dbman, details))
-			{
-				safeDisplayStatus("Shift deleted!");	
-				updateDBObjects();
-			}
-			else
-			{
-				safeDisplayStatus("Failed to delete!");	
-			}
-		}
-	}
-	
+
 	/**
 	 * Finds start date/time for a specified duty.
-	 * @param person Person name.
-	 * @param position Position name.
-	 * @param datetime Reference date/time, can be any time within the shift.
-	 * @return String date/time representation fo the duty start.
+	 * 
+	 * @param person
+	 *            Person name.
+	 * @param position
+	 *            Position name.
+	 * @param datetime
+	 *            Reference date/time, can be any time within the shift.
+	 * @return String date/time representation of the duty start.
 	 */
-	public String getDutyStart(String person, String position, String datetime)
-	{
+	public Calendar getDutyStart(String person, String position, String datetime) {
 		Duty duty = getDutyByTime(person, position, datetime);
 		if (duty != null) {
-			return DateUtils.DateToString(duty.getM_start());
+			return duty.getM_start();
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Finds end date/time for a specified duty.
-	 * @param person Person name.
-	 * @param position Position name.
-	 * @param datetime Reference date/time, can be any time within the shift.
-	 * @return String date/time representation fo the duty start.
+	 * 
+	 * @param person
+	 *            Person name.
+	 * @param position
+	 *            Position name.
+	 * @param datetime
+	 *            Reference date/time, can be any time within the shift.
+	 * @return String date/time representation of the duty end.
 	 */
-	public String getDutyEnd(String person, String position, String datetime) {
+	public Calendar getDutyEnd(String person, String position, String datetime) {
 		Duty duty = getDutyByTime(person, position, datetime);
 		if (duty != null) {
-			return DateUtils.DateToString(duty.getM_end());
+			return duty.getM_end();
 		}
 		return null;
 
 	}
-	
+
 	/**
 	 * Finds duty scheduled for specified time..
-	 * @param person Person name.
-	 * @param position Position name.
-	 * @param datetime Reference date/time, can be any time within the shift.
+	 * 
+	 * @param person
+	 *            Person name.
+	 * @param position
+	 *            Position name.
+	 * @param datetime
+	 *            Reference date/time, can be any time within the shift.
 	 * @return Duty scheduled for specified parameters.
 	 */
-	private Duty getDutyByTime(String person, String position, String datetime)
-	{
-		int person_id=DB_Factory.getObjectPKIDByName(db_persons, person);
-		int position_id=DB_Factory.getObjectPKIDByName(db_positions, position);
-		if(person!=null && person.length()>1)
-		{
-			return DB_Factory.findDutyByTime(db_duties, person_id, position_id, datetime);
+	private Duty getDutyByTime(String person, String position, String datetime) {
+		if (person != null && person.length() > 1) {
+			return db_factory.findDutyByTime(person, position, datetime);
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Adds new position to the database, note that the name should be unique
-	 * @param details Position information
+	 * Deletes a record from the database.
+	 * 
+	 * @param obj
+	 *            Element to delete.
+	 * @param type
+	 * 			  Element type.
 	 */
-	public void addPosition(ArrayList<String> details)
-	{	
-		if(details != null)
-		{
-			if(DB_Factory.insertRecord(ObjectType.POSITION, dbman, details, usingFB))
-			{
-				safeDisplayStatus("Positions added!");	
-				updateDBObjects();
-			}
-			else
-			{
-				safeDisplayStatus("Unable to add position!");
-			}
-		}
-	}
-	
-	/**
-	 * Deletes one or more employees from the database.
-	 * @param values employees to delete.
-	 */
-	public void deleteEmployee(String [] values)
-	{
-		boolean success=false;
-		if(values != null)
-		{
-			for(int i=0; i<values.length; i++)
-			{
-				success=DB_Factory.deleteRecord(db_persons,dbman,values[i]);
-				if(success)
-				{
-					safeDisplayStatus("Record deleted!");
-					updateDBObjects();
-				}
-				else
-				{
-					safeDisplayStatus("Unable to delete record!");
-				}
-			}	
-		}
-	}
-	
-	/**
-	 * Deletes one or more position from from the database.
-	 * @param values positions to delete.
-	 */
-	public void deletePosition(String [] values)
-	{
-		boolean success=false;
-		if(values != null)
-		{
-			for(int i=0; i<values.length; i++)
-			{
-				success=DB_Factory.deleteRecord(db_positions,dbman,	values[i]);
-				if(success)
-				{
-					safeDisplayStatus("Record deleted!");
-					updateDBObjects();
-				}
-				else
-				{
-					safeDisplayStatus("Unable to delete record!");
-				}
-			}	
+	public void deleteRecord(DB_Object obj, DBObjectType type) {
+		boolean success = false;
+
+		success = db_factory.deleteElement(obj, type);
+		if (success) {
+			safeDisplayStatus("Record deleted!");
+		} else {
+			safeDisplayStatus("Unable to delete record!");
 		}
 	}
 
 	/**
-	 * Updates employee in the database.
-	 * @param old_val Old values
-	 * @param new_val New values
-	 * @param position_boxes Positions list that this employee can take. 
+	 * Updates object in the database.
+	 * 
+	 * @param oldObj
+	 *            Old object
+	 * @param newObj
+	 *            New object
+	 *            
+	 *@param type
+	 *			Object type.            
 	 */
-	public void updateEmployee(ArrayList<String> old_val, ArrayList<String> new_val, ArrayList<String> position_boxes) {
-		
-		if(DB_Factory.updateRecord(db_persons, dbman, old_val, new_val))
-		{
-			updatePersonToPositionMap(new_val.get(Tables.PERSON_NAME_INDEX), position_boxes);
+	public void updateRecord(DB_Object oldObj, DB_Object newObj,
+			DBObjectType type) {
+		if (db_factory.updateElement(oldObj, newObj, type)) {
 			safeDisplayStatus("Record updated!");
-			updateDBObjects();
-		}
-		else
-		{
+		} else {
 			safeDisplayStatus("Unable to update record!");
-		}	
-			
-	}
-	
-	/**
-	 * Updates mapping of person to position
-	 * @param person_name Employee name to update
-	 * @param position_boxes Positions that this employee can take.
-	 */
-	private void updatePersonToPositionMap(String person_name, ArrayList<String> position_boxes)
-	{
-		if(person_name!=null & position_boxes!=null)
-		{
-			ArrayList<Integer> place_ids=new ArrayList<Integer>();
-			
-			for(String s:position_boxes)
-			{
-				int place_id=DB_Factory.getObjectPKIDByName(db_positions, s);
-				place_ids.add(place_id);
-			}
-			
-			DB_Factory.updatePersonToPosition(db_persons, place_ids, person_name, dbman);
-			updateDBObjects();
 		}
-	}
-	
-	/**
-	 * Updates position in the database.
-	 * @param old_val Old values
-	 * @param new_val New values
-	 */
-	public void updatePosition(ArrayList<String> old_val, ArrayList<String> new_val) {
-			if(DB_Factory.updateRecord(db_positions, dbman, old_val, new_val))
-			{
-				updateDBObjects();
-				safeDisplayStatus("Record updated!");
-			}
-			else
-			{
-				safeDisplayStatus("Unable to update record!");
-			}
-	}
-	
-	/**
-	 * Fetches database data for local objects
-	 */
-	private void updateDBObjects()
-	{
-		db_positions=DB_Factory.getAllRecords(ObjectType.POSITION, dbman, usingFB);	
-		db_persons=DB_Factory.getAllRecords(ObjectType.PERSON, dbman, usingFB);	
-		db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions, usingFB);
-		
 	}
 
-	
 	/**
 	 * Determines a label for specified cell.
-	 * @param str_time Time of the shift (row label)
-	 * @param column_label Position name (column label)
-	 * @param string_date Date of the shift (currently selected date).
+	 * 
+	 * @param str_time
+	 *            Time of the shift (row label)
+	 * @param column_label
+	 *            Position name (column label)
+	 * @param string_date
+	 *            Date of the shift (currently selected date).
 	 * @return Name of a person(s) scheduled for this shift.
 	 */
-	public String getCellLabelString(String str_time, String column_label, String string_date)
-	{
-		if(column_label!=null && string_date!=null && str_time!=null)
-		{
-							
-			String date=string_date+" "+str_time+":00.0";
-			
-			ArrayList<String> persons_on_duty=null;
-			persons_on_duty=isDutyOn(date, column_label);
-			
-			if(persons_on_duty!=null && persons_on_duty.size()>0)
-			{
+	public String getCellLabelString(String str_time, String column_label,
+			String string_date) {
+		if (column_label != null && string_date != null && str_time != null) {
+
+			String date = string_date + " " + str_time + ":00.0";
+
+			ArrayList<String> persons_on_duty = null;
+			persons_on_duty = isDutyOn(date, column_label);
+
+			if (persons_on_duty != null && persons_on_duty.size() > 0) {
 				return persons_on_duty.toString();
-			}												
+			}
 			return "";
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Creates a list of times between starting and ending times 
-	 * from the configuration, using an interval from the configuration.
+	 * Creates a list of times between starting and ending times from the
+	 * configuration, using an interval from the configuration.
+	 * 
 	 * @return List of time spans.
 	 */
-	public ArrayList<Object> getTimeSpan()
-	{
-		return DateUtils.getTimeSpan
-				(prop.getProperty("day_start"), prop.getProperty("day_end"), prop.getProperty("interval_minutes"));		
+	public ArrayList<Object> getTimeSpan() {
+		return DateUtils.getTimeSpan(prop.getProperty("day_start"),
+				prop.getProperty("day_end"),
+				prop.getProperty("interval_minutes"));
 	}
-	
+
 	/**
 	 * Loads properties file.
 	 * 
-	 * @param ids
-	 *            Information display interface.
 	 * @return null if something went wrong. Properties loaded from file
 	 *         otherwise.
 	 */
@@ -468,176 +297,75 @@ public class DataManager implements Runnable{
 		prop = null;
 		try {
 			prop = new Properties();
-			prop.load(new FileInputStream(CONFIG_FILE_PATH));
+			prop.load(new FileInputStream(config_file));
 		} catch (Exception e) {
 			safeDisplayStatus("Unable to load configuration file!");
 		}
 		safeDisplayStatus("Done...");
 		return prop;
 	}
-	
+
 	/**
-	 *  Checks if an employee has already been scheduled.
-	 * @param person_name Name of the employee
-	 * @param start Shift start date/time
-	 * @param end Shift end date/time
+	 * Checks if an employee has already been scheduled.
+	 * 
+	 * @param duty
+	 *           Duty object to check.
 	 * @return true is person has a conflict, false otherwise.
 	 */
-	public boolean checkDutyConflict(String person_name, String start, String end) {
-		
-		int per_id=DB_Factory.getObjectPKIDByName(db_persons, person_name);
-		
-		for(DB_Object d:db_duties)
-		{
-			if(d!=null && ((Duty)d).personConflict(per_id, start, end))
-			{
-				return true;
-			}
-		}
-		return false;
+	public boolean checkDutyConflict(DB_Object duty) {
+		return db_factory.checkDutyConflict(duty);
 	}
-	
-	/**
-	 * Calculates the total hours that an employee is scheduled for during a specified period.
-	 * @param employee_name Name of the employee.
-	 * @param start Start of the period.
-	 * @param end End of the period.
-	 * @return Total hours 
-	 */
-	public String getTotalEmpoloyeeHours(String employee_name, String start, String end)
-	{
-		int per_id=DB_Factory.getObjectPKIDByName(db_persons, employee_name);		
-		double total_hours=0;
-		
-		for(DB_Object d: db_duties)
-		{
-			if(d!=null)
-			{
-				double hours=((Duty)d).getTotalEmpoloyeeHours(per_id, start, end);
-				if(hours>0)
-				{
-					total_hours+=hours;
-				}
-			}
-		}
-		try
-		{
-			String retval=String.format("%.2f", total_hours);
-			return retval;
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		return null;
-	} 
 
 	/**
-	 * Gets a list of employees that are allowed to work specified positions for specified time span.
-	 * @param col_label Position name
-	 * @param start Start of the time span.
-	 * @param end End of the time span.
+	 * Calculates the total hours that an employee is scheduled for during a
+	 * specified period.
+	 * 
+	 * @param employee_name
+	 *            Name of the employee.
+	 * @param start
+	 *            Start of the period.
+	 * @param end
+	 *            End of the period.
+	 * @return Total hours
+	 */
+	public String getTotalEmpoloyeeHours(String employee_name, String start,
+			String end) {
+
+		return db_factory.getTotalEmpoloyeeHours(employee_name, start, end);
+	}
+
+	/**
+	 * Gets a list of employees that are allowed to work specified positions for
+	 * specified time span.
+	 * 
+	 * @param col_label
+	 *            Position name
+	 * @param start
+	 *            Start of the time span.
+	 * @param end
+	 *            End of the time span.
 	 * @return List of the employee names.
 	 */
-	public ArrayList<String> getAllowedEmployees(String col_label, String start, String end) {
-		
-		int place_id=DB_Factory.getObjectPKIDByName(db_positions, col_label);
-		ArrayList<DB_Object> persons=new ArrayList<DB_Object>();
-		for(DB_Object per:db_persons)
-		{
-			if(per!=null && ((Person)per).isActive() && ((Person)per).isPositionAllowed(place_id))
-			{
-				persons.add(per);
-			}
-		}
-		ArrayList<String> retval=new ArrayList<String>();
-		
-		for(DB_Object per:persons)
-		{
-			if(per!=null && ((Person)per).isTimeAllowed(start, end))
-			{				
-				retval.add(per.getName());				
-			}
-		}
-		
-		return retval;
-
-	}	
-
-	/**
-	 * Adds new time off request.
-	 * @param start Time off start
-	 * @param end Time off end
-	 * @param nameText Name of the person.
-	 * @return True if time off was added successfully, false otherwise
-	 */
- 	public boolean newTimeOffRequest(String start, String end, String nameText) {
-
-		if(DB_Factory.addTimeOff(db_persons, start, end, nameText, dbman))
-		{
-			safeDisplayStatus("Time Off Added!");
-			updateDBObjects();
-			return true;
-		}
-		else
-		{
-			safeDisplayStatus("Unable to add Time Off!");
-			return false;
-		}
-		
-	}
-
- 	/**
- 	 * Fetches all time off requests for a specified employee.
- 	 * @param string Employee name.
- 	 * @return List of time off requests.
- 	 */
-	public ArrayList<String> getTimeOff(String string) {
-		DB_Object person=DB_Factory.getObjectByName(db_persons, string);
-		
-		return person!=null?((Person)person).getTimesOff():null;
+	public ArrayList<String> getAllowedEmployees(String col_label,
+			String start, String end) {
+		return db_factory.getAllowedEmployees(col_label, start, end);
 	}
 
 	/**
-	 * Deletes a time off request
-	 * @param start Start of the request
-	 * @param end End of the request
-	 * @param nameText Name of the employee
-	 * @return True is operation was successfull, false otherwise.
+	 * Fetches most recent records from the database.
 	 */
-	public boolean deleteTimeOffRequest(String start, String end, String nameText) {
-		if(DB_Factory.deleteTimeOff(db_persons, start, end, nameText, dbman))
-		{
-			safeDisplayStatus("Time Off Deleted!");
-			updateDBObjects();
-			return true;
-		}
-		else
-		{
-			safeDisplayStatus("Unable to delete Time Off!");
-			return false;
-		}
-		
+	public void refreshData() {
+		db_factory.refreshData();
 	}
 
-	/**
-	 * Fetches most recent records from the database for duties.
-	 */
-	public void refreshDutyList() {
-		db_duties=DB_Factory.getAllDuties(dbman, db_persons, db_positions, usingFB);
-	}
-	
 	/**
 	 * Saves properties into a file.
 	 * 
 	 * @param prop
 	 *            Properties to save.
-	 * @param ids
-	 *            Information display interface.
 	 */
 	public void saveProp(Properties pprop) {
-		if(pprop == null)
-		{
+		if (pprop == null) {
 			safeDisplayStatus("Properties are empty. Not saving.");
 			return;
 		}
@@ -645,9 +373,8 @@ public class DataManager implements Runnable{
 		safeDisplayStatus("Saving configuration...");
 		FileOutputStream fout = null;
 		try {
-			fout = new FileOutputStream(CONFIG_FILE_PATH);
-			prop.store(fout, "Auto-Save "
-					+ DateUtils.getCurrentDateString());
+			fout = new FileOutputStream(config_file);
+			prop.store(fout, "Auto-Save " + DateUtils.getCurrentDateString());
 		} catch (IOException e) {
 			safeDisplayStatus(e.getMessage());
 		} finally {
@@ -659,106 +386,165 @@ public class DataManager implements Runnable{
 		}
 		safeDisplayStatus("Done...");
 	}
-	
+
 	/**
 	 * Safety function for status display
-	 * @param status Message to display.
+	 * 
+	 * @param status
+	 *            Message to display.
 	 */
-	private void safeDisplayStatus(String status)
-	{
-		if(ids!=null)
-		{
+	private void safeDisplayStatus(String status) {
+		if (ids != null && status!=null) {
 			ids.DisplayStatus(status);
 		}
 	}
 
+	/**
+	 * Intializes database connection in a separate thread.
+	 */
 	@Override
 	public void run() {
-		
-		if(iconn==null)
-		{
+
+		if (iconn == null) {
 			safeDisplayStatus("Main window is not available! Exiting...");
 			System.exit(0);
 		}
-		
+
 		getProp();
-		
-		if(prop != null && !prop.isEmpty())
-		{
-			String db_type=(String) prop.get("db_type");
-			if(db_type!=null)				
-			{
-				usingFB=db_type.equals(Tables.FB_DB_FLAG);
-			}
+
+		if (prop != null && !prop.isEmpty()) {
 			safeDisplayStatus("Attempting to connect to the databse...");
-	
+
 			if (initDBMan()) {
 				safeDisplayStatus("Connected to the Database!");
-				
-				updateDBObjects();
-				
+				db_factory = new DB_Factory(dbman);
+				db_factory.refreshData();
+
 			} else {
 				safeDisplayStatus("Database connection failed. Exiting...");
 				iconn.setError();
 				iconn.setInitialized();
-				
+
 				return;
 			}
-		}
-		else
-		{
+		} else {
 			safeDisplayStatus("Empty config file. Unable to continiue...");
 			iconn.setError();
 			iconn.setInitialized();
-			
+
 			return;
 		}
-			
+
 		iconn.setInitialized();
 		return;
-		
+
 	}
 
+	/**
+	 * Sets employees pin using SHA512 hash.
+	 * @param pin Pin to hash.
+	 * @param name Employee's name.
+	 */
 	public void setPin(String pin, String name) {
-		String salt=CryptoUtils.generateRandomSalt(120, 32);
-		String hash=CryptoUtils.hashPasswordSHA512(pin, salt);
-		DB_Factory.setPin(dbman, hash, salt, name);
-		
+		String salt = CryptoUtils.generateRandomSalt(120, 32);
+		String hash = CryptoUtils.hashPasswordSHA512(pin, salt);
+		db_factory.setPin(hash, salt, name);
+
 	}
 
+	/**
+	 * Fetches all time offs from the database.
+	 * @return Time Offs collection.
+	 */
 	public ArrayList<Object> getAllTimesOff() {
-		ArrayList<Object> retval=new ArrayList<Object>();
-		for(DB_Object p : db_persons)
-		{
-			retval.addAll(((Person)p).getTimeOffs());
-		}
-		return retval;
+		return db_factory.getAllTimesOff();
 	}
 
-	public ArrayList<String> getTimeOffStatusOptions() {		
-		return DB_Factory.getTimeOffStatusOptions(dbman);
+	/**
+	 * Fetches all available time off status label.
+	 * @return Time off status labels
+	 */
+	public ArrayList<String> getTimeOffStatusOptions() {
+		return db_factory.getTimeOffStatusOptions();
 	}
-	
+
 	/**
 	 * Retrieves a list of Active employees stored in the database
+	 * 
 	 * @return List of employees
 	 */
-	public ArrayList<String> getActiveEmployees()
-	{		
-		return DB_Factory.getActiveNames(db_persons);
+	public ArrayList<String> getActiveEmployees() {
+		return db_factory.getActiveNames();
 	}
 
+	/**
+	 * Updates time off object in the database.
+	 * @param timeOff Time off object to update.
+	 */
 	public void updateTimesOff(ArrayList<Object> timeOff) {
-		DB_Factory.deleteTimeOffs(dbman);
-		for(Object obj:timeOff)
-		{
-			TimeOff toff=(TimeOff)obj;
-			DB_Factory.requestTimeOff
-			(dbman, toff.getName(), toff.getStartStr(), toff.getEndStr(), toff.getStatus());
-		}
-		updateDBObjects();
 		
+		if(timeOff!=null)
+		{
+			//All time offs are deleted initially
+			db_factory.deleteTimeOffs();	
+			
+			//then they are re-added.
+			for (Object obj : timeOff) {
+				
+				if(obj!=null && obj instanceof TimeOff)
+				{
+					TimeOff toff = (TimeOff) obj;
+									
+					db_factory.requestTimeOff(toff.getName(), toff.getStartStr(),
+							toff.getEndStr(), toff.getStatus());
+				}
+			}
+		}
 	}
 
-	
+	/**
+	 * Fetches a list of privileges mapped for a specified person
+	 * @param person_name Name of person to fetch.
+	 * @return Collection of privileges.
+	 */
+	public ArrayList<String> getPersonToPrivilegesMapping(String person_name) {
+		if (person_name != null) {
+			Person person = (Person) db_factory.getElementByName(person_name,
+					DBObjectType.PERSON);
+
+			if (person != null) {
+				return person.getM_privileges();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Deletes a duty from the database.
+	 * @param start_date Duty start
+	 * @param end_date Duty end
+	 * @param position Position
+	 * @param person Person
+	 */
+	public void deleteDuty(Calendar start_date, Calendar end_date,
+			String position, String person) {
+		boolean success = false;
+		Duty duty = new Duty(start_date, end_date, position, person);
+		success = db_factory.deleteElement(duty, DBObjectType.DUTY);
+		if (success) {
+			safeDisplayStatus("Record deleted!");
+		} else {
+			safeDisplayStatus("Unable to delete record!");
+		}
+	}
+
+	/**
+	 * Fetches database object based on its name.
+	 * @param name Name to use
+	 * @param type Object type.
+	 * @return Database object that matches parameters.
+	 */
+	public DB_Object getObjectByName(String name, DBObjectType type) {
+		return db_factory.getElementByName(name, type);
+	}
 }

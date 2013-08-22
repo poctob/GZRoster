@@ -5,230 +5,204 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gzlabs.gzroster.data.DB_Object;
+import com.gzlabs.gzroster.data.DataManager;
 import com.gzlabs.gzroster.data.Duty;
 import com.gzlabs.gzroster.data.Person;
 import com.gzlabs.gzroster.data.Position;
+import com.gzlabs.gzroster.data.Privilege;
+import com.gzlabs.gzroster.data.TimeOff;
+import com.gzlabs.gzroster.sql.DBObjectType;
+import com.gzlabs.gzroster.sql.Tables;
 import com.gzlabs.utils.DateUtils;
 
-
 public class DutyTest {
-
-	Duty duty;
-	
 	Position position;
+	Privilege privilege;
 	Person person;
-	
-	ArrayList<String> d_properties;
-	ArrayList<String> pos_properties;
-	ArrayList<String> per_properties;
-	ArrayList<Integer> positions;
 	
 	Calendar start;
 	Calendar end;
-	
-	
+	Duty duty;
 	@Before
 	public void setUp() throws Exception {
-		position=new Position();
-		pos_properties=new ArrayList<String>();
-		pos_properties.add("2");
-		pos_properties.add("Test Position");
-		pos_properties.add("Test Note");
-		position.populateProperties(pos_properties);
+		TestCommon tc=new TestCommon();
+		DataManager dman=tc.getDman();
 		
-		person=new Person();
-		per_properties=new ArrayList<String>();
-		per_properties.add("2");
-		per_properties.add("Test Name");
-		per_properties.add("Test Address");
-		per_properties.add("Test home phone");
-		per_properties.add("Test mobile phone");
-		per_properties.add("Test Note");
-		per_properties.add("1");
-		per_properties.add("Test Email");
-		person.populateProperties(per_properties);
+		position=new Position( "Test Position",  "Test Note", 100);
+		dman.addRecord(position, DBObjectType.POSITION);
 		
-		positions=new ArrayList<Integer>();
-		positions.add(1);
-		positions.add(2);
-		positions.add(3);
-		person.setM_positions(positions);
+		privilege=new Privilege("Test Name", 100);
+		dman.addRecord(privilege, DBObjectType.PRIVILEGE);
 		
-		duty=new Duty();
-		d_properties=new ArrayList<String>();
+		ArrayList<String> positions=new ArrayList<String>();
+		ArrayList<String> privileges=new ArrayList<String>();
+		positions.add(position.getName());
+		privileges.add(privilege.getName());
+		
+		Calendar start1=new GregorianCalendar();
+		Calendar end1=new GregorianCalendar();
+		end1.set(Calendar.DATE, end1.get(Calendar.DATE)+1);
+		TimeOff timeoff=new TimeOff(start1, end1, "Pending", "Test Person");
+		
+		ArrayList<TimeOff> timesoff=new ArrayList<TimeOff>();
+		timesoff.add(timeoff);
+		
+		person=new Person("Test Person","Test Address","23204230420","4732752399743",true,"TEst email@",100,timesoff, positions, privileges);
+		dman.addRecord(person, DBObjectType.PERSON);
+		
+		
 		start=new GregorianCalendar();
 		end=new GregorianCalendar();
-		end.add(Calendar.HOUR_OF_DAY,2);
-		d_properties.add(DateUtils.DateToString(start.getTime()));
-		d_properties.add(position.getName());
-		d_properties.add(person.getName());
-		d_properties.add(DateUtils.DateToString(end.getTime()));
-		d_properties.add("");
-		
-		ArrayList<DB_Object> pos=new ArrayList<DB_Object>();
-		pos.add(position);
-		ArrayList<DB_Object> pers=new ArrayList<DB_Object>();
-		pers.add(person);
-		duty.populateProperties(d_properties, pos, pers);
+		end.set(Calendar.HOUR, end.get(Calendar.HOUR)+1);
+		duty=new Duty(start, end, position.getName(), person.getName(), "1234");
 	}
 
 	@After
 	public void tearDown() throws Exception {
-	}
-
-	@Test
-	public void testGetInsert_sql() {
-		String sql=duty.getInsert_sql(1);
-		String uuid=duty.getM_uuid();
-		String target="INSERT INTO DUTIES" +
-				" (DUTY_START_TIME,PLACE_ID,PERSON_ID,DUTY_END_TIME,DUTY_KEY) " +
-				"VALUES ('"+DateUtils.DateToString(start.getTime())+
-						"','2','2','"+DateUtils.DateToString(end.getTime())+
-								"','"+uuid+"')";
+		TestCommon tc=new TestCommon();
+		DataManager dman=tc.getDman();
 		
-		assertEquals("Strings should be the same", target, sql);		
+		dman.deleteRecord(position, DBObjectType.POSITION);
+		dman.deleteRecord(privilege, DBObjectType.PRIVILEGE);
+		dman.deleteRecord(person, DBObjectType.PERSON);
 	}
 
-	@Test
-	public void testGetNexPKID_sql() {
-		assertNull("Should not be implemented", duty.getNexPKID_sql());
+/*	@Test
+	public void testGetInsert_sql() {
+		assertEquals(Tables.PROC_INSERT_DUTY, duty.getInsert_sql());
 	}
 
 	@Test
 	public void testGetUpdate_sql() {
-		String uuid=duty.getM_uuid();
-		String target="UPDATE DUTIES SET " +
-				"DUTY_START_TIME='"+DateUtils.DateToString(start.getTime())+
-				"',PLACE_ID='2',PERSON_ID='2'," +
-				"DUTY_END_TIME='"+DateUtils.DateToString(end.getTime())+"' "+
-				"WHERE DUTY_KEY='"+uuid+"'";
-		String sql=duty.getUpdate_sql();
-		assertEquals("Strings should be the same", target, sql);
+		assertEquals(Tables.PROC_UPDATE_DUTY, duty.getInsert_sql());
 	}
 
 	@Test
 	public void testGetDelete_sql() {
-		String uuid=duty.getM_uuid();
-		String target="DELETE FROM DUTIES WHERE DUTY_KEY='"+uuid+"'";
-		ArrayList<String> sql=duty.getDelete_sql();
-		assertEquals("Strings should be the same", target, sql.get(0));
+		assertEquals(Tables.PROC_DELETE_DUTY, duty.getInsert_sql());
 	}
 
 	@Test
+	public void testPopulateProperitesResultSet() {
+		TestCommon tc=new TestCommon();
+		DataManager dman=tc.getDman();
+		
+		dman.addRecord(duty, DBObjectType.DUTY);
+		ArrayList<String> persons=dman.isDutyOn(DateUtils.CalendarToString(start), position.getName());
+		assertNotNull(persons);
+		assertEquals(1,persons.size());
+		assertEquals(person.getName(),persons.get(0));
+		dman.deleteDuty(start, end, position.getName(), person.getName());
+	}*/
+
+	@Test
+	public void testPopulateProperties() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	/*@Test
 	public void testGetName() {
-		assertEquals("Strings should be the same", DateUtils.DateToString(start.getTime()), duty.getName());
+		assertEquals(DateUtils.CalendarToString(start), duty.getName());
 	}
 
 	@Test
 	public void testGetPKID() {
-		assertEquals("PKID should not be initialized", 0, duty.getPKID());
+		assertEquals(0, duty.getPKID());
 	}
 
 	@Test
-	public void testMatchesArrayListOfStringBoolean() {
-		ArrayList<String> p_properties=new ArrayList<String>();
-		start=new GregorianCalendar();
-		String uuid=UUID.randomUUID().toString();
-		
-		p_properties.add(DateUtils.DateToString(start.getTime()));
-		p_properties.add(position.getName());
-		p_properties.add(person.getName());
-		p_properties.add(DateUtils.DateToString(end.getTime()));
-		p_properties.add("");
-		
-		assertTrue("Arrays should match", duty.matches(p_properties, false));
-		assertTrue("Arrays should match", duty.matches(p_properties, true));
-		
-		duty.setM_uuid(uuid);
-		p_properties.set(4, uuid);
-		assertTrue("Arrays should match", duty.matches(p_properties, true));
+	public void testGetPKIDStr() {
+		assertEquals("1234", duty.getPKIDStr());
 	}
 
 	@Test
-	public void testToSortedArray() {
-		d_properties.set(1,Integer.toString(position.getPKID()));
-		d_properties.set(2,Integer.toString(person.getPKID()));
-		assertEquals("Strings should be the same", d_properties,duty.toSortedArray());
+	public void testMatchesDB_ObjectBoolean() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public void testToStringArray() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public void testGetM_start() {
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testSetM_start() {
-		duty.setM_start(start.getTime());
-		assertEquals("Strings should be the same",start.getTime(),duty.getM_start());
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public void testGetM_end() {
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testSetM_end() {
-		duty.setM_end(end.getTime());
-		assertEquals("Strings should be the same",end.getTime(),duty.getM_end());
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public void testGetM_position() {
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testSetM_position() {
-		duty.setM_position(position);
-		assertEquals("Objects should be the same",position,duty.getM_position());
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public void testGetM_person() {
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testSetM_person() {
-		duty.setM_person(person);
-		assertEquals("Objects should be the same",person,duty.getM_person());
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public void testGetM_uuid() {
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testSetM_uuid() {
-		String uuid=UUID.randomUUID().toString();
-		duty.setM_uuid(uuid);
-		assertEquals("Objects should be the same",uuid,duty.getM_uuid());
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public void testPopulateProperitesResultSetDB_Factory() {
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testIsPersonOn() {
-		int person_id=duty.isPersonOn(2, DateUtils.DateToString(start.getTime()));
-		assertEquals("Objects should be the same",person.getPKID(),person_id);
-		
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testPersonConflict() {
-		Calendar td=new GregorianCalendar();
-		td.add(Calendar.HOUR_OF_DAY,1);
-		String str_cal=DateUtils.DateToString(td.getTime());
-		boolean conflict=duty.personConflict(2, str_cal, str_cal);
-		assertTrue("Should be conlicting", conflict);
-		
-		td.add(Calendar.HOUR_OF_DAY,4);
-		str_cal=DateUtils.DateToString(td.getTime());
-		conflict=duty.personConflict(2, str_cal, str_cal);
-		assertFalse("Should be conlicting", conflict);
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
 	public void testGetTotalEmpoloyeeHours() {
-		Calendar td=new GregorianCalendar();
-		td.add(Calendar.HOUR_OF_DAY,-1);
-		Calendar td2=new GregorianCalendar();
-		td2.add(Calendar.HOUR_OF_DAY,3);
-		int hours=(int)duty.getTotalEmpoloyeeHours(2, DateUtils.DateToString(td.getTime()), DateUtils.DateToString(td2.getTime()));
-		assertEquals("Hours should be 2", 2, hours);
+		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
-	public void testMatchesIntIntString() {
-		Calendar td=new GregorianCalendar();
-		td.add(Calendar.HOUR_OF_DAY,-1);
-		boolean matched=duty.matches(2, 2, DateUtils.DateToString(td.getTime()));
-		assertFalse("Should not match", matched);
-		td.add(Calendar.HOUR_OF_DAY,2);
-		matched=duty.matches(2, 2, DateUtils.DateToString(td.getTime()));
-		assertTrue("Should match", matched);
-	}
+	public void testMatchesStringStringString() {
+		fail("Not yet implemented"); // TODO
+	}*/
 
 }

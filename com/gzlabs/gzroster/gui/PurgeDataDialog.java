@@ -14,7 +14,6 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
 import com.gzlabs.gzroster.data.UploadManager;
-import com.gzlabs.utils.DateUtils;
 
 /**
  * Dialog used for purging data
@@ -26,9 +25,6 @@ public class PurgeDataDialog extends Dialog {
 	protected Object result;
 	protected Shell shlPurgeData;
 	private final FormToolkit formToolkit = new FormToolkit(Display.getDefault());
-	private IDetailsManager idm;
-	private UploadManager drh;
-	
 	private DateTime fromDate;
 	private DateTime toDate;
 
@@ -47,8 +43,6 @@ public class PurgeDataDialog extends Dialog {
 		{
 			return;
 		}
-		this.idm=idm;
-		this.drh=drh;
 	}
 
 	/**
@@ -107,24 +101,7 @@ public class PurgeDataDialog extends Dialog {
 				shlPurgeData.close();
 			}
 		});
-		btnCancel.setBounds(10, 109, 88, 30);
-		
-		Button btnPurge = formToolkit.createButton(frmNewForm.getBody(), "Purge", SWT.NONE);
-		btnPurge.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if(idm!=null && drh!=null)
-				{
-					String start=DateUtils.dateStringFromWidget(fromDate, null);
-					String end=DateUtils.dateStringFromWidget(toDate, null);
-					drh.purgeData(null, start, end);
-					idm.refreshData();
-					shlPurgeData.close();
-					
-				}
-			}
-		});
-		btnPurge.setBounds(125, 109, 88, 30);
+		btnCancel.setBounds(10, 109, 88, 30);			
 
 	}
 }

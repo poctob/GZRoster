@@ -1,11 +1,8 @@
 package com.gzlabs.gzroster.gui;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.GregorianCalendar;
 import java.util.Properties;
 
 import org.eclipse.swt.widgets.Display;
@@ -24,11 +21,15 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.jface.dialogs.MessageDialog;
 
+import com.gzlabs.gzroster.data.DB_Object;
 import com.gzlabs.gzroster.data.UploadManager;
 import com.gzlabs.gzroster.data.DataManager;
+import com.gzlabs.gzroster.gui.person.EmployeeHoursComposite;
+import com.gzlabs.gzroster.gui.person.EmployeesWidget;
+import com.gzlabs.gzroster.gui.person.IEmployeeManager;
 import com.gzlabs.gzroster.gui.time_off.ITimeOffManager;
 import com.gzlabs.gzroster.gui.time_off.TimeOffWidget;
-import com.gzlabs.gzroster.sql.Tables;
+import com.gzlabs.gzroster.sql.DBObjectType;
 import com.gzlabs.utils.WidgetUtilities;
 
 import org.eclipse.swt.widgets.MenuItem;
@@ -40,7 +41,7 @@ import org.eclipse.swt.widgets.MenuItem;
  * 
  */
 public class MainWindow implements IDisplayStatus, IDutyUpdater,
-		IEHoursHandler, IShiftAdder, IPositionsManager, IDetailsManager,
+		IEHoursHandler, IShiftAdder, IDetailsManager,
 		IEmployeeManager, ITimeOffManager, IConnectionStatus {
 
 	protected Shell shell;
@@ -54,7 +55,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	private TabFolder tabFolder;
 	private Label lblStatus;
 	private EmployeeHoursComposite employeeHoursComposite;
-	private EmployeePositionComposite employeePositionComposite;
 	private AddShiftComposite addShiftComposite;
 	/************************************************************/
 
@@ -66,7 +66,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	/************************************************************/
 	// Positions Tab
 	private TabItem tbtmDetails;
-	private PositionsWidget positionsWidget;
 
 	/************************************************************/
 
@@ -74,10 +73,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	// Details and Timeoff Tab
 	private DetailsWidget detailsWidget;
 	private TimeOffWidget timeOffWidget;
-	/************************************************************/
-
-	/************************************************************/
-	private Label lblAllowedPositions;
 
 	/************************************************************/
 	
@@ -107,7 +102,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		isInitialized=false;	
 		isError=false;
 		
-		dman = new DataManager(this, this);
+		dman = new DataManager(this, this, null);
 		Thread worker=new Thread(dman);
 		worker.setName("DataManager");
 		worker.start();
@@ -217,7 +212,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		formToolkit.paintBordersFor(addShiftComposite);
 
 		createEmployeesTab();
-		createPositionsTab();
 
 		employeeHoursComposite = new EmployeeHoursComposite(shell, SWT.NONE,
 				this);
@@ -288,7 +282,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 	private void createDetailsTab() {
 		tbtmDetails = new TabItem(tabFolder, SWT.NONE);
-		tbtmDetails.setText("Details");
+		tbtmDetails.setText("Schedule");
 
 		detailsWidget = new DetailsWidget(tabFolder, SWT.NONE, this, this);
 		detailsWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
@@ -340,35 +334,25 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 		employeesWidget = new EmployeesWidget(composite_1, SWT.NONE, this);
 		employeesWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
-		employeesWidget.setBounds(10, 10, 640, 376);
+		employeesWidget.setBounds(10, 10, 843, 408);
+		
 		formToolkit.adapt(employeesWidget);
 		formToolkit.paintBordersFor(employeesWidget);
-
-		employeePositionComposite = new EmployeePositionComposite(composite_1,
-				SWT.NONE);
-		employeePositionComposite.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
-		employeePositionComposite.setBounds(680, 32, 182, 390);
-		formToolkit.adapt(employeePositionComposite);
-		formToolkit.paintBordersFor(employeePositionComposite);
-
-		lblAllowedPositions = new Label(composite_1, SWT.CENTER);
-		lblAllowedPositions.setBounds(701, 10, 130, 18);
-		formToolkit.adapt(lblAllowedPositions, true, true);
-		lblAllowedPositions.setText("Allowed Positions");
-	}
-
-	/**
-	 * Creates positions tab
-	 */
-	protected void createPositionsTab() {
-		TabItem tbtmPositions = new TabItem(tabFolder, SWT.NONE);
-		tbtmPositions.setText("Positions");
-		positionsWidget = new PositionsWidget(tabFolder, SWT.NONE, this);
-		positionsWidget.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
-		tbtmPositions.setControl(positionsWidget);
-		positionsWidget.setBounds(10, 10, 431, 341);
-		formToolkit.adapt(positionsWidget);
-		formToolkit.paintBordersFor(positionsWidget);
+		
+		employeesWidget.addElementsChangedListener(new ElementsChangedListener()
+		{
+			@Override
+			public void elementsChanged(ElementsChangedEvent event) {	
+				
+				if(event.getType()==DBObjectType.POSITION)
+				{
+					rebuildDetailsWidget();
+				}
+				populateData();
+			}
+			
+		});
+		
 	}
 
 	/*************************************************************************/
@@ -377,20 +361,18 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	 * Populates objects with data
 	 */
 	public void populateData() {
-		ArrayList<String> employees = dman.getEmployees();
+		ArrayList<String> employees = dman.getElementsNames(DBObjectType.PERSON);
 
-		if (addShiftComposite != null && employeesWidget != null
+		if (addShiftComposite != null 
 				&& employees != null) {
 			addShiftComposite.clearControls();
 			addShiftComposite.addEmployee(employees);
+			
+			employeeHoursComposite.clearTable();
+			ArrayList<String> active_employees = dman.getActiveEmployees();
+			for (String s : active_employees) {
 
-			employeesWidget.clearEmployeesList();
-			employeesWidget.addEmployee(employees);
-
-			Collections.sort(employees);
-			for (String s : employees) {
-
-				if (employeeHoursComposite != null) {
+				if (employeeHoursComposite != null) {					
 					employeeHoursComposite.updateItem(s, dman
 							.getTotalEmpoloyeeHours(s,
 									employeeHoursComposite.getStartDate(),
@@ -398,20 +380,16 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 				}
 			}
 
-			ArrayList<String> positions = dman.getPositions();
+			ArrayList<String> positions = dman.getElementsNames(DBObjectType.POSITION);
 
-			if (positionsWidget != null && positions!=null) {
-				positionsWidget.clearPositionsList();
+			if (positions!=null) {
+
 				Collections.sort(positions);
 				for (String s : positions) {
-					positionsWidget.addPosition(s);
-					addShiftComposite.addPosition(s);
-
-					if (employeePositionComposite != null)
-						employeePositionComposite.addButton(s);
-				}
+					addShiftComposite.addPosition(s);			
+				} 
 			}
-
+			
 			ArrayList<Object> timespans = dman.getTimeSpan();
 			
 			if(timespans!=null)
@@ -444,148 +422,13 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	}
 
 	/**
-	 * Sets employee details to the specified HashMap values
-	 * 
-	 * @param details
-	 *            HashMap with values.
-	 */
-	public void setEmployeeDetails(String string) {
-
-		ArrayList<String> details = null;
-		if (dman != null) {
-			details = dman.getEmployeeDetails(string);
-			if (details != null && employeesWidget != null) {
-				String value = details.get(Tables.PERSON_NAME_INDEX);
-				if (value != null) {
-					employeesWidget.setNameText(value);
-				}
-
-				value = details.get(Tables.PERSON_ADDRESS_INDEX);
-				if (value != null) {
-					employeesWidget.setAddressText(value);
-				}
-
-				value = details.get(Tables.PERSON_HPHONE_INDEX);
-				if (value != null) {
-					employeesWidget.setHomephoneText(value);
-				}
-
-				value = details.get(Tables.PERSON_MPHONE_INDEX);
-				if (value != null) {
-					employeesWidget.setMobilePhoneText(value);
-				}
-
-				value = details.get(Tables.PERSON_ACTIVE_INDEX);
-				if (value != null && value.equals("1")) {
-					employeesWidget.setActiveCheck(true);
-				} else {
-					employeesWidget.setActiveCheck(false);
-				}
-
-				value = details.get(Tables.PERSON_EMAIL_INDEX);
-				if (value != null) {
-					employeesWidget.setEmailText(value);
-				}
-
-				if (employeePositionComposite != null && dman != null) {
-					employeePositionComposite.checkBoxes(dman
-							.getPersonToPosMapping(employeesWidget
-									.getNameText()));
-				}
-
-			}
-
-		}
-	}
-
-	/**
-	 * Sets position details to the specified HashMap values
-	 * 
-	 * @param details
-	 *            HashMap with values.
-	 */
-	public void setPositionDetails(String string) {
-
-		if (dman != null) {
-			ArrayList<String> details = dman.getPositionDetailsByName(string);
-
-			if (details != null && positionsWidget != null) {
-				String value = details.get(Tables.PLACE_NAME_INDEX);
-				if (value != null) {
-					positionsWidget.setPositionNameText(value);
-				}
-
-				value = details.get(Tables.PLACE_NOTE_INDEX);
-				if (value != null) {
-					positionsWidget.setPositionNoteText(value);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Updates existing employee or inserts new one.
-	 */
-	public void processEmployeeData() {
-		if (employeesWidget != null) {
-			ArrayList<String> new_details = new ArrayList<String>();
-			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getNameText(), true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getAddressText(), true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getHomephoneText(), true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getMobilePhoneText(), true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);
-			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getActiveCheck() ? "1" : "0", true);		
-			WidgetUtilities.safeArrayStringListAdd(new_details, employeesWidget.getEmailText(), true);
-
-			ArrayList<String> old_details = new ArrayList<String>(
-					Tables.PLACE_MAX_COLS);
-			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_name(), true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_address(), true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_hphone(), true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_mphone(), true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_active(), true);
-			WidgetUtilities.safeArrayStringListAdd(old_details, employeesWidget.getOld_email(), true);
-
-			ArrayList<String> position_boxes = null;
-			if (employeePositionComposite != null) {
-				position_boxes = employeePositionComposite.getBoxes();
-			}
-
-			if (employeesWidget.getSelectionIndex() >= 0 && dman!=null) {
-				dman.updateEmployee(old_details, new_details, position_boxes);
-			} else {
-				dman.addEmployee(new_details, position_boxes);
-			}
-			employeesWidget.resetControls();
-			populateData();
-		}
-	}
-
-	/**
 	 * Updates existing duty or inserts new one.
 	 */
 	@Override
 	public void processDutyData() {
-		if (addShiftComposite != null && addShiftComposite.checkTextLength() && dman!=null) {
+		if (addShiftComposite != null && addShiftComposite.checkTextLength() && dman!=null) {			
 
-			String start_date = addShiftComposite.getSelectedDate() + " "
-					+ addShiftComposite.getSelectedStart() + ":00.0";
-
-			String end_date = addShiftComposite.getSelectedDate() + " "
-					+ addShiftComposite.getSelectedEnd() + ":00.0";
-
-			ArrayList<String> details = new ArrayList<String>();
-			WidgetUtilities.safeArrayStringListAdd(details, start_date, true);
-			WidgetUtilities.safeArrayStringListAdd(details, addShiftComposite.getSelectedPosition(), true);
-			WidgetUtilities.safeArrayStringListAdd(details, addShiftComposite.getSelectedEmployee(), true);
-			WidgetUtilities.safeArrayStringListAdd(details, end_date, true);
-			WidgetUtilities.safeArrayStringListAdd(details, "", true);	
-
-			if (dman.checkDutyConflict(addShiftComposite.getSelectedEmployee(),
-					start_date, end_date)) {
+			if (dman.checkDutyConflict(addShiftComposite.getDutyDetails())) {
 				DisplayStatus("Scheduling conflict!");
 				if (!MessageDialog
 						.openConfirm(shell, "Schedule Conflict",
@@ -594,37 +437,10 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 					return;
 				}
 			}
-			dman.addDuty(details);
+			dman.addRecord(addShiftComposite.getDutyDetails(), DBObjectType.DUTY);
 			populateData();
 		} else {
 			DisplayStatus("Both Employee and Position need to be selected!  Both Start and End times are required!");
-		}
-	}
-
-	/**
-	 * Updates existing position or inserts new one.
-	 */
-	public void processPositionData() {
-
-		if (positionsWidget != null) {
-			ArrayList<String> new_details = new ArrayList<String>();
-			WidgetUtilities.safeArrayStringListAdd(new_details, "", true);	
-			WidgetUtilities.safeArrayStringListAdd(new_details, positionsWidget.getPositionNameText(), true);	
-			WidgetUtilities.safeArrayStringListAdd(new_details, positionsWidget.getPositionNoteText(), true);	
-	
-			ArrayList<String> old_details = new ArrayList<String>(
-					Tables.PLACE_MAX_COLS);
-			WidgetUtilities.safeArrayStringListAdd(old_details, "", true);	
-			WidgetUtilities.safeArrayStringListAdd(old_details, positionsWidget.getOld_name(), true);	
-			WidgetUtilities.safeArrayStringListAdd(old_details, positionsWidget.getOld_note(), true);	
-
-			if (positionsWidget.getSelectionIndex() >= 0 && dman!=null) {
-				dman.updatePosition(old_details, new_details);
-			} else {
-				dman.addPosition(new_details);
-			}
-			
-			rebuildDetailsWidget();
 		}
 	}
 
@@ -638,38 +454,35 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			addShiftComposite.selectEmployee(label);
 			addShiftComposite.selectPosition(col_label);
 
-			String start_time = dman.getDutyStart(label, col_label,
+			Calendar start_time = dman.getDutyStart(label, col_label,
 					addShiftComposite.getSelectedDate() + " " + row_label
 							+ ":00.0");
 
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-			Calendar time_cal = new GregorianCalendar();
+			String start_str = null;
 
-			String end_time = dman.getDutyEnd(label, col_label,
+			Calendar end_time = dman.getDutyEnd(label, col_label,
 					addShiftComposite.getSelectedDate() + " " + row_label
 							+ ":00.0");
-			try {
-				String zminute = "00";
-				time_cal.setTime(sdf.parse(start_time));
-				start_time = time_cal.get(Calendar.HOUR_OF_DAY)
-						+ ":"
-						+ (time_cal.get(Calendar.MINUTE) == 0 ? zminute
-								: time_cal.get(Calendar.MINUTE));
-				time_cal.setTime(sdf.parse(end_time));
-				end_time = time_cal.get(Calendar.HOUR_OF_DAY)
-						+ ":"
-						+ (time_cal.get(Calendar.MINUTE) == 0 ? zminute
-								: time_cal.get(Calendar.MINUTE));
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
 
+			String end_str = null;
+
+			String zminute = "00";
+
+			start_str = start_time.get(Calendar.HOUR_OF_DAY)
+					+ ":"
+					+ (start_time.get(Calendar.MINUTE) == 0 ? zminute : start_time
+							.get(Calendar.MINUTE));
+
+			end_str = end_time.get(Calendar.HOUR_OF_DAY)
+					+ ":"
+					+ (end_time.get(Calendar.MINUTE) == 0 ? zminute : end_time
+							.get(Calendar.MINUTE));
 			addShiftComposite.setEndEnabled(true);
-			addShiftComposite.setUpd_start(start_time);
-			addShiftComposite.selectStart(start_time);
+			addShiftComposite.setUpd_start(start_str);
+			addShiftComposite.selectStart(start_str);
 
 			addShiftComposite.correlateEndTimeCombo();
-			addShiftComposite.selectEnd(end_time);
+			addShiftComposite.selectEnd(end_str);
 			addShiftComposite.setButtonsToUpdate();
 			addShiftComposite.enableEmployeePicker();
 			isa_updateEmployeeList();
@@ -677,30 +490,18 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	}
 
 	@Override
-	public void dutyDeleteRequest(String label, String col_label,
+	public void dutyDeleteRequest(String person, String position,
 			String row_label, boolean update_request) {
 		if (dman != null && addShiftComposite!=null) {
-			String start_date = dman.getDutyStart(label, col_label,
+			Calendar start_date = dman.getDutyStart(person, position,
 					addShiftComposite.getSelectedDate() + " " + row_label
 							+ ":00.0");
 
-			String end_date = dman.getDutyEnd(label, col_label,
+			Calendar end_date = dman.getDutyEnd(person, position,
 					addShiftComposite.getSelectedDate() + " " + row_label
 							+ ":00.0");
-
-			ArrayList<String> details = new ArrayList<String>();
-			WidgetUtilities.safeArrayStringListAdd(details, start_date, true);	
-			WidgetUtilities.safeArrayStringListAdd(details, col_label, true);	
-			WidgetUtilities.safeArrayStringListAdd(details, label, true);	
-			WidgetUtilities.safeArrayStringListAdd(details, end_date, true);	
-			WidgetUtilities.safeArrayStringListAdd(details, "", true);	
-
-			dman.deleteDuty(details);
-			
-			if(!update_request)
-			{
-				populateData();
-			}
+			dman.deleteDuty(start_date, end_date, position, person);
+			populateData();
 		}
 
 	}
@@ -714,14 +515,13 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 			addShiftComposite.correlateEndTimeCombo();
 			isa_updateEmployeeList();
 		}
-
 	}
 
 	@Override
 	public void rangeChanged(String dateStringFromWidget,
 			String dateStringFromWidget2) {
 		if (dman != null) {
-			ArrayList<String> employees = dman.getEmployees();
+			ArrayList<String> employees = dman.getElementsNames(DBObjectType.PERSON);
 			
 			if(employees!=null && employeeHoursComposite!=null )
 			{
@@ -756,17 +556,6 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 
 	}
 
-	@Override
-	public void deletePosition(String[] selection) {
-		if (dman != null) {
-			dman.deletePosition(selection);
-			rebuildDetailsWidget();
-			positionsWidget.resetControls();
-			populateData();
-		}
-
-	}
-	
 	/**
 	 * Refreshes details widget with new data
 	 */
@@ -783,7 +572,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	@Override
 	public ArrayList<String> getPositions() {
 		if (dman != null) {
-			return dman.getPositions();
+			return dman.getElementsNames(DBObjectType.POSITION);
 		}
 		return null;
 	}
@@ -798,13 +587,14 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	}
 
 	@Override
-	public void deleteEmployee(String[] selection) {
-		if (dman != null) {
-			dman.deleteEmployee(selection);
-			employeesWidget.resetControls();
-			employeeHoursComposite.removeItem(selection);
+	public void deleteItem(Object item, DBObjectType type) {
+		if(item instanceof DB_Object)
+		{
+			if (dman != null) {
+				dman.deleteRecord((DB_Object) item, type);
+				employeeHoursComposite.removeItem(((DB_Object) item).getName());
+			}
 		}
-
 	}
 
 	@Override
@@ -840,7 +630,7 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 	@Override
 	public void refreshData() {
 		if (dman != null) {
-			dman.refreshDutyList();
+			dman.refreshData();
 		}
 		populateData();
 
@@ -896,6 +686,46 @@ public class MainWindow implements IDisplayStatus, IDutyUpdater,
 		if(dman!=null)
 		{
 			dman.updateTimesOff(timeOff);
+		}
+		
+	}
+
+	@Override
+	public ArrayList<String> getData(DBObjectType type) {
+		if(dman!=null)
+		{
+			return dman.getElementsNames(type);
+		}
+		return null;
+	}
+
+	@Override
+	public Object getItem(String selection,  DBObjectType type) {		
+		if(dman!=null)
+		{
+			return dman.getObjectByName(selection, type);
+		}
+		return null;
+	}
+
+	@Override
+	public void updateObject(Object oldObj, Object newObj, DBObjectType type) {
+		if(newObj instanceof DB_Object)
+		{
+			if (dman != null) {
+				dman.updateRecord((DB_Object)oldObj, (DB_Object)newObj, type);
+			}
+		}
+		
+	}
+
+	@Override
+	public void insertObject(Object newObj, DBObjectType type) {
+		if(newObj instanceof DB_Object)
+		{
+			if (dman != null) {
+				dman.addRecord((DB_Object) newObj, type);
+			}
 		}
 		
 	}

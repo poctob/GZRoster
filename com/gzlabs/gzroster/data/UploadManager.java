@@ -11,18 +11,32 @@ import com.gzlabs.utils.ICalUtils;
 import com.gzlabs.utils.SSHUtils;
 
 /**
- * An orchestrator of the other classes.
+ * Manages data upload to the server.
  * 
  * @author apavlune
  * 
  */
-
-
 public class UploadManager {
-
+	
+	/**
+	 * Configuration file path
+	 */
 	private static final String CONFIG_FILE_PATH = "GZRoster.config";
+	
+	/**
+	 * Database manager
+	 */
 	private DBManager dbman;
+	
+	/**
+	 * Status display interface.
+	 */
 	private IDisplayStatus ids = null;
+	
+	/**
+	 * Local properties object.
+	 */
+	private Properties prop = null;
 
 	/**
 	 * @return the ids
@@ -37,10 +51,13 @@ public class UploadManager {
 	 */
 	public void setIds(IDisplayStatus ids) {
 		this.ids = ids;
-	}
+	}	
 
-	private Properties prop = null;
-
+	/**
+	 * Default constructor with local variables initialization
+	 * @param pprop Properties
+	 * @param pids Display status interface.
+	 */
 	public UploadManager(Properties pprop, IDisplayStatus pids) {
 		ids = pids;
 		prop = pprop;
@@ -57,6 +74,7 @@ public class UploadManager {
 	public void processData(String password) {
 		ids.DisplayStatus("Attempting to connect to the databse...");
 
+		//First step is to initialize database manager
 		if (initDBMan()) {
 			ids.DisplayStatus("Connected to the Database!");
 		} else {
@@ -65,17 +83,17 @@ public class UploadManager {
 		}
 
 		ids.DisplayStatus("Archving existing data...");
+		
+		//Attempt to copy data to the archive.
 		if (archiveData()) {
 			ids.DisplayStatus("Data archived successfully!");
 		} else {
 			ids.DisplayStatus("Failed to archive data...");
 		}
-
-		if (prop.getProperty("auto_purge").equals("1")) {
-
-			purgeData(prop.getProperty("auto_purge_interval"), null, null);
-		}
+		
 		ids.DisplayStatus("Retrieving records...");
+		
+		//Get all records
 		ResultSet rs = getDBData();
 
 		if (rs == null) {
@@ -83,6 +101,8 @@ public class UploadManager {
 		}
 
 		ids.DisplayStatus("Attempting to write calendar...");
+		
+		//Try to make ICal file
 		boolean success = makeICal(prop.getProperty("ical_file_path"), rs);
 
 		if (!success) {
@@ -91,6 +111,7 @@ public class UploadManager {
 
 		ids.DisplayStatus("Attempting to upload a file...");
 
+		//Attempt to upload ICal to the server using SSH.
 		success = uploadCalendar(prop.getProperty("ssh_host"),
 				prop.getProperty("ssh_username"),
 				password,
@@ -121,7 +142,6 @@ public class UploadManager {
 	 * Creates a copy of the data in the database.
 	 * 
 	 * @return true if copy is good, false otherwise.
-	 * @param usingFB flag to show that we are using FirebirdDatabase.
 	 */
 	private boolean archiveData() {
 		ids.DisplayStatus("Archiving data...");
@@ -164,49 +184,11 @@ public class UploadManager {
 			e.printStackTrace();
 			return false;
 		}
-
 		return true;
-
-	}
-
-	/**
-	 * Purges data from the database.
-	 * 
-	 * @param howfarback
-	 *            Records older than this number of days will be purged
-	 * @param start
-	 *            From date
-	 * @param end
-	 *            To date
-	 */
-	public void purgeData(String howfarback, String start, String end) {
-		ids.DisplayStatus("Purging data...");
-		if (dbman == null) {
-			if (!initDBMan()) {
-				ids.DisplayStatus("Error purging data!");
-				return;
-			}
-		}
-
-		if (howfarback != null) {
-			int interval = Integer.parseInt(howfarback);
-			interval--;
-			dbman.runQuery(
-					"DELETE FROM DUTIES WHERE DUTY_START_TIME < DATE_ADD(NOW(), INTERVAL "
-							+ Integer.toString(interval)
-							+ " DAY)", false);
-		} else if (start != null && end != null) {
-			dbman.runQuery("DELETE FROM DUTIES WHERE DUTY_START_TIME "
-					+ "between '" + start + "' and '" + end + "'", false);
-		}
-		ids.DisplayStatus("Data purge complete!");
 	}
 
 	/**
 	 * Executes a query to get the data from the DB.
-	 * 
-	 * @param dbman
-	 *            Properties to use for the connection.
 	 * @return null if something is wrong. Result set otherwise
 	 */
 	private ResultSet getDBData() {
@@ -229,9 +211,6 @@ public class UploadManager {
 
 	/**
 	 * Loads properties file.
-	 * 
-	 * @param ids
-	 *            Information display interface.
 	 * @return null if something went wrong. Properties loaded from file
 	 *         otherwise.
 	 */
@@ -254,8 +233,6 @@ public class UploadManager {
 	 * 
 	 * @param prop
 	 *            Properties to save.
-	 * @param ids
-	 *            Information display interface.
 	 */
 	public void saveProp(Properties pprop) {
 		ids.DisplayStatus("Saving configuration...");
@@ -270,8 +247,6 @@ public class UploadManager {
 	 *            File path where to save the calendar.
 	 * @param rs
 	 *            Database data result set.
-	 * @param ids
-	 *            Information display interface
 	 * @return true if everything is OK. False otherwise
 	 */
 	private boolean makeICal(String path, ResultSet rs) {

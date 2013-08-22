@@ -1,4 +1,4 @@
-package com.gzlabs.gzroster.gui;
+package com.gzlabs.gzroster.gui.person;
 
 import java.util.ArrayList;
 
@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
+import com.gzlabs.gzroster.gui.IEHoursHandler;
 import com.gzlabs.utils.DateUtils;
 import com.gzlabs.utils.WidgetUtilities;
 
@@ -111,11 +112,16 @@ public class EmployeeHoursComposite extends Composite {
 	}
 	
 	/**
-	 * Clears all data from teh table
+	 * Clears all data from the table
 	 */
 	public void clearTable()
 	{
-		hoursTable.clearAll();
+		for(TableItem ti:tableItems)
+		{
+			ti.dispose();
+		}
+		tableItems.clear();
+		
 	}
 	
 	/**
@@ -151,20 +157,15 @@ public class EmployeeHoursComposite extends Composite {
 	
 	/**
 	 * Removes item from the list
-	 * @param name Employee name to remove
+	 * @param string Employee name to remove
 	 */
-	public void removeItem(String[] name)
+	public void removeItem(String string)
 	{
-		for(int j=0; j<name.length; j++)
-		{
-			for(int i=0; i< tableItems.size(); i++)
-			{
-				if(tableItems.get(i).getText(0).equals(name[j]))
-				{				
-					hoursTable.remove(i);
-					tableItems.remove(i);
-					return;
-				}
+		for (int i = 0; i < tableItems.size(); i++) {
+			if (tableItems.get(i).getText(0).equals(string)) {
+				hoursTable.remove(i);
+				tableItems.remove(i);
+				return;
 			}
 		}
 	}

@@ -7,31 +7,6 @@ package com.gzlabs.gzroster.sql;
  */
 public class Tables
 {
-	//Positions table
-	public static final int PLACE_ID_INDEX = 0;
-	public static final int PLACE_NAME_INDEX = 1;
-	public static final int PLACE_NOTE_INDEX = 2;
-	public static final int PLACE_MAX_COLS = 3;
-	
-	//Person table
-	public static final int PERSON_MAX_COLS=8;
-	public static final int PERSON_ID_INDEX = 0;
-	public static final int PERSON_NAME_INDEX = 1;
-	public static final int PERSON_ADDRESS_INDEX = 2;
-	public static final int PERSON_HPHONE_INDEX = 3;
-	public static final int PERSON_MPHONE_INDEX = 4;
-	public static final int PERSON_NOTE_INDEX = 5;
-	public static final int PERSON_ACTIVE_INDEX = 6;
-	public static final int PERSON_EMAIL_INDEX = 7;
-	
-	//Duties table
-	public static final int DUTIES_MAX_COLS=5;
-	public static final int DUTIES_START_INDEX=0;
-	public static final int DUTIES_PLACE_ID_INDEX=1;
-	public static final int DUTIES_PERSON_ID_INDEX=2;
-	public static final int DUTIES_END_INDEX=3;
-	public static final int DUTIES_KEY_INDEX=4;
-	
 	//TmeOff table
 	public static final String TIME_OFF_TABLE_NAME="VIEW_TIME_OFF";
 	
@@ -66,5 +41,42 @@ public class Tables
 	public static final String PROC_GET_TIME_OFF_STATUS_OPTIONS = "getTimeOffStatusOptions";
 	public static final String PROC_DELETE_TIME_OFFS = "deleteTimeOffs";
 	public static final String PROC_GET_CLOCK_OUT_REASONS = "getClockOutReasons";
+	public static final String PROC_GET_NEXT_SHIFT_DIFF = "getNextClockInTime";
+	public static final String PROC_GET_SUPERVISOR_TYPE = "getSupervisorType";
+	public static final String PROC_GET_PRIVILEGES = "getPrivileges";
+	public static final String PROC_GET_PERSON_PRIVILEGES = "getPersonsPrivileges";
+	public static final String PROC_ADD_PERSON_PRIVILEGE = "addPersonPrivileges";
+	public static final String PROC_DELETE_PERSON_PRIVILEGE = "deletePersonPrivileges";
+	public static final String PROC_GET_PERSON_POSITIONS = "getPersonsPositions";
+	public static final String PROC_GET_POSITION = "getPosition";
+	public static final String PROC_GET_DUTY = "getDuty";
+	public static final String PROC_GET_PERSON = "getPerson";
+	public static final String PROC_GET_TIME_OFF = "getTimeOff"
+			;
+	public static final String PROC_INSERT_DUTY = "insertDuty";
+	public static final String PROC_UPDATE_DUTY = "updateDuty";
+	public static final String PROC_DELETE_DUTY = "deleteDuty";
+
+	public static final String PROC_UPDATE_PERSON = "updatePerson";
+
+	public static final String PROC_DELETE_PERSON = "deletePerson";
+
+	public static final String PROC_INSERT_PERSON = "insertPerson";
+
+	public static final String PROC_DELETE_PERSON_POSITION = "deletePersonPositions";
+
+	public static final String PROC_ADD_PERSON_POSITION = "addPersonPositions";
+
+	public static final String PROC_INSERT_POSITION = "insertPosition";
+
+	public static final String PROC_UPDATE_POSITION = "updatePosition";
+
+	public static final String PROC_DELETE_POSITION = "deletePosition";
+
+	public static final String PROC_INSERT_PRIVILEGE = "insertPrivilege";
+
+	public static final String PROC_UPDATE_PRIVILEGE = "updatePrivilege";
+
+	public static final String PROC_DELETE_PRIVILEGE = "deletePrivilege";
 	
 }

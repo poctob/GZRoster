@@ -17,13 +17,12 @@ import com.gzlabs.gzroster.data.Duty;
 import com.gzlabs.gzroster.data.Position;
 import com.gzlabs.gzroster.sql.DBManager;
 import com.gzlabs.gzroster.sql.DB_Factory;
-import com.gzlabs.gzroster.sql.DB_Factory.ObjectType;
 import com.gzlabs.gzroster.sql.Tables;
 import com.gzlabs.utils.DateUtils;
 
 public class DB_FactoryTest {
 
-	DBManager dbman;
+/*	DBManager dbman;
 	Properties prop_mysql;
 	Properties prop_firebird;
 	private static final String CONFIG_FILE_PATH_MYSQL = "GZRoster.mysql.config";
@@ -566,6 +565,6 @@ public class DB_FactoryTest {
 		name=db_persons.get(0).getName();
 		result=DB_Factory.updatePersonToPosition(db_persons, place_ids, name, dbman);
 		assertTrue("Result should be true", result);
-	}
+	}*/
 
 }

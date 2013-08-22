@@ -28,7 +28,7 @@ public interface IShiftAdder {
 	 * @param upd_start Duty start time
 	 */
 	void dutyDeleteRequest(String upd_person, String upd_position,
-			String upd_start, boolean update_request);
+			String upd_start, boolean update_request);	
 
 	/**
 	 * Handles duty update requests

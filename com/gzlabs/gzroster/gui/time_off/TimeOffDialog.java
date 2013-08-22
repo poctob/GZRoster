@@ -1,6 +1,7 @@
 package com.gzlabs.gzroster.gui.time_off;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -216,8 +217,8 @@ public class TimeOffDialog extends Dialog {
 
 		String start_date = DateUtils.dateStringFromWidget(fromDateTime, null);
 		String end_date = DateUtils.dateStringFromWidget(toDateTime, null);
-		Date startDate=DateUtils.StringToDate(start_date+" "+start_time);
-		Date endDate=DateUtils.StringToDate(end_date+" "+end_time);
+		Calendar startDate=DateUtils.calendarFromString(start_date+" "+start_time);
+		Calendar endDate=DateUtils.calendarFromString(end_date+" "+end_time);
 		
 		timeOff=new TimeOff(startDate, endDate, statusCombo.getText(),personCombo.getText());
 	}

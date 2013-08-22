@@ -1,4 +1,4 @@
-package com.gzlabs.gzroster.gui;
+package com.gzlabs.gzroster.gui.person;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -14,6 +14,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+
 
 public class PinDialog extends Dialog {
 	private Text pin;

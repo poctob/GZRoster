@@ -8,6 +8,7 @@ import com.gzlabs.gzroster.data.DB_Object;
 import com.gzlabs.gzroster.data.Duty;
 import com.gzlabs.gzroster.data.Person;
 import com.gzlabs.gzroster.data.Position;
+import com.gzlabs.gzroster.data.Privilege;
 
 /**
  * Provides utilities for database Object generation and manipulation.
@@ -16,27 +17,38 @@ import com.gzlabs.gzroster.data.Position;
  */
 public class DB_Factory {
 
-	// Statements
+	//DB Manager, we need this guy to perform database operations.
+	private DBManager dbman;
+	
+	//DB objects
+	private ArrayList<DB_Object> db_positions;
+	private ArrayList<DB_Object> db_persons;
+	private ArrayList<DB_Object> db_duties;		
+	private ArrayList<DB_Object> db_privileges;	
 	
 	/**
-	 * Table names.  Nothing special.
-	 * @author apavlune
-	 *
+	 * Default constructor, initialized dbman object
+	 * @param dbman
 	 */
-	public enum ObjectType {
-		POSITION,
-		PERSON,
-		PERSON_TO_PLACE,
-		PERSON_NA_AVAIL_HOURS,
-		DUTIES
-	};
+	public DB_Factory(DBManager dbman) {
+		super();
+		this.dbman = dbman;
+		refreshData();
+	}
 
+	public void refreshData()
+	{
+		db_positions=getAllRecords(DBObjectType.POSITION);	
+		db_persons=getAllRecords(DBObjectType.PERSON);
+		db_duties=getAllRecords(DBObjectType.DUTY);
+		db_privileges=getAllRecords(DBObjectType.PRIVILEGE);
+	}
 	/**
 	 * Creates new database object based on the specified type.
 	 * @param type Type of the object to create.  Comes from ObjectType enum.
 	 * @return Newly created DB_Object.
 	 */
-	public static DB_Object createObject(ObjectType type) {
+	public DB_Object createObject(DBObjectType type) {
 		if(type==null)
 		{
 			return null;
@@ -46,49 +58,13 @@ public class DB_Factory {
 			return new Position();
 		case PERSON:
 			return new Person();
-		case DUTIES:
+		case DUTY:
 			return new Duty();
+		case PRIVILEGE:
+			return new Privilege();
 		default:
 			return null;
 		}
-	}
-	
-	/**
-	 * Retrieves all duty objects from the database
-	 * @param dbman Database manager to use.
-	 * @param persons List of the persons to use for reference.
-	 * @param positions List of the positions to use for reference.
-	 * @return List of the duties in the database.
-	 */
-	public static ArrayList<DB_Object> getAllDuties(DBManager dbman, ArrayList<DB_Object> persons,
-			ArrayList<DB_Object> positions, boolean usingFB) {
-		if(dbman !=null && persons!=null && positions !=null)
-		{
-			ResultSet records = runSQL(dbman, getSelect_sql("1","1",ObjectType.DUTIES),
-					true);
-			ArrayList<DB_Object> objects = new ArrayList<DB_Object>();
-			
-			if(records!=null)
-			{
-				try {
-					while (records.next()) {
-						Duty obj = (Duty) createObject(ObjectType.DUTIES);
-						obj=obj.populateProperites(records, positions, persons);
-						if(obj!=null)
-						{
-							obj.setUsingFB(usingFB);
-							objects.add(obj);
-						}
-					}
-					
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-				return objects;
-			}
-		}
-		return null;
-		
 	}
 
 	/**
@@ -100,13 +76,11 @@ public class DB_Factory {
 	 * @param usingFB flag indicating if we are using FB database
 	 * @return List of the database objects the were fetched.
 	 */
-	public static ArrayList<DB_Object> getAllRecords(ObjectType type,
-			DBManager dbman, String column, String value, boolean usingFB) {
+	public ArrayList<DB_Object> getAllRecords(DBObjectType type) {
 		
 		if(dbman!=null)
 		{
-			ResultSet records = runSQL(dbman, getSelect_sql(column, value, type),
-					true);
+			ResultSet records =runSproc(getSelect_sql(type), true);
 			ArrayList<DB_Object> objects = new ArrayList<DB_Object>();
 			
 			if(records!=null)
@@ -117,14 +91,13 @@ public class DB_Factory {
 						obj.populateProperites(records);	
 						if(obj!=null)
 						{							
-							obj.setUsingFB(usingFB);
 							objects.add(obj);
 						}
 					}
 					
-					if(type==ObjectType.PERSON)
+					if(type==DBObjectType.PERSON)
 					{
-						processPersons(objects, dbman);
+						processPersons(objects);
 					}		
 					
 				} catch (SQLException e) {
@@ -141,7 +114,7 @@ public class DB_Factory {
 	 * @param persons List of the persons to process.
 	 * @param dbman Database manager to use.
 	 */
-	private static void processPersons(ArrayList<DB_Object> persons, DBManager dbman)
+	private void processPersons(ArrayList<DB_Object> persons)
 	{
 		if(persons!=null)
 		{
@@ -149,25 +122,19 @@ public class DB_Factory {
 			{
 				if(person!=null && dbman!=null)
 				{
-					ResultSet records = runSQL(dbman, getSelect_sql("1", "1", ObjectType.PERSON_TO_PLACE), true);
-					((Person) person).populatePositions(records);
+					((Person) person).setM_positions
+					(runSprocList(Tables.PROC_GET_PERSON_POSITIONS, person.getName(), "PLACE"));
 					
-					records = runSQL(dbman, getSelect_sql("1", "1", ObjectType.PERSON_NA_AVAIL_HOURS), true);
+					ResultSet records = runSproc(Tables.PROC_GET_TIME_OFF, true, person.getName());						
 					((Person) person).populateTimeOff(records);
+					
+					((Person)person).setM_privileges(
+							runSprocList(Tables.PROC_GET_PERSON_PRIVILEGES, 
+									((Person)person).getName(), 
+									"PRIVILEGE"));	
 				}
 			}	
 		}
-	}
-
-	/**
-	 * Gets all records from the database. Convenience method that sets where
-	 * clause to all.
-	 * 
-	 * @return populated array list with DB_Objects
-	 */
-	public static ArrayList<DB_Object> getAllRecords(ObjectType type,
-			DBManager dbman, boolean usingFB) {
-		return getAllRecords(type, dbman, "1", "1", usingFB);
 	}
 
 	/**
@@ -177,28 +144,26 @@ public class DB_Factory {
 	 * @param details Details of the record
 	 * @return True if success, false otherwise
 	 */
-	public static boolean insertRecord(ObjectType type, DBManager dbman,
-			ArrayList<String> details, boolean usingFB) {
+	public  boolean insertRecord(DB_Object details, DBObjectType type) {
 		if(details !=null)
 		{
 			DB_Object obj = createObject(type);
 						
 			if(obj!=null && dbman!=null)
 			{
-				obj.populateProperties(details);
-				int next_pkid=0;
-				
-				if(usingFB)
-				{
-					next_pkid=getNextPKID(dbman, obj.getNexPKID_sql());
-				}
-				
-				obj.setUsingFB(usingFB);
-				String sql=obj.getInsert_sql(next_pkid);
-				ResultSet rs = runSQL(dbman, sql, false);
+				obj.populateProperties(details);			
+				ResultSet rs = runSproc(obj.getInsert_sql(), false, obj.toStringArray());
 		
 				if (rs != null) {
+					refreshData();
+					if(type==DBObjectType.PERSON)
+					{
+
+						updatePersonToPosition(obj);
+						updatePersonToPrivilege(obj);
+					}
 					return true;
+					
 				}
 			}
 		}
@@ -212,82 +177,38 @@ public class DB_Factory {
 	 * @param name Name of the object to delete.
 	 * @return True if success, false otherwise.
 	 */
-	public static boolean deleteRecord(ArrayList<DB_Object> objects, DBManager dbman,
-			String name) {
-		
-		if(objects!=null)
-		{
-			DB_Object obj=getObjectByName(objects, name);
-			if(obj!=null && dbman !=null)
-			{
-				ArrayList<String> stmts=obj.getDelete_sql();
-				
-				if(stmts!=null)
+	public boolean deleteRecord(ArrayList<DB_Object> objects, DB_Object obj) {
+			if (objects!=null && obj != null && dbman != null) {
+
+				for(DB_Object o: objects)
 				{
-					for(String sql:stmts)
+					if(o.matches(obj, false))
 					{
-						ResultSet rs = runSQL(dbman,sql, false);
+						ResultSet rs = runSproc(o.getDelete_sql(), true,o.getPKIDStr());
 						if (rs == null) {
 							return false;
 						}
+						refreshData();
+						return true;
 					}
-					return true;
 				}
 			}
-		}
 		return false;
 	}	
-	
-	/**
-	 * Specific method to delete a shift duty from the database. 
-	 * @param objects List of duties to pick from.
-	 * @param dbman Database manager to use.
-	 * @param details Specific duty details for reference.
-	 * @return True if success, false otherwise.
-	 */
-	public static boolean deleteDuty(ArrayList<DB_Object> objects, DBManager dbman,
-			ArrayList<String> details) {
 		
-		if(objects!=null)
-		{
-			for(DB_Object obj:objects)
-			{
-				if(obj!=null && dbman!=null && ((Duty)obj).matches(details, false))
-				{
-					ArrayList<String> stmts=obj.getDelete_sql();
-					{
-						if(stmts!=null)
-						{
-							for(String sql:stmts)
-							{
-								ResultSet rs = runSQL(dbman,sql, false);
-								if (rs == null) {
-									return false;
-								}
-							}
-							return true;
-						}
-						
-					}					
-				}
-			}
-		}
-		return false;
-	}	
 	
 	/**
 	 * Finds a specific duty using time as reference.
-	 * @param objects List of duty objects to search.
 	 * @param person_id Person id in the duty
 	 * @param position_id Position id in the duty
 	 * @param datetime date to search.
 	 * @return Duty if it's found, null if it's not.
 	 */
-	public static Duty findDutyByTime(ArrayList<DB_Object> objects, int person_id, int position_id, String datetime)
+	public Duty findDutyByTime(String person_id, String position_id, String datetime)
 	{
-		if(objects!=null)
+		if(db_duties!=null)
 		{
-			for(DB_Object obj:objects)
+			for(DB_Object obj:db_duties)
 			{
 				if(obj!=null)
 				{
@@ -309,8 +230,7 @@ public class DB_Factory {
 	 * @param new_details New details
 	 * @return True if success, false otherwise
 	 */
-	public static boolean updateRecord(ArrayList<DB_Object> objects, DBManager dbman,
-			ArrayList<String> old_details, ArrayList<String> new_details) {
+	public boolean updateRecord(ArrayList<DB_Object> objects,DB_Object old_details, DB_Object new_details) {
 		
 		if(objects!=null)
 		{
@@ -319,9 +239,9 @@ public class DB_Factory {
 				if(obj!=null && dbman!=null && obj.matches(old_details, false))
 				{
 					obj.populateProperties(new_details);
-					String sql=obj.getUpdate_sql();
-					ResultSet rs = runSQL(dbman,sql, false);
+					ResultSet rs = runSproc(obj.getUpdate_sql(), false, obj.toStringArray());
 					if (rs != null) {
+						refreshData();
 						return true;
 					}
 				}
@@ -337,27 +257,25 @@ public class DB_Factory {
  * @param type Table type
  * @return String containing sql statement
  */
-	private static String getSelect_sql(String column, 
-			String value, ObjectType type) {	
-		String table_name=null;
+	private String getSelect_sql(DBObjectType type) {	
+		String sproc_name=null;
 		if(type!=null)
 		{
 			switch(type)
 			{
-				case POSITION:table_name=Tables.POSITION_TABLE_NAME;
+				case POSITION:sproc_name=Tables.PROC_GET_POSITION;
 						break;
-				case PERSON:table_name=Tables.PERSON_TABLE_NAME;
+				case PERSON:sproc_name=Tables.PROC_GET_PERSON;
 					break;
-				case PERSON_TO_PLACE:table_name=Tables.PERSON_TO_PLACE_TABLE_NAME;
+				case DUTY:sproc_name=Tables.PROC_GET_DUTY;
 					break;
-				case PERSON_NA_AVAIL_HOURS:table_name=Tables.TIME_OFF_TABLE_NAME;
+				case PRIVILEGE:sproc_name=Tables.PROC_GET_PRIVILEGES;
 					break;
-				case DUTIES:table_name=Tables.DUTY_TABLE_NAME;
-					break;
-				default:return null;
+				default:
+					return null;
 			}		
 		}
-		return QueryFactory.getSelect("*", column, value, table_name);
+		return sproc_name;
 	}
 
 	/**
@@ -367,68 +285,19 @@ public class DB_Factory {
 	 * @param wantresult Flag if result is wanted.
 	 * @return SQL result set.
 	 */
-	private static ResultSet runSQL(DBManager dbman, String sql_str,
-			boolean wantresult) {
+	private ResultSet runSQL(String sql_str,boolean wantresult) {
 		if (dbman != null) {
 			return dbman.runQuery(sql_str, wantresult);
 		}
 		return null;
 	}
 
-	/**
-	 * Finds a database object in the list by using a name.
-	 * @param objects List of the objects to search.
-	 * @param name Name reference.
-	 * @return DB_Object if found, null if not.
-	 */
-	public static DB_Object getObjectByName(ArrayList<DB_Object> objects, String name)
-	{
-		if(objects!=null)
-		{
-			for(DB_Object obj: objects)
-			{
-				if(obj!=null)
-				{
-					if(obj.getName().equals(name))
-					{
-						return obj;
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Finds an object using pkid.
-	 * @param objects List of objects to search.
-	 * @param pkid Primary key to look for
-	 * @return object if it has been found, null if not.
-	 */
-	public static DB_Object getObjectByPKID(ArrayList<DB_Object> objects, int pkid)
-	{
-		if(objects!=null)
-		{
-			for(DB_Object obj: objects)
-			{
-				if(obj!=null)
-				{
-					if(obj.getPKID()==pkid)
-					{
-						return obj;
-					}
-				}
-			}
-		}
-		return null;
-		
-	}
 	
 	/**
 	 * Convenience method to get names of the objects from the list.
 	 * @return ArraList of names.
 	 */
-	public static ArrayList<String> getNames(ArrayList<DB_Object> objects)
+	public ArrayList<String> getNames(ArrayList<DB_Object> objects)
 	{
 		ArrayList<String> names=new ArrayList<String>();
 		if(objects!=null)
@@ -444,142 +313,29 @@ public class DB_Factory {
 		return names;
 	}
 	
+	
 	/**
-	 * Retrieves primary keys from the objects and returns them as a list.
-	 * @param objects Objects to search.
-	 * @return List of the primary keys.
+	 * Updates person to position map.
+	 * @param place_ids List of positions
+	 * @param nameText Name of a person
+	 * @param dbman database manager
+	 * @return True if a map was updated, false otherwise.
 	 */
-	public static ArrayList<Integer> getPIKDs(ArrayList<DB_Object> objects)
+	public void updatePersonToPosition(DB_Object person)
 	{
-		ArrayList<Integer> pkids=new ArrayList<Integer>();
-		if(objects!=null)
+		if(person!=null)
 		{
-			for(DB_Object obj:objects)
+			Person pers=(Person)person;
+			runSproc(Tables.PROC_DELETE_PERSON_POSITION, false, pers.getName());
+			if(pers.getM_positions()!=null)
 			{
-				if(obj!=null)
+				for(String s:pers.getM_positions())
 				{
-					pkids.add(obj.getPKID());
+					runSproc(Tables.PROC_ADD_PERSON_POSITION, false, pers.getName(),s);
 				}
+				refreshData();
 			}
 		}
-		return pkids;
-	}
-	
-	/**
-	 * Returns primary keys from the objects as strings
-	 * @param objects Objects to search
-	 * @return List of the primary keys.
-	 */
-	public static ArrayList<String> getPIKDsStr(ArrayList<DB_Object> objects)
-	{
-		ArrayList<Integer> pkids=getPIKDs(objects);
-		ArrayList<String> pkids_str=new ArrayList<String>();
-		for(Integer i:pkids)
-		{
-			pkids_str.add(i.toString());
-		}
-		
-		return pkids_str;
-	}
-	
-	/**
-	 * Uses pkID to get an object from the list
-	 * @param objects List of objects to search
-	 * @param pkid pkID to use to retrieve an object.
-	 * @return DBObject with a specified pkid;
-	 */
-	public static String getObjectNameByPKID(ArrayList<DB_Object> objects,int pkid)
-	{
-		if(objects!=null)
-		{
-			for(DB_Object obj:objects)
-			{
-				if(obj!=null)
-				{
-					if(obj.getPKID()==pkid)
-					{
-						return obj.getName();
-					}
-				}
-			}
-		}
-		
-		return null;
-	}
-	
-	/**
-	 * Finds a primary key from an object using it's name.
-	 * @param objects List of objects to search.
-	 * @param name Reference name of the object
-	 * @return Object's primary key
-	 */
-	public static int getObjectPKIDByName(ArrayList<DB_Object> objects,String name)
-	{
-		if(objects!=null)
-		{
-			for(DB_Object obj:objects)
-			{
-				if(obj!=null)
-				{
-					if(obj.getName().equals(name))
-					{
-						return obj.getPKID();
-					}
-				}
-			}
-		}
-		return 0;
-	}
-	
-	/**
-	 * Fetches object's properties using it's name
-	 * @param objects List of the objects to search.
-	 * @param name object's name 
-	 * @return List of object properties as strings.
-	 */
-	public static ArrayList<String> geDetaislByName(ArrayList<DB_Object> objects, String name) {
-		if(objects!=null)
-		{
-			for(DB_Object obj:objects)
-			{
-				if(obj!=null)
-				{
-					if(obj.getName().equals(name))
-					{
-						return obj.toSortedArray();
-					}
-				}
-				
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * Adds a time off for a person.
-	 * @param objects List of persons
-	 * @param start Time off start
-	 * @param end Time off end
-	 * @param nameText Name of the person
-	 * @param dbman Database manager to use
-	 * @return True if time off was added, false otherwise
-	 */
-	public static boolean addTimeOff(ArrayList<DB_Object> objects, String start, String end, String nameText, DBManager dbman)
-	{
-		if(objects!=null && start!=null && end!=null && nameText!=null && dbman!=null)
-		{
-			DB_Object person=getObjectByName(objects, nameText);
-			if(dbman!=null && person !=null && ((Person)person).isTimeAllowed(start, end))
-			{
-				String sql=((Person)person).getTimeOffInsertSql(start, end);				
-				ResultSet rs = runSQL(dbman, sql, false);
-	
-				if (rs != null) {
-					return true;
-				}				
-			}
-		}
-		return false;
 	}
 	
 	/**
@@ -590,114 +346,24 @@ public class DB_Factory {
 	 * @param dbman database manager
 	 * @return True if a map was updated, false otherwise.
 	 */
-	public static boolean updatePersonToPosition(ArrayList<DB_Object> objects, ArrayList<Integer> place_ids, String nameText, DBManager dbman)
+	public void updatePersonToPrivilege(DB_Object person)
 	{
-		if(objects!=null && place_ids!=null && nameText != null && dbman!=null)
+		if(person!=null)
 		{
-			DB_Object person=getObjectByName(objects, nameText);
-			if(dbman!=null && person !=null)
+			Person pers=(Person)person;
+			runSproc(Tables.PROC_DELETE_PERSON_PRIVILEGE, false, pers.getName());
+			
+			if(pers.getM_privileges()!=null)
 			{
-				((Person)person).setM_positions(place_ids);
-				String sql=((Person)person).getPersonToPositionsDeleteSql();		
-				
-				ResultSet rs = runSQL(dbman,sql, false);
-				if (rs == null) {
-					return false;
-				}
-				
-				ArrayList<String> insert_sql=((Person)person).getPersonToPositionsInsertSql();
-				for(String s: insert_sql)
+				for(String s:pers.getM_privileges())
 				{
-					rs = runSQL(dbman,s, false);
-					if (rs == null) {
-						return false;
-					}
+					runSproc(Tables.PROC_ADD_PERSON_PRIVILEGE, false, pers.getName(),s);
 				}
-				return true;
+				refreshData();
 			}
 		}
-		return false;
 	}
-	
-	/**
-	 * Deletes a time off for a person
-	 * @param objects List of persons
-	 * @param start Time off start
-	 * @param end time off end
-	 * @param nameText Name of a person
-	 * @param dbman DB manager to use
-	 * @return True if time off was deleted, false otherwise.
-	 */
-	public static boolean deleteTimeOff(ArrayList<DB_Object> objects, String start, String end, String nameText, DBManager dbman)
-	{
-		if(objects!=null && start!=null && end!=null && nameText!=null && dbman!=null)
-		{
-			DB_Object person=getObjectByName(objects, nameText);
-			if(dbman!=null && person !=null)
-			{		
-					String sql=((Person)person).getDeleteTimeOffSql(start, end);
-					
-					ResultSet rs = runSQL(dbman,sql, false);
-					if (rs == null) {
-						return false;
-					}
-					return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * Adds new duty to the database.
-	 * @param dbman Database manager to use.
-	 * @param details Duty properties
-	 * @param db_positions list of positions
-	 * @param db_persons list of persons
-	 * @return True if duty was added, false otherwise.
-	 */
-	public static boolean insertDuty(DBManager dbman,ArrayList<String> details,
-			ArrayList<DB_Object> db_positions, ArrayList<DB_Object> db_persons) {
-			
-		if(dbman!=null && details!=null && db_positions!=null && db_persons!=null)
-		{
-			DB_Object obj = createObject(ObjectType.DUTIES);
-			((Duty)obj).populateProperties(details, db_positions, db_persons);
 
-			String sql=obj.getInsert_sql(0);			
-			ResultSet rs = runSQL(dbman, sql, false);
-	
-			if (rs != null) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * Retrieves next pkid from the database (Firebird crap)
-	 * @param dbman Database manager to use.
-	 * @param table_name Name of the table to get next id for.
-	 * @return next pkid
-	 */
-	private static int getNextPKID(DBManager dbman, String sql) {
-
-		if(dbman!=null && sql!=null)
-		{
-			
-			ResultSet rs = dbman.runQuery(sql, true);
-			if(rs!=null)
-			{
-				try {
-					if (rs.next()) {
-						return rs.getInt("GEN_ID");
-					}
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return 0;
-	}
 		
 	/**
 	 * Get today's schedule for a specified employee.
@@ -707,22 +373,21 @@ public class DB_Factory {
 	 * @param persons Persons list (to populate duties object)
 	 * @return List of database duties.
 	 */
-	public static ArrayList<DB_Object> getTodaysDuty(DBManager dbman, String name, ArrayList<DB_Object> positions,
+	public ArrayList<DB_Object> getTodaysDuty(String name, ArrayList<DB_Object> positions,
 			ArrayList<DB_Object> persons) {
 		if(dbman !=null && name!=null)
 		{
-			ResultSet records = runSproc(dbman, Tables.PROC_TODAY_SCHEDULE, true,name);
+			ResultSet records = runSproc(Tables.PROC_TODAY_SCHEDULE, true,name);
 			ArrayList<DB_Object> objects = new ArrayList<DB_Object>();
 			
 			if(records!=null)
 			{
 				try {
 					while (records.next()) {
-						Duty obj = (Duty) createObject(ObjectType.DUTIES);
-						obj=obj.populateProperites(records,positions,persons);
+						Duty obj = (Duty) createObject(DBObjectType.DUTY);
+						obj.populateProperites(records);
 						if(obj!=null)
 						{
-							obj.setUsingFB(false);
 							objects.add(obj);
 						}
 					}
@@ -743,12 +408,12 @@ public class DB_Factory {
 	 * @param isClockIn Whether this is a clock in event.
 	 * @return True is operation was a success.
 	 */
-	public static boolean insertClockEvent(DBManager dbman, String name, boolean isClockIn, String reason)
+	public boolean insertClockEvent(String name, boolean isClockIn, String reason)
 	{
 		boolean retval=false;
 		if(dbman !=null && name!=null)
 		{
-			ResultSet records =runSproc(dbman, isClockIn?Tables.PROC_CLOCKIN:Tables.PROC_CLOCKOUT, true, name, reason); 
+			ResultSet records =runSproc(isClockIn?Tables.PROC_CLOCKIN:Tables.PROC_CLOCKOUT, true, name, reason); 
 			return records!=null;
 		}
 		return retval;
@@ -760,9 +425,9 @@ public class DB_Factory {
 	 * @param name Person's name
 	 * @return True if person is clocked in.
 	 */
-	public static boolean isClockedIn(DBManager dbman, String name)
+	public boolean isClockedIn(String name)
 	{
-		return runSprocBoolean(dbman, Tables.PROC_ISCLOCKEDIN, name, "isClockedIN");
+		return runSprocBoolean(Tables.PROC_ISCLOCKEDIN, name, "isClockedIN");
 	}
 	
 	/**
@@ -771,9 +436,9 @@ public class DB_Factory {
 	 * @param name Person's name
 	 * @return Scheduled hours for a week.
 	 */
-	public static int getWeekScheduledHours(DBManager dbman, String name)
+	public int getWeekScheduledHours(String name)
 	{
-		return runSprocInt(dbman, Tables.PROC_TOTALSCHEDULEDHOURS, name, "TOTAL_SCHEDULED");
+		return runSprocInt(Tables.PROC_TOTALSCHEDULEDHOURS, name, "TOTAL_SCHEDULED");
 	}
 	
 	/**
@@ -782,17 +447,18 @@ public class DB_Factory {
 	 * @param name Person's name
 	 * @return Worked hours for a week.
 	 */
-	public static int getWeekWorkeddHours(DBManager dbman, String name)
+	public int getWeekWorkeddHours(String name)
 	{
-		return runSprocInt(dbman, Tables.PROC_WEEKLYWORKEDDHOURS, name, "total_minutes");
+		return runSprocInt(Tables.PROC_WEEKLYWORKEDDHOURS, name, "total_minutes");
 	}
 	
-	public static boolean requestTimeOff(DBManager dbman, String name, String start, String end, String status)
+	public boolean requestTimeOff(String name, String start, String end, String status)
 	{
 		boolean retval=false;
 		if(dbman !=null && name!=null)
 		{
-			ResultSet records =runSproc(dbman, Tables.PROC_REQUESTTIMEOFF, true, name, start, end, status); 
+			ResultSet records =runSproc(Tables.PROC_REQUESTTIMEOFF, true, name, start, end, status); 
+			refreshData();
 			return records!=null;
 		}
 		return retval;
@@ -806,11 +472,11 @@ public class DB_Factory {
 	 * @param col_name Column name to return
 	 * @return Boolean contained in the specified column
 	 */
-	private static boolean runSprocBoolean(DBManager dbman, String sproc_name, String args, String col_name)
+	private boolean runSprocBoolean(String sproc_name, String args, String col_name)
 	{
 		if(dbman !=null && sproc_name!=null && col_name !=null)
 		{
-			ResultSet records = runSproc(dbman, sproc_name, true, args);
+			ResultSet records = runSproc(sproc_name, true, args);
 			if(records!=null)
 			{
 				try {
@@ -837,11 +503,11 @@ public class DB_Factory {
 	 * @param col_name Column name to return
 	 * @return Integer contained in the specified column
 	 */
-	private static int runSprocInt(DBManager dbman, String sproc_name, String args, String col_name)
+	private int runSprocInt(String sproc_name, String args, String col_name)
 	{
 		if(dbman !=null && sproc_name!=null && col_name !=null)
 		{
-			ResultSet records = runSproc(dbman, sproc_name, true, args);
+			ResultSet records = runSproc(sproc_name, true, args);
 			if(records!=null)
 			{
 				try {
@@ -866,23 +532,22 @@ public class DB_Factory {
 	 * @param wantresult Whether a result is wanted
 	 * @return Resultset is wanted, null otherwise.
 	 */
-	private static ResultSet runSproc(DBManager dbman, String sproc_name, boolean wantresult, String ... args)
+	private ResultSet runSproc( String sproc_name, boolean wantresult, String ... args)
 	{
 		ResultSet retval=null;
 		if(dbman !=null && sproc_name!=null)
 		{
 			String sql=QueryFactory.getProc(sproc_name, args);
-			retval=runSQL(dbman, sql,	wantresult);
+			retval=runSQL(sql,	wantresult);
 		}
 		return retval;
 	}
 
-	public static ArrayList<String> getActiveNames(
-			ArrayList<DB_Object> objects) {
+	public ArrayList<String> getActiveNames() {
 		ArrayList<String> names=new ArrayList<String>();
-		if(objects!=null)
+		if(db_persons!=null)
 		{
-			for(DB_Object obj:objects)
+			for(DB_Object obj:db_persons)
 			{
 				if(obj!=null && ((Person)obj).isActive())
 				{
@@ -893,34 +558,27 @@ public class DB_Factory {
 		return names;
 	}
 
-	public static void setPin(DBManager dbman, String pin, String salt, String name) {
-		runSproc(dbman, Tables.PROC_SETPIN, false, name, pin, salt); 
+	public void setPin(String pin, String salt, String name) {
+		runSproc(Tables.PROC_SETPIN, false, name, pin, salt); 
 		
 	}
 
-	public static ArrayList<String> getPin(DBManager dbman, String login) {
-		return runSprocList(dbman, Tables.PROC_GETPIN, login, "pass","salt");			
-	}
-
-	public static void updatePerson(DBManager dbman, String nameLabel,
-			String address, String homephone, String cellphone, String email) {
-		runSproc
-		(dbman, Tables.PROC_UPDATEPERSON, false,nameLabel, address, homephone, cellphone, email);
-		
+	public ArrayList<String> getPin(String login) {
+		return runSprocList(Tables.PROC_GETPIN, login, "pass","salt");			
 	}
 	
-	public static ArrayList<String> getTimeOffStatusOptions(DBManager dbman)
+	public ArrayList<String> getTimeOffStatusOptions()
 	{
-		return runSprocList(dbman, Tables.PROC_GET_TIME_OFF_STATUS_OPTIONS, null, "Status");		
+		return runSprocList(Tables.PROC_GET_TIME_OFF_STATUS_OPTIONS, null, "Status");		
 	}
 	
-	public static ArrayList<String> getClockOutReasons(DBManager dbman)
+	public ArrayList<String> getClockOutReasons()
 	{
-		return runSprocList(dbman, Tables.PROC_GET_CLOCK_OUT_REASONS, null, "Name");		
+		return runSprocList(Tables.PROC_GET_CLOCK_OUT_REASONS, null, "Name");		
 	}
 
-	public static void deleteTimeOffs(DBManager dbman) {
-		runSproc(dbman, Tables.PROC_DELETE_TIME_OFFS, true); 
+	public void deleteTimeOffs() {
+		runSproc(Tables.PROC_DELETE_TIME_OFFS, true); 
 		
 	}	
 	
@@ -931,10 +589,10 @@ public class DB_Factory {
 	 * @param col_name Column name(s) to return
 	 * @return ArrayList of strings contained in the specified column
 	 */
-	private static ArrayList<String> runSprocList(DBManager dbman, String sproc_name, String arg, String ...col_names)
+	private ArrayList<String> runSprocList(String sproc_name, String arg, String ...col_names)
 	{
 		ArrayList<String> retval=new ArrayList<String>();
-		ResultSet records =arg!=null?runSproc(dbman, sproc_name, true, arg):runSproc(dbman, sproc_name, true);
+		ResultSet records =arg!=null?runSproc(sproc_name, true, arg):runSproc(sproc_name, true);
 		if(records!=null)
 		{
 			try {
@@ -953,7 +611,185 @@ public class DB_Factory {
 		}
 		return retval;
 	}
-	
 
+	public int getNextShiftDiff(String name) {
+		return runSprocInt(Tables.PROC_GET_NEXT_SHIFT_DIFF, name, "Next_Shift_Diff");
+	}
+
+	public ArrayList<String> getSupervisorType(
+			String type) {
+		return runSprocList(Tables.PROC_GET_SUPERVISOR_TYPE, type, "PERSON_NAME");	
+	}
+
+	public ArrayList<Object> getAllTimesOff() {
+		ArrayList<Object> retval=new ArrayList<Object>();
+		for(DB_Object p : db_persons)
+		{
+			retval.addAll(((Person)p).getTimeOffs());
+		}
+		return retval;
+	}
+	/**
+	 * Gets a list of employees that are allowed to work specified positions for specified time span.
+	 * @param col_label Position name
+	 * @param start Start of the time span.
+	 * @param end End of the time span.
+	 * @return List of the employee names.
+	 */
+	public ArrayList<String> getAllowedEmployees(String col_label, String start, String end) {
+		
+		ArrayList<DB_Object> persons=new ArrayList<DB_Object>();
+		for(DB_Object per:db_persons)
+		{
+			if(per!=null && ((Person)per).isActive() && ((Person)per).isPositionAllowed(col_label))
+			{
+				persons.add(per);
+			}
+		}
+		ArrayList<String> retval=new ArrayList<String>();
+		
+		for(DB_Object per:persons)
+		{
+			if(per!=null && ((Person)per).isTimeAllowed(start, end))
+			{				
+				retval.add(per.getName());				
+			}
+		}
+		
+		return retval;
+
+	}
+
+		
+	
+	/**
+	 * Gets a list of people scheduled on a specified position and date/time
+	 * @param date Date/time duty is scheduled on.
+	 * @param postion_id Duty position.
+	 * @return A List of people scheduled on that date.
+	 */
+	public ArrayList<String> isDutyOn(String date, String postion_id)
+	{
+		if(date!=null && postion_id != null)
+		{
+			ArrayList<String> retval=new ArrayList<String> ();
+				
+			for(DB_Object d: db_duties)
+			{
+				String person_id=d==null?null:((Duty)d).isPersonOn(postion_id, date);
+				if(person_id!=null)
+				{
+					retval.add(person_id);
+				}
+			}
+			return retval;
+		}
+		return null;
+	}
+
+	/**
+	 *  Checks if an employee has already been scheduled.
+	 * @param person_name Name of the employee
+	 * @param start Shift start date/time
+	 * @param end Shift end date/time
+	 * @return true is person has a conflict, false otherwise.
+	 */
+	public boolean checkDutyConflict(DB_Object duty) {		
+		
+		for(DB_Object d:db_duties)
+		{
+			if(d!=null && ((Duty)d).personConflict(duty))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Calculates the total hours that an employee is scheduled for during a specified period.
+	 * @param employee_name Name of the employee.
+	 * @param start Start of the period.
+	 * @param end End of the period.
+	 * @return Total hours 
+	 */
+	public String getTotalEmpoloyeeHours(String employee_name, String start, String end)
+	{	
+		double total_hours=0;
+		
+		for(DB_Object d: db_duties)
+		{
+			if(d!=null)
+			{
+				double hours=((Duty)d).getTotalEmpoloyeeHours(employee_name, start, end);
+				if(hours>0)
+				{
+					total_hours+=hours;
+				}
+			}
+		}
+		try
+		{
+			String retval=String.format("%.2f", total_hours);
+			return retval;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	private DB_Object getElementByName(ArrayList<DB_Object> elements,
+			String name) {
+		if (name != null && elements != null) {
+			for (DB_Object obj : elements) {
+				if (obj.getName().equals(name)) {
+					return obj;
+				}
+			}
+		}
+		return null;
+	}
+	
+	public DB_Object getElementByName(String name, DBObjectType type) {
+		return getElementByName(getElements(type), name);		
+	}
+	
+	public ArrayList<String> getElementsNames(DBObjectType type) {		
+		return getNames(getElements(type));
+	}
+	
+	public boolean updateElement(DB_Object old_val, DB_Object new_val, DBObjectType type)
+	{
+		boolean retval=updateRecord(getElements(type), old_val, new_val);
+		if(type==DBObjectType.PERSON)
+		{
+			updatePersonToPosition(new_val);
+			updatePersonToPrivilege(new_val);
+		}
+		return retval;
+	}
+	
+	public boolean deleteElement(DB_Object obj, DBObjectType type)
+	{
+		return deleteRecord(getElements(type),obj);
+	}
+	
+	private ArrayList<DB_Object> getElements(DBObjectType type)
+	{
+		switch (type) {
+		case PERSON:
+			return db_persons;
+		case POSITION:
+			return db_positions;
+		case DUTY:
+			return db_duties;
+		case PRIVILEGE:
+			return db_privileges;
+		default:
+			return null;
+		}
+	}
 
 }

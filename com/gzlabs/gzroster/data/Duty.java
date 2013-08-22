@@ -2,12 +2,10 @@ package com.gzlabs.gzroster.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.UUID;
 
-import com.gzlabs.gzroster.sql.DB_Factory;
-import com.gzlabs.gzroster.sql.QueryFactory;
 import com.gzlabs.gzroster.sql.Tables;
 import com.gzlabs.utils.DateUtils;
 /**
@@ -18,58 +16,131 @@ import com.gzlabs.utils.DateUtils;
 public class Duty extends DB_Object {
 
 	/**
+	 * Duty start
+	 */
+	private Calendar m_start;
+	
+	/**
+	 * Duty end
+	 */
+	private Calendar m_end;
+	
+	/**
+	 * Position assigned
+	 */
+	private String m_position;
+	
+	/**
+	 * Person assigned to the position
+	 */
+	private String m_person;
+	
+	/**
+	 * Unique identifier.  This is a legacy leftover from FB.
+	 */
+	private String m_uuid;
+	
+	
+	 /*-------------------------------------------------------------------*/
+	 /*  Constructors start
+	 /*--------------------------------------------------------------------*/
+	/**
+	 * Default constructor.  Blank variables are assigned. Note that start and end
+	 * dates are initialized to the current date.
+	 */
+	public Duty()
+	{
+		this(new GregorianCalendar(), new GregorianCalendar(), "", "", "");
+	}
+	
+	/**
+	 * Overloaded constructor, takes in all properties except for unique identifier.
+	 * @param m_start Start date
+	 * @param m_end End date
+	 * @param m_position Position name
+	 * @param m_person Person name
+	 */
+	public Duty(Calendar m_start, Calendar m_end, String m_position, String m_person) {
+		this(m_start, m_end, m_position, m_person, "");
+	}
+	
+	/**
+	 * Overloaded constructor that takes in all variables for initialization.
+	 * @param m_start Start date
+	 * @param m_end End date
+	 * @param m_position Position name
+	 * @param m_person Person name
+	 * @param u_uuid Unique identifier.
+	 */
+	public Duty(Calendar m_start, Calendar m_end, String m_position, String m_person, String u_uuid) {
+		super();
+		this.m_start = m_start;
+		this.m_end = m_end;
+		
+		this.m_position =m_position;
+		this.m_person = m_person;
+		this.m_uuid=u_uuid;
+	}	
+	 /*-------------------------------------------------------------------*/
+	 /*  Constructors End
+	 /*--------------------------------------------------------------------*/
+
+	 /*-------------------------------------------------------------------*/
+	 /*  Setters and getters start
+	 /*--------------------------------------------------------------------*/
+	/**
 	 * @return the m_start
 	 */
-	public Date getM_start() {
+	public Calendar getM_start() {
 		return m_start;
 	}
 
 	/**
 	 * @param m_start the m_start to set
 	 */
-	public void setM_start(Date m_start) {
+	public void setM_start(Calendar m_start) {
 		this.m_start = m_start;
 	}
 
 	/**
 	 * @return the m_end
 	 */
-	public Date getM_end() {
+	public Calendar getM_end() {
 		return m_end;
 	}
 
 	/**
 	 * @param m_end the m_end to set
 	 */
-	public void setM_end(Date m_end) {
+	public void setM_end(Calendar m_end) {
 		this.m_end = m_end;
 	}
 
 	/**
 	 * @return the m_position
 	 */
-	public Position getM_position() {
+	public String getM_position() {
 		return m_position;
 	}
 
 	/**
 	 * @param m_position the m_position to set
 	 */
-	public void setM_position(Position m_position) {
+	public void setM_position(String m_position) {
 		this.m_position = m_position;
 	}
 
 	/**
 	 * @return the m_person
 	 */
-	public Person getM_person() {
+	public String getM_person() {
 		return m_person;
 	}
 
 	/**
 	 * @param m_person the m_person to set
 	 */
-	public void setM_person(Person m_person) {
+	public void setM_person(String m_person) {
 		this.m_person = m_person;
 	}
 
@@ -86,168 +157,111 @@ public class Duty extends DB_Object {
 	public void setM_uuid(String m_uuid) {
 		this.m_uuid = m_uuid;
 	}
-
-	private Date m_start;
-	private Date m_end;
-	private Position m_position;
-	private Person m_person;
-	private String m_uuid;
-
-	@Override
-	public String getInsert_sql(int pkid) {
-		m_uuid=UUID.randomUUID().toString();
-		String cols="DUTY_START_TIME," +
-				"PLACE_ID," +
-				"PERSON_ID,"+
-				"DUTY_END_TIME,"+
-				"DUTY_KEY";
-		
-		String vals="'"+DateUtils.DateToString(m_start)+"','"+
-				m_position.getPKID()+"','"+
-				m_person.getPKID()+"','"+
-				DateUtils.DateToString(m_end)+"','"+
-				m_uuid+"'";
-
-		return QueryFactory.getInsert(cols, vals, Tables.DUTY_TABLE_NAME);
-	}
-
-	@Override
-	public String getUpdate_sql() {
-		String what= "DUTY_START_TIME='"+DateUtils.DateToString(m_start)+
-				"',PLACE_ID='"+m_position.getPKID()+
-				"',PERSON_ID='"+m_person.getPKID()+
-				"',DUTY_END_TIME='"+DateUtils.DateToString(m_end)+"'";
-		return QueryFactory.getUpdate(what, "DUTY_KEY", m_uuid, Tables.DUTY_TABLE_NAME);		
-	}
-
-	@Override
-	public ArrayList<String> getDelete_sql() {
-		
-		ArrayList<String> retval=new ArrayList<String>();
-		String sql = QueryFactory.getDelete("DUTY_KEY", m_uuid, Tables.DUTY_TABLE_NAME);						
-		retval.add(sql);
-		return retval;		
-	}
-
+	
 	/**
-	 * Populates data using SQL result set and list of positions and persons
-	 * @param rs Result Set with object data
-	 * @param postions List of positions
-	 * @param persons List of persons
-	 * @return populated Duty object
+	 * @see DB_Object#getName()
 	 */
-	public Duty populateProperites(ResultSet rs, ArrayList<DB_Object> postions,  ArrayList<DB_Object> persons) {
-		try {
-			m_start = rs.getTimestamp("DUTY_START_TIME");
-			m_end = rs.getTimestamp("DUTY_END_TIME");
-			m_uuid = rs.getString("DUTY_KEY");
-			
-			int person_id = rs.getInt("PERSON_ID");
-			int place_id = rs.getInt("PLACE_ID");	
-			
-			m_person=(Person) DB_Factory.getObjectByPKID(persons, person_id);
-			m_position=(Position) DB_Factory.getObjectByPKID(postions, place_id);
-			
-			if(m_person == null || m_position == null)
-			{
-				return null;
-			}
-			return this;
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return null;
-
-	}
-
-	/**
-	 * Populates properties from String array
-	 * @param details String array with properties
-	 * @param postions List of positions
-	 * @param persons List of properties
-	 */
-	public void populateProperties(ArrayList<String> details, ArrayList<DB_Object> postions,  ArrayList<DB_Object> persons) {
-		if(details == null || details.size() != Tables.DUTIES_MAX_COLS)
-		{
-			return;
-		}
-		
-		String start_str=details.get(Tables.DUTIES_START_INDEX);
-		if(start_str.length()>0)
-		{
-			m_start=DateUtils.StringToDate(start_str);
-		}
-		
-		String end_str=details.get(Tables.DUTIES_END_INDEX);
-		if(end_str.length()>0)
-		{
-			m_end=DateUtils.StringToDate(end_str);
-		}
-		try
-		{
-			m_uuid=details.get(Tables.DUTIES_KEY_INDEX);
-		}
-		catch (NumberFormatException e)
-		{
-			e.printStackTrace();
-		}
-		
-		String person_id=details.get(Tables.DUTIES_PERSON_ID_INDEX);
-		m_person=(Person) DB_Factory.getObjectByName(persons, person_id);
-		
-		String place_id=details.get(Tables.DUTIES_PLACE_ID_INDEX);
-		m_position=(Position)DB_Factory.getObjectByName(postions, place_id);
-	}
-
 	@Override
 	public String getName() {
-		return DateUtils.DateToString(m_start);
+		return DateUtils.CalendarToString(m_start);
 	}
 
+	/**
+	 * @see DB_Object#getPKID()
+	 */
 	@Override
 	public int getPKID() {
 		return 0;
 	}
+	
+	/**
+	 * @see DB_Object#getPKIDStr()
+	 */
+	@Override
+	public String getPKIDStr() {
+		return m_uuid;
+	}
+	/*-------------------------------------------------------------------*/
+	/*  Setters and getters end
+	/*--------------------------------------------------------------------*/
 
+	
+	/*-------------------------------------------------------------------*/
+	/* SQL getters start
+	/*--------------------------------------------------------------------*/
+	/**
+	 * @see DB_Object#getInsert_sql()
+	 */
+	@Override
+	public String getInsert_sql() {
+		m_uuid=UUID.randomUUID().toString();
+		return Tables.PROC_INSERT_DUTY;
+	}
+	
+	/**
+	 * @see DB_Object#getUpdate_sql()
+	 */
+	@Override
+	public String getUpdate_sql() {	
+		return Tables.PROC_UPDATE_DUTY;
+	}
+
+	/**
+	 * @see DB_Object#getDelete_sql()
+	 */
+	@Override
+	public String getDelete_sql() {			
+		return Tables.PROC_DELETE_DUTY;		
+	}
+	/*-------------------------------------------------------------------*/
+	/* SQL getters end
+	/*--------------------------------------------------------------------*/
+	
+	/**
+	 * @see DB_Object#matches(DB_Object, boolean)
+	 */
 	@Override
 	public
-	boolean matches(ArrayList<String> details, boolean use_id) {
-		if(details != null && details.size() == Tables.DUTIES_MAX_COLS)
+	boolean matches(DB_Object details, boolean use_id) {
+		if(details != null)
 		{
+			Duty duty=(Duty) details;
 			boolean id=true;
 			if(use_id)
 			{
-				id= m_uuid==details.get(Tables.DUTIES_KEY_INDEX);
+				id= m_uuid==duty.getM_uuid();
 			}
-			
-			String start_str=DateUtils.DateToString(m_start);
-			String end_str=DateUtils.DateToString(m_end);
+
 			return id &&
-					start_str.equals(details.get(Tables.DUTIES_START_INDEX)) &&
-					end_str.equals(details.get(Tables.DUTIES_END_INDEX)) &&
-					m_person.getName().equals(details.get(Tables.DUTIES_PERSON_ID_INDEX)) &&
-				    m_position.getName().equals(details.get(Tables.DUTIES_PLACE_ID_INDEX));			
+					m_start.equals(duty.getM_start()) &&
+					m_end.equals(duty.getM_end()) &&
+					m_person.equals(duty.getM_person()) &&
+				    m_position.equals(duty.getM_position());			
 		}
 		return false;
 	}
 
-	@Override
-	public ArrayList<String> toSortedArray() {
-		ArrayList<String> properties=new ArrayList<String>();
-		properties.add(DateUtils.DateToString(m_start));
-		properties.add(Integer.toString(m_position.getPKID()));
-		properties.add(Integer.toString(m_person.getPKID()));
-		properties.add(DateUtils.DateToString(m_end));
-		properties.add(m_uuid);
-		return properties;
-	}
-
+	/**
+	 * @see DB_Object#populateProperites(ResultSet)
+	 */
 	@Override
 	public void populateProperites(ResultSet rs) {
 		try {
-			m_start = rs.getTimestamp("DUTY_START_TIME");
-			m_end = rs.getTimestamp("DUTY_END_TIME");
+			
+			if(rs.getTimestamp("DUTY_START_TIME")!=null)
+			{
+				m_start.setTime(rs.getTimestamp("DUTY_START_TIME"));
+			}
+			
+			if(rs.getTimestamp("DUTY_END_TIME")!=null)
+			{
+				m_end.setTime(rs.getTimestamp("DUTY_END_TIME"));
+			}		
+			
+			
+			m_person=rs.getString("PERSON_NAME");
+			m_position=rs.getString("PLACE_NAME");
+			m_uuid=rs.getString("DUTY_KEY");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -260,19 +274,31 @@ public class Duty extends DB_Object {
 	 * @param date Date
 	 * @return Person id if it's found, 0 if not
 	 */
-	public int isPersonOn(int place_id, String date)
+	public String isPersonOn(String place_id, String date)
 	{
 		boolean start_b=DateUtils.isCalendarBetween(m_start, m_end, date, null, true);
-		if(m_position!=null && m_person!=null && place_id==m_position.getPKID() && start_b)
+		if(m_position!=null && m_person!=null && place_id.equals(m_position) && start_b)
 		{
-			return m_person.getPKID();
+			return m_person;
 		}
-		return 0;
+		return null;
 	}
 
+	/**
+	 * @see DB_Object#populateProperties(DB_Object)
+	 */
 	@Override
-	public void populateProperties(ArrayList<String> details) {
-		
+	public void populateProperties(DB_Object details) {
+		if(details!=null)
+		{
+			Duty duty=(Duty) details;
+			m_uuid=duty.getM_uuid();
+			m_start=duty.getM_start();
+			m_end=duty.getM_end();
+			m_person=duty.getM_person();
+			m_position=duty.getM_position();
+			
+		}		
 	}
 	
 	/**
@@ -282,12 +308,12 @@ public class Duty extends DB_Object {
 	 * @param end Duty end
 	 * @return True if there is a conflict, false otherwise
 	 */
-	public boolean personConflict(int person_id, String start, String end)
+	public boolean personConflict(DB_Object duty)
 	{
-		if(m_person != null && person_id==m_person.getPKID())
+		if(m_person != null && duty!=null && ((Duty)duty).getM_person().equals(m_person))
 		{
-			boolean start_match=DateUtils.isCalendarBetween(m_start, m_end, start, null, true);
-			boolean end_match=DateUtils.isCalendarBetween(m_start, m_end, end, null, true);
+			boolean start_match=DateUtils.isCalendarBetween(m_start, m_end, ((Duty)duty).getM_start(), null, true);
+			boolean end_match=DateUtils.isCalendarBetween(m_start, m_end, ((Duty)duty).getM_end(), null, true);
 			
 			if(start_match || end_match)
 			{
@@ -305,13 +331,13 @@ public class Duty extends DB_Object {
 	 * @param end End of a period
 	 * @return Total number of employee hours
 	 */
-	public double getTotalEmpoloyeeHours(int employee_id, String start, String end)
+	public double getTotalEmpoloyeeHours(String employee_id, String start, String end)
 	{
 		double hours = 0;
 
-		if (m_person !=null && m_start!=null && m_end!=null && m_person.getPKID()==employee_id) {
+		if (m_person !=null && m_start!=null && m_end!=null && m_person.equals(employee_id)) {
 		
-			String start_str=DateUtils.DateToString(m_start);
+			String start_str=DateUtils.CalendarToString(m_start);
 			boolean start_match = DateUtils.isCalendarBetween(start, end,
 					start_str, true);
 			if (start_match) {
@@ -328,19 +354,28 @@ public class Duty extends DB_Object {
 	 * @param datetime Date/time to check
 	 * @return True if there is a match, false otherwise.
 	 */
-	public boolean matches(int person_id, int position_id, String datetime) {
-		if(m_person.getPKID()==person_id && m_position.getPKID()==position_id && 
+	public boolean matches(String person_id, String position_id, String datetime) {
+		if(m_person.equals(person_id) && m_position.equals(position_id) && 
 				DateUtils.isCalendarBetween(m_start, m_end, datetime, null, true))
 		{
 			return true;
 		}
 		return false;
 	}
-
+	
+	/**
+	 * @see DB_Object#toStringArray()
+	 */
 	@Override
-	public String getNexPKID_sql() {
-		// TODO Auto-generated method stub
-		return null;
+	public String[] toStringArray() {
+		String[] str_array=	{DateUtils.CalendarToString(m_start),
+		m_position,
+		m_person,
+		DateUtils.CalendarToString(m_end),
+		m_uuid};
+		return str_array;
 	}
+	
+	
 
 }

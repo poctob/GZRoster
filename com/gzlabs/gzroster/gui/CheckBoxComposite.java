@@ -2,11 +2,17 @@ package com.gzlabs.gzroster.gui;
 
 import java.util.ArrayList;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.custom.ScrolledComposite;
-
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
+import com.gzlabs.gzroster.sql.DBObjectType;
 import com.gzlabs.utils.WidgetUtilities;
 
 /**
@@ -16,12 +22,30 @@ import com.gzlabs.utils.WidgetUtilities;
  * @author apavlune
  * 
  */
-public class EmployeePositionComposite extends Composite {
+public abstract class CheckBoxComposite extends BaseElementMenu {
+	
+	/**
+	 * Location of the first checkbox.
+	 */
 	private static final int Y_POS_FIRST = 10;
+	
+	/**
+	 * Spacing between objects
+	 */
 	private static final int Y_SPACER = 28;
+	
 	// Checkbox collection
 	private ArrayList<Button> pos_boxes;
+	
+	/**
+	 * Composite for checkboxes
+	 */
 	private ScrolledComposite scrolledComposite;
+	
+	/**
+	 * Currently selected item.
+	 */
+	private String current_selection;
 
 	/**
 	 * Create the composite.
@@ -29,15 +53,39 @@ public class EmployeePositionComposite extends Composite {
 	 * @param parent
 	 * @param style
 	 */
-	public EmployeePositionComposite(Composite parent, int style) {
-		super(parent, style);
+	public CheckBoxComposite(Composite parent, int style, IItemsManager man) {
+		super(parent, style, man);
 
 		scrolledComposite = new ScrolledComposite(this, SWT.BORDER
 				| SWT.H_SCROLL | SWT.V_SCROLL);
-		scrolledComposite.setBounds(10, 10, 161, 361);
-		scrolledComposite.setExpandHorizontal(true);
-		// scrolledComposite.setExpandVertical(true);
+		scrolledComposite.setBounds(10, 10, 260, 246);
+		scrolledComposite.setExpandHorizontal(true);		
 		pos_boxes = new ArrayList<Button>();
+		if(man!=null)
+		{
+			updateItems();
+		}	
+		setUpContextMenu();
+		
+
+		final Action add = new Action("New") {
+			public void run() {
+				addItem();
+			}
+		};
+		
+		final MenuManager mgr_new = new MenuManager();
+		mgr_new.setRemoveAllWhenShown(true);
+
+		mgr_new.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager manager) {
+
+				mgr_new.add(add);
+			}
+		});
+		
+		scrolledComposite.setMenu(mgr_new.createContextMenu(scrolledComposite));
+		
 	}
 
 	/**
@@ -45,7 +93,8 @@ public class EmployeePositionComposite extends Composite {
 	 */
 	public void removeAll() {
 		for (int i = 0; i < pos_boxes.size(); i++) {
-			pos_boxes.remove(i);
+			pos_boxes.get(i).dispose();
+			pos_boxes.remove(i);			
 		}
 	}
 
@@ -67,7 +116,7 @@ public class EmployeePositionComposite extends Composite {
 			y_pos = btn.getBounds().y + Y_SPACER;
 		}
 
-		button.setBounds(10, y_pos, 111, 22);
+		button.setBounds(10, y_pos, 250, 22);
 		WidgetUtilities.safeButtonSet(button, label);
 		pos_boxes.add(button);
 	}
@@ -88,14 +137,6 @@ public class EmployeePositionComposite extends Composite {
 			}
 		}
 		return false;
-	}
-
-	@Override
-	public void setEnabled(boolean enabled) {
-		scrolledComposite.setEnabled(enabled);
-		for (int i = 0; i < pos_boxes.size(); i++) {
-			pos_boxes.get(i).setEnabled(enabled);
-		}
 	}
 
 	/**
@@ -119,7 +160,7 @@ public class EmployeePositionComposite extends Composite {
 	}
 
 	/**
-	 * Fetches boxes labels
+	 * Fetches box labels
 	 * 
 	 * @return String list of box labels
 	 */
@@ -162,5 +203,78 @@ public class EmployeePositionComposite extends Composite {
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
+	}
+
+	/**
+	 * @see BaseElementMenu#getSelection()
+	 */
+	@Override
+	public String getSelection() {		
+		return current_selection;
+	}
+
+	@Override
+	abstract protected DBObjectType getObjectType();
+
+	/**
+	 * @see BaseElementMenu#updateItems()
+	 */
+	@Override
+	protected void updateItems() {
+		removeAll();
+		pos_boxes.clear();
+		ArrayList<String> elements=getManager().getData(getObjectType());
+		if(elements!=null)
+		{
+			for(String s:elements)
+			{
+				addButton(s);
+			}
+		}
+		
+	}
+
+	/**
+	 * @see BaseElementMenu#getExtraActions()
+	 */
+	@Override
+	protected ArrayList<Action> getExtraActions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * Adds menu to the check box elements.
+	 * @see BaseElementMenu#setMenu(MenuManager)
+	 */
+	@Override
+	protected void setMenu(MenuManager mgr) {
+		if(pos_boxes != null)
+		{
+			for(final Button b:pos_boxes)
+			{
+				b.setMenu(mgr.createContextMenu(b));
+				
+				/**
+				 * This focus listener captures 
+				 * currently selected item.
+				 */
+				b.addFocusListener(new FocusListener(){
+
+					@Override
+					public void focusGained(FocusEvent e) {
+						current_selection=b.getText();						
+					}
+
+					@Override
+					public void focusLost(FocusEvent e) {
+						current_selection="";
+						
+					}
+					
+				});			
+			}
+		}		
+		
 	}
 }

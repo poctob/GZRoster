@@ -3,8 +3,9 @@ package com.gzlabs.gzroster.data;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
-import com.gzlabs.gzroster.sql.QueryFactory;
 import com.gzlabs.gzroster.sql.Tables;
 
 /**
@@ -19,63 +20,250 @@ public class Person extends DB_Object {
 	private int m_id;
 	private String m_name;
 	private String m_address;
+	private String m_home_phone;
+	private String m_mobile_phone;
+	private boolean m_active;
+	private String m_email;
+
+	private ArrayList<TimeOff> m_times_off;
+	private ArrayList<String> m_positions;
+	private ArrayList<String> m_privileges;
+
+	/*************************************************************************/
+
+	/*-------------------------------------------------------------------*/
+	/*
+	 * Constructors start
+	 * /*--------------------------------------------------------------------
+	 */
+	/**
+	 * Default constructor
+	 */
+	public Person() {
+		this("", "", "", "", false, "", 0, null, null, null);
+	}
+
+	/**
+	 * Overloaded constructor, takes in common properties
+	 * 
+	 * @param m_name
+	 *            Name
+	 * @param m_address
+	 *            Address
+	 * @param m_home_phone
+	 *            Home phone
+	 * @param m_mobile_phone
+	 *            Mobiel phone
+	 * @param m_active
+	 *            Is person active?
+	 * @param m_email
+	 *            Email address
+	 */
+	public Person(String m_name, String m_address, String m_home_phone,
+			String m_mobile_phone, boolean m_active, String m_email) {
+		this(m_name, m_address, m_home_phone, m_mobile_phone, m_active,
+				m_email, 0, null, null, null);
+	}
+
+	/**
+	 * Overloaded constructor takes in all parameters
+	 * 
+	 * @param m_name
+	 *            Name
+	 * @param m_address
+	 *            Address
+	 * @param m_home_phone
+	 *            Home phone
+	 * @param m_mobile_phone
+	 *            Mobiel phone
+	 * @param m_active
+	 *            Is person active?
+	 * @param m_email
+	 *            Email address
+	 * @param p_pkid
+	 *            Primary key
+	 * @param p_times_off
+	 *            Times off collection
+	 * @param p_positions
+	 *            positions collection
+	 * @param p_privileges
+	 *            Privileges collection
+	 */
+	public Person(String m_name, String m_address, String m_home_phone,
+			String m_mobile_phone, boolean m_active, String m_email,
+			int p_pkid, ArrayList<TimeOff> p_times_off,
+			ArrayList<String> p_positions, ArrayList<String> p_privileges) {
+
+		super();
+		this.m_name = m_name;
+		this.m_address = m_address;
+		this.m_home_phone = m_home_phone;
+		this.m_mobile_phone = m_mobile_phone;
+		this.m_active = m_active;
+		this.m_email = m_email;
+		this.m_id = p_pkid;
+
+		this.m_times_off = p_times_off != null ? p_times_off
+				: new ArrayList<TimeOff>();
+		this.m_positions = p_positions != null ? p_positions
+				: new ArrayList<String>();
+		this.m_privileges = p_privileges != null ? p_privileges
+				: new ArrayList<String>();
+
+	}
+
+	/*-------------------------------------------------------------------*/
+	/*
+	 * Constructors End
+	 * /*--------------------------------------------------------------------
+	 */
+
+	/*-------------------------------------------------------------------*/
+	/*
+	 * Setters and getters start
+	 * /*--------------------------------------------------------------------
+	 */
+	/**
+	 * Checks if this person is active
+	 * 
+	 * @return True or false
+	 */
+	public boolean isActive() {
+		return m_active;
+	}
+
+	/**
+	 * @return the m_positions
+	 */
+	public ArrayList<String> getM_positions() {
+		return m_positions;
+	}
+
+	/**
+	 * @param m_name
+	 *            the m_name to set
+	 */
+	public void setM_name(String m_name) {
+		this.m_name = m_name;
+	}
+
 	/**
 	 * @return the m_address
 	 */
 	public String getM_address() {
 		return m_address;
 	}
+
 	/**
 	 * @return the m_home_phone
 	 */
 	public String getM_home_phone() {
 		return m_home_phone;
 	}
+
 	/**
 	 * @return the m_mobile_phone
 	 */
 	public String getM_mobile_phone() {
 		return m_mobile_phone;
 	}
+
 	/**
 	 * @return the m_email
 	 */
 	public String getM_email() {
 		return m_email;
 	}
-	private String m_home_phone;
-	private String m_mobile_phone;
-	private String m_note;
-	private boolean m_active;
-	private String m_email;
-
-	private ArrayList<TimeOff> m_times_off;
-	private ArrayList<Integer> m_positions;
-
-	/*************************************************************************/
 
 	/**
-	 * Checks if this person is active
-	 * @return True or false
+	 * @return the m_privileges
 	 */
-	public boolean isActive()
-	{
-		return m_active;
-	}
-	/**
-	 * @return the m_positions
-	 */
-	public ArrayList<Integer> getM_positions() {
-		return m_positions;
+	public ArrayList<String> getM_privileges() {
+		return m_privileges;
 	}
 
 	/**
 	 * @param m_positions
 	 *            the m_positions to set
 	 */
-	public void setM_positions(ArrayList<Integer> m_positions) {
+	public void setM_positions(ArrayList<String> m_positions) {
 		this.m_positions = m_positions;
 	}
+
+	/**
+	 * @param m_positions
+	 *            the m_positions to set
+	 */
+	public void setM_privileges(ArrayList<String> m_privileges) {
+		this.m_privileges = m_privileges;
+	}
+
+	/**
+	 * @see DB_Object#getName()
+	 */
+	@Override
+	public String getName() {
+		return m_name;
+	}
+
+	/**
+	 * @see DB_Object#getPKID()
+	 */
+	@Override
+	public int getPKID() {
+		return m_id;
+	}
+
+	/**
+	 * @see DB_Object#getPKIDStr()
+	 */
+	@Override
+	public String getPKIDStr() {
+		return Integer.toString(m_id);
+	}
+
+
+	/**
+	 * Times off collection accessor.
+	 * @return Times off.
+	 */
+	public ArrayList<TimeOff> getTimeOffs() {
+		return m_times_off;
+	}
+	/*-------------------------------------------------------------------*/
+	/*
+	 * SQL getters start
+	 * /*--------------------------------------------------------------------
+	 */
+	/**
+	 * @see DB_Object#getInsert_sql()
+	 */
+	@Override
+	public String getInsert_sql() {
+		return Tables.PROC_INSERT_PERSON;
+	}
+
+	/**
+	 * @see DB_Object#getUpdate_sql()
+	 */
+	@Override
+	public String getUpdate_sql() {
+		return Tables.PROC_UPDATE_PERSON;
+	}
+
+	/**
+	 * @see DB_Object#getDelete_sql()
+	 */
+	@Override
+	public String getDelete_sql() {
+		return Tables.PROC_DELETE_PERSON;
+	}
+
+	/*-------------------------------------------------------------------*/
+	/*
+	 * SQL getters end
+	 * /*--------------------------------------------------------------------
+	 */
 
 	/**
 	 * Checks if this person is allowed to work on the position
@@ -84,10 +272,10 @@ public class Person extends DB_Object {
 	 *            Primary key of the position
 	 * @return True is this person is allowed to work this position
 	 */
-	public boolean isPositionAllowed(int pos_id) {
+	public boolean isPositionAllowed(String pos_id) {
 		if (m_positions != null) {
-			for (int pos : m_positions) {
-				if (pos == pos_id) {
+			for (String pos : m_positions) {
+				if (pos != null && pos.equals(pos_id)) {
 					return true;
 				}
 			}
@@ -95,167 +283,80 @@ public class Person extends DB_Object {
 		return false;
 	}
 
-	/*************************************************************************/
+	/**
+	 * @see DB_Object#populateProperites(ResultSet)
+	 */
 	@Override
-	public
-	String getInsert_sql(int pkid) {	
-		m_id=pkid;
-		String cols = "PERSON_NAME," + "ADDRESS,"
-				+ "PHONE_HOME," + "PHONE_MOBILE," + "NOTE," + "ACTIVE_PERSON,"
-				+ "EMAIL_ADDRESS";
-		
-		if(isUsingFB())
-			cols+=",PERSON_ID";
-		
-		int active = m_active ? 1 : 0;
-
-		String vals = "'" + m_name + "','" + m_address + "','"
-				+ m_home_phone + "','" + m_mobile_phone + "','" + m_note
-				+ "','" + active + "','" + m_email + "'";
-		
-		if(isUsingFB())
-			vals+=",'"+m_id+"'";
-
-		return QueryFactory.getInsert(cols, vals, Tables.PERSON_TABLE_NAME);
-	}
-
-	@Override
-	public String getUpdate_sql() {	
-		String active = m_active ? "1" : "0";
-		String what = "PERSON_NAME='" + m_name + "',ADDRESS='"
-				+ m_address + "',PHONE_HOME='" + m_home_phone
-				+ "',PHONE_MOBILE='" + m_mobile_phone + "',NOTE='" + m_note
-				+ "',ACTIVE_PERSON='" + active + "',EMAIL_ADDRESS='" + m_email
-				+ "'";
-		return QueryFactory.getUpdate(what, "PERSON_ID", m_id, Tables.PERSON_TABLE_NAME);
-	}
-
-	@Override
-	public ArrayList<String> getDelete_sql() {
-		ArrayList<String> retval = new ArrayList<String>();
-		String sql = QueryFactory.getDelete
-				("PERSON_ID", m_id, Tables.PERSON_TABLE_NAME);
-		retval.add(sql);
-		return retval;
-	}
-
-	@Override
-	public
-	void populateProperites(ResultSet rs) {
+	public void populateProperites(ResultSet rs) {
 		if (rs != null) {
 			try {
 				m_id = rs.getInt("PERSON_ID");
-				m_name=safeStringAssign( rs.getString("PERSON_NAME"));
-				m_address=safeStringAssign(rs.getString("ADDRESS"));
-				m_home_phone=safeStringAssign(rs.getString("PHONE_HOME"));
-				m_mobile_phone=safeStringAssign(rs.getString("PHONE_MOBILE"));
-				m_note=safeStringAssign(rs.getString("NOTE"));
+				m_name = safeStringAssign(rs.getString("PERSON_NAME"));
+				m_address = safeStringAssign(rs.getString("ADDRESS"));
+				m_home_phone = safeStringAssign(rs.getString("PHONE_HOME"));
+				m_mobile_phone = safeStringAssign(rs.getString("PHONE_MOBILE"));
 				m_active = rs.getInt("ACTIVE_PERSON") > 0;
-				m_email=safeStringAssign(rs.getString("EMAIL_ADDRESS"));
+				m_email = safeStringAssign(rs.getString("EMAIL_ADDRESS"));
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	@Override
-	public
-	void populateProperties(ArrayList<String> details) {
-		if (details == null || details.size() != Tables.PERSON_MAX_COLS) {
-			return;
-		}
-		String id_str = details.get(Tables.PERSON_ID_INDEX);
-		if (id_str.length() > 0) {
-			m_id = Integer.parseInt(id_str);
-		}
-
-		m_name=safeStringAssign(details.get(Tables.PERSON_NAME_INDEX));
-		m_address=safeStringAssign(details.get(Tables.PERSON_ADDRESS_INDEX));
-		m_home_phone=safeStringAssign(details.get(Tables.PERSON_HPHONE_INDEX));
-		m_mobile_phone=safeStringAssign(details.get(Tables.PERSON_MPHONE_INDEX));
-		m_note=safeStringAssign(details.get(Tables.PERSON_NOTE_INDEX));
-		m_active = details.get(Tables.PERSON_ACTIVE_INDEX).equals("1");
-		m_email=safeStringAssign(details.get(Tables.PERSON_EMAIL_INDEX));
 	}
 
 	/**
-	 * Populates allowed positions list from the SQL result set
-	 * 
-	 * @param rs
-	 *            Result set with position's ids
+	 * @see DB_Object#populateProperties(DB_Object)
 	 */
-	public void populatePositions(ResultSet rs) {
-		if (rs != null) {
-			m_positions = new ArrayList<Integer>();
-			try {
-				while (rs.next()) {
-					int pers_id = rs.getInt("PERSON_ID");
-					if (pers_id == m_id) {
-						m_positions.add(rs.getInt("PLACE_ID"));
-					}
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+	@Override
+	public void populateProperties(DB_Object details) {
+		if (details == null) {
+			return;
 		}
+		Person person = (Person) details;
+		if (person.getPKID() != 0) {
+			m_id = person.getPKID();
+		}
+		m_name = person.getName();
+		m_address = person.getM_address();
+		m_home_phone = person.getM_home_phone();
+		m_mobile_phone = person.getM_mobile_phone();
+		m_active = person.isActive();
+		m_email = person.getM_email();
+		m_times_off = person.getTimeOffs();
+		if (person.getM_positions() != null
+				&& person.getM_positions().size() > 0) {
+			m_positions = person.getM_positions();
+		}
+
+		if (person.getM_privileges() != null
+				&& person.getM_privileges().size() > 0) {
+			m_privileges = person.getM_privileges();
+		}
+
 	}
 
+	/**
+	 * @see DB_Object#matches(DB_Object, boolean)
+	 */
 	@Override
-	public
-	String getName() {
-		return m_name;
-	}
-
-	@Override
-	public int getPKID() {
-		return m_id;
-	}
-
-	@Override
-	public boolean matches(ArrayList<String> details, boolean use_id) {
-		if (details != null && details.size() == Tables.PERSON_MAX_COLS) {
+	public boolean matches(DB_Object details, boolean use_id) {
+		if (details != null) {
+			Person person = (Person) details;
 			boolean id = true;
-			boolean uuid = true;
 			if (use_id) {
-				id = m_id == Integer.parseInt(details
-						.get(Tables.PERSON_ID_INDEX));
+				id = m_id == person.getPKID();
 			}
-			boolean active = details.get(Tables.PERSON_ACTIVE_INDEX)
-					.equals("1");
-			return id
-					&& m_name.equals(details.get(Tables.PERSON_NAME_INDEX))
-					&& m_address.equals(details
-							.get(Tables.PERSON_ADDRESS_INDEX))
-					&& m_home_phone.equals(details
-							.get(Tables.PERSON_HPHONE_INDEX))
-					&& m_mobile_phone.equals(details
-							.get(Tables.PERSON_MPHONE_INDEX))
-					&& m_note.equals(details.get(Tables.PERSON_NOTE_INDEX))
-					&& m_active == active
-					&& m_email.equals(details.get(Tables.PERSON_EMAIL_INDEX))
-					&& uuid;
+			return id && m_name.equals(person.getName())
+					&& m_address.equals(person.getM_address())
+					&& m_home_phone.equals(person.getM_home_phone())
+					&& m_mobile_phone.equals(person.getM_mobile_phone())
+					&& m_active == person.isActive()
+					&& m_email.equals(person.getM_email());
 		}
 		return false;
 	}
 
-	@Override
-	public
-	ArrayList<String> toSortedArray() {
-		ArrayList<String> properties = new ArrayList<String>();
-		String active = m_active ? "1" : "0";
-		properties.add(Integer.toString(m_id));
-		properties.add(m_name);
-		properties.add(m_address);
-		properties.add(m_home_phone);
-		properties.add(m_mobile_phone);
-		properties.add(m_note);
-		properties.add(active);
-		properties.add(m_email);
-		return properties;
-	}
-
 	/**
-	 * Populates a list of time offs from the sql result set
+	 * Populates a list of time offs from the SQL result set
 	 * 
 	 * @param rs
 	 *            Result set with time off data
@@ -267,10 +368,20 @@ public class Person extends DB_Object {
 				while (rs.next()) {
 					String pers_name = rs.getString("PERSON_NAME");
 					if (pers_name.equals(m_name)) {
-						TimeOff timeOff = new TimeOff(
-								rs.getTimestamp("START"),
-								rs.getTimestamp("END"),
-								rs.getString("STATUS"),
+						Calendar start=new GregorianCalendar();
+						if(rs.getTimestamp("START")!=null)
+						{
+							start.setTime(rs.getTimestamp("START"));
+						}
+						
+						Calendar end=new GregorianCalendar();
+						if(rs.getTimestamp("END")!=null)
+						{
+							end.setTime(rs.getTimestamp("END"));
+						}
+						
+						TimeOff timeOff = new TimeOff(start,
+								end, rs.getString("STATUS"),
 								pers_name);
 						m_times_off.add(timeOff);
 					}
@@ -299,15 +410,9 @@ public class Person extends DB_Object {
 
 					retval.add(str_to);
 				}
-
 			}
 		}
 		return retval;
-	}
-	
-	public ArrayList<TimeOff> getTimeOffs()
-	{
-		return m_times_off;
 	}
 
 	/**
@@ -320,93 +425,27 @@ public class Person extends DB_Object {
 	 * @return True if this person is allowed to work this shift
 	 */
 	public boolean isTimeAllowed(String start_time, String end_time) {
-		
+
 		if (start_time != null && end_time != null && m_times_off != null) {
 			for (TimeOff to : m_times_off) {
 				if (to != null) {
-					if(to.isConflicting(start_time, end_time))
-					{
+					if (to.isConflicting(start_time, end_time)) {
 						return false;
 					}
 				}
-
 			}
 		}
 		return true;
 	}
 
 	/**
-	 * Convenience method to get insert SQL statement for the time off table.
-	 * 
-	 * @param start
-	 *            Start of the time off
-	 * @param end
-	 *            End of the time off
-	 * @return String containing insert SQL statement.
+	 * @see DB_Object#toStringArray()
 	 */
-	public String getTimeOffInsertSql(String start, String end) {
-
-		String cols = "PERSON_ID," + "PERSON_NA_START_DATE_HOUR,"
-				+ "PERSON_NA_END_DATE_HOUR";
-
-		String vals = "'" + m_id + "','" + start + "','" + end + "'";
-
-		return QueryFactory.getInsert(cols, vals, Tables.TIME_OFF_TABLE_NAME);
-	}
-
-	/**
-	 * Delete time off SQL statement
-	 * 
-	 * @param start
-	 *            Start of the time off
-	 * @param end
-	 *            End of the time off
-	 * @return String containing sql statement.
-	 */
-	public String getDeleteTimeOffSql(String start, String end) {
-		ArrayList<String> cols=new ArrayList<String>();
-		cols.add("PERSON_ID");
-		cols.add("PERSON_NA_START_DATE_HOUR");
-		cols.add("PERSON_NA_END_DATE_HOUR");
-		
-		ArrayList<String> vals=new ArrayList<String>();
-		vals.add(Integer.toString(m_id));
-		vals.add(start);
-		vals.add(end);
-		
-		return QueryFactory.getDelete(cols, vals, Tables.TIME_OFF_TABLE_NAME);		
-	}
-
-	/**
-	 * Generates a list of SQL statement to insert person to position mappings
-	 * 
-	 * @return SQL statement
-	 */
-	public ArrayList<String> getPersonToPositionsInsertSql() {
-		ArrayList<String> retval = new ArrayList<String>();
-
-		if (m_positions != null) {
-			for (Integer i : m_positions) {
-				String cols = "PERSON_ID," + "PLACE_ID";
-				String vals = "";
-				vals = "'" + m_id + "','" + i + "'";
-				retval.add(QueryFactory.getInsert(cols, vals, Tables.PERSON_TO_PLACE_TABLE_NAME));
-			}
-		}
-		return retval;
-	}
-
-	/**
-	 * Generates SQL statement to delete person to position mappings.
-	 * @return SQL statement.
-	 */
-	public String getPersonToPositionsDeleteSql() {
-		return QueryFactory.getDelete
-				("PERSON_ID", m_id, Tables.PERSON_TO_PLACE_TABLE_NAME);
-	}
 	@Override
-	public String getNexPKID_sql() {
-		return QueryFactory.getNextPKIDFB(Tables.PERSON_TABLE_NAME);
+	public String[] toStringArray() {
+		String[] str_array = { m_name, m_address, m_home_phone, m_mobile_phone,
+				m_active ? "1" : "0", m_email, getPKIDStr() };
+		return str_array;
 	}
 
 }

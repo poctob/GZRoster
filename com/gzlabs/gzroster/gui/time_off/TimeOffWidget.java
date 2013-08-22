@@ -16,8 +16,6 @@ import com.gzlabs.gzroster.gui.GZTableViewer;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.events.FocusEvent;
-import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Cursor;
@@ -41,7 +39,6 @@ public class TimeOffWidget extends Composite {
 	private Button btnDelete;
 	private Button btnUpdate;
 	private TimeOffModelProvider modelProvider;
-	private TimeOffModelProvider lastProvider;
 
 	/**
 	 * Create the composite.

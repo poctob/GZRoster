@@ -1,7 +1,6 @@
 package com.gzlabs.gzroster.data;
 
-import java.util.Date;
-
+import java.util.Calendar;
 import com.gzlabs.utils.DateUtils;
 
 /**
@@ -12,10 +11,10 @@ import com.gzlabs.utils.DateUtils;
 public class TimeOff{
 	
 	//Time off start time
-	private Date start;
+	private Calendar start;
 	
 	//Time off end time
-	private Date end;
+	private Calendar end;
 	
 	//request's status
 	private String status;
@@ -27,14 +26,23 @@ public class TimeOff{
 	 * Default constructor initializes member variables
 	 * @param start Start of the time off
 	 * @param end End of the time off
+	 * @param status Time off status
+	 * @param name name of a person this time off applie to.
 	 */
-	public TimeOff(Date start, Date end, String status, String name) {
+	public TimeOff(Calendar start, Calendar end, String status, String name) {
 		super();
 		this.start = start;
 		this.end = end;
 		this.status=status;
 		this.name=name;
 	}
+	
+
+	/*-------------------------------------------------------------------*/
+	/*
+	 * Setters and getters start
+	 * /*--------------------------------------------------------------------
+	 */
 	/**
 	 * @return the name
 	 */
@@ -52,28 +60,28 @@ public class TimeOff{
 	/**
 	 * @return the start
 	 */
-	public Date getStart() {
+	public Calendar getStart() {
 		return start;
 	}
 
 	/**
 	 * @param start the start to set
 	 */
-	public void setStart(Date start) {
+	public void setStart(Calendar start) {
 		this.start = start;
 	}
 
 	/**
 	 * @return the end
 	 */
-	public Date getEnd() {
+	public Calendar getEnd() {
 		return end;
 	}
 
 	/**
 	 * @param end the end to set
 	 */
-	public void setEnd(Date end) {
+	public void setEnd(Calendar end) {
 		this.end = end;
 	}
 	
@@ -88,21 +96,26 @@ public class TimeOff{
 	 */
 	public String getStartStr()
 	{
-		return DateUtils.DateToString(start);
+		return DateUtils.CalendarToString(start);
 	}
 	
 	/**
-	 * 
+	 *  Returns end date as string
 	 * @return End date as string
 	 */
 	public String getEndStr()
 	{
-		return DateUtils.DateToString(end);
+		return DateUtils.CalendarToString(end);
 	}
 	
+	/**
+	 * Sets start value from string
+	 * @param start String date.
+	 * @return true if this is a valid date.
+	 */
 	public boolean setStart(String start)
 	{
-		Date st_date=DateUtils.StringToDate(start);
+		Calendar st_date=DateUtils.calendarFromString(start);
 		if(st_date!=null)
 		{
 			this.start=st_date;
@@ -112,9 +125,14 @@ public class TimeOff{
 		
 	}
 	
+	/**
+	 * Sets end value from string
+	 * @param endt String date.
+	 * @return true if this is a valid date.
+	 */
 	public boolean setEnd(String end)
 	{
-		Date end_date=DateUtils.StringToDate(end);
+		Calendar end_date=DateUtils.calendarFromString(end);
 		if(end_date!=null)
 		{
 			this.end=end_date;
@@ -123,10 +141,21 @@ public class TimeOff{
 		return false;		
 	}
 	
+	/**
+	 * Retrieves status variable.
+	 * @return Time off status.
+	 */
 	public String getStatus()
 	{
 		return status;
 	}
+
+	/*-------------------------------------------------------------------*/
+	/*
+	 * Setters and getters End
+	 * /*--------------------------------------------------------------------
+	 */
+	
 	
 	/**
 	 * Checks if supplied dates conflict with this object
@@ -136,7 +165,11 @@ public class TimeOff{
 	 */
 	public boolean isConflicting(String start, String end)
 	{
-		return DateUtils.isCalendarBetween(this.start, this.end, start, end, true);				
+		if(status!=null)
+		{
+			return status.equals("Approved") && DateUtils.isCalendarBetween(this.start, this.end, start, end, true);
+		}
+		return false;
 	}
 
 }

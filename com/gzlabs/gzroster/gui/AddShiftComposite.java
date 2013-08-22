@@ -3,7 +3,6 @@ package com.gzlabs.gzroster.gui;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Cursor;
@@ -14,6 +13,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Button;
 
+import com.gzlabs.gzroster.data.DB_Object;
+import com.gzlabs.gzroster.data.Duty;
 import com.gzlabs.utils.DateUtils;
 import com.gzlabs.utils.WidgetUtilities;
 import org.eclipse.wb.swt.SWTResourceManager;
@@ -36,7 +37,7 @@ public class AddShiftComposite extends Composite {
 	private Button addButton;
 	private Button cancelButton;
 
-	// Update place holders
+	// Update placeholders
 	private String upd_person;
 	private String upd_position;
 	private String upd_start;
@@ -238,50 +239,7 @@ public class AddShiftComposite extends Composite {
 		cancelButton.setVisible(false);
 	}
 
-	/**
-	 * @return the upd_person
-	 */
-	public String getUpd_person() {
-		return upd_person;
-	}
-
-	/**
-	 * @param upd_person
-	 *            the upd_person to set
-	 */
-	public void setUpd_person(String upd_person) {
-		this.upd_person = upd_person;
-	}
-
-	/**
-	 * @return the upd_position
-	 */
-	public String getUpd_position() {
-		return upd_position;
-	}
-
-	/**
-	 * @param upd_position
-	 *            the upd_position to set
-	 */
-	public void setUpd_position(String upd_position) {
-		this.upd_position = upd_position;
-	}
-
-	/**
-	 * @return the upd_start
-	 */
-	public String getUpd_start() {
-		return upd_start;
-	}
-
-	/**
-	 * @param upd_start
-	 *            the upd_start to set
-	 */
-	public void setUpd_start(String upd_start) {
-		this.upd_start = upd_start;
-	}
+	
 
 	/**
 	 * Clears all data from the controls.
@@ -375,6 +333,51 @@ public class AddShiftComposite extends Composite {
 	public void setEndEnabled(boolean enabled) {
 		endPicker.setEnabled(enabled);
 	}
+	
+	/**
+	 * @return the upd_person
+	 */
+	public String getUpd_person() {
+		return upd_person;
+	}
+
+	/**
+	 * @param upd_person
+	 *            the upd_person to set
+	 */
+	public void setUpd_person(String upd_person) {
+		this.upd_person = upd_person;
+	}
+
+	/**
+	 * @return the upd_position
+	 */
+	public String getUpd_position() {
+		return upd_position;
+	}
+
+	/**
+	 * @param upd_position
+	 *            the upd_position to set
+	 */
+	public void setUpd_position(String upd_position) {
+		this.upd_position = upd_position;
+	}
+
+	/**
+	 * @return the upd_start
+	 */
+	public String getUpd_start() {
+		return upd_start;
+	}
+
+	/**
+	 * @param upd_start
+	 *            the upd_start to set
+	 */
+	public void setUpd_start(String upd_start) {
+		this.upd_start = upd_start;
+	}
 
 	// End accessors
 	/***************************************************************************/
@@ -439,5 +442,37 @@ public class AddShiftComposite extends Composite {
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
+	}
+
+	/**
+	 * Creates and returns new duty object based on the saved person and position.
+	 * @param start Duty start time
+	 * @param end Duty end time
+	 * @return New duty object
+	 */
+	public DB_Object getCurrentDuty(Calendar start, Calendar end) {
+		Duty duty=new Duty(start, end, null, null);
+		duty.setM_person(upd_person);
+		duty.setM_position(upd_position);
+		return duty;
+	}
+
+	/**
+	 * Creates new duty object based on the current widget data
+	 * @return New duty object.
+	 */
+	public DB_Object getDutyDetails() {		
+		String start_date = getSelectedDate() + " "
+				+ getSelectedStart() + ":00.0";
+
+		String end_date = getSelectedDate() + " "
+				+ getSelectedEnd() + ":00.0";
+
+		Duty duty=new Duty(DateUtils.calendarFromString(start_date),
+				DateUtils.calendarFromString(end_date),
+				getSelectedPosition(),
+				getSelectedEmployee());
+		
+		return duty;
 	}
 }

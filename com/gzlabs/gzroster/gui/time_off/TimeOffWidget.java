@@ -10,7 +10,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.widgets.Composite;
 
-import com.gzlabs.gzroster.data.TimeOff;
+import com.xpresstek.gzrosterdata.TimeOff;
 import com.gzlabs.gzroster.gui.GZTableViewer;
 
 import org.eclipse.swt.widgets.Button;

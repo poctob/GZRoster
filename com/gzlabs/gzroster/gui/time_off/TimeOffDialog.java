@@ -18,7 +18,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Combo;
 
-import com.gzlabs.gzroster.data.TimeOff;
+import com.xpresstek.gzrosterdata.TimeOff;
 import com.gzlabs.utils.DateUtils;
 import com.gzlabs.utils.WidgetUtilities;
 import org.eclipse.swt.events.SelectionAdapter;

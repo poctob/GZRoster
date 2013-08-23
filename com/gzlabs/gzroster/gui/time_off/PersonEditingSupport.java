@@ -2,7 +2,7 @@ package com.gzlabs.gzroster.gui.time_off;
 
 import java.util.ArrayList;
 
-import com.gzlabs.gzroster.data.TimeOff;
+import com.xpresstek.gzrosterdata.TimeOff;
 import com.gzlabs.gzroster.gui.GZTableViewer;
 
 public class PersonEditingSupport extends ComboEditingSupport{

@@ -2,7 +2,7 @@ package com.gzlabs.gzroster.gui.time_off;
 
 import java.util.ArrayList;
 
-import com.gzlabs.gzroster.data.TimeOff;
+import com.xpresstek.gzrosterdata.TimeOff;
 
 public class TimeOffModelProvider {
 	

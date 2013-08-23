@@ -4,7 +4,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 
-import com.gzlabs.gzroster.data.TimeOff;
+import com.xpresstek.gzrosterdata.TimeOff;
 
 public class TimeOffViewerComparator extends ViewerComparator {
 	 private int propertyIndex;

@@ -9,12 +9,12 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.wb.swt.SWTResourceManager;
 
-import com.gzlabs.gzroster.data.Person;
-import com.gzlabs.gzroster.gui.BaseListViewerWidget;
-import com.gzlabs.gzroster.gui.ElementsChangedEvent;
-import com.gzlabs.gzroster.gui.ElementsChangedListener;
-import com.gzlabs.gzroster.sql.DBObjectType;
-import com.gzlabs.gzroster.gui.CheckBoxComposite;
+import com.xpresstek.gzrosterdata.Person;
+import com.xpresstek.gzrosterdata.gui.BaseListViewerWidget;
+import com.xpresstek.gzrosterdata.gui.ElementsChangedEvent;
+import com.xpresstek.gzrosterdata.gui.ElementsChangedListener;
+import com.xpresstek.gzrosterdata.sql.DBObjectType;
+import com.xpresstek.gzrosterdata.gui.CheckBoxComposite;
 import com.gzlabs.gzroster.gui.position.PositionsComposite;
 import com.gzlabs.gzroster.gui.privilege.PrivilegeComposite;
 import org.eclipse.swt.widgets.List;

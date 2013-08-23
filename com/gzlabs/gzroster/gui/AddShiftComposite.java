@@ -13,8 +13,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Button;
 
-import com.gzlabs.gzroster.data.DB_Object;
-import com.gzlabs.gzroster.data.Duty;
+import com.xpresstek.gzrosterdata.DB_Object;
+import com.xpresstek.gzrosterdata.Duty;
 import com.gzlabs.utils.DateUtils;
 import com.gzlabs.utils.WidgetUtilities;
 import org.eclipse.wb.swt.SWTResourceManager;

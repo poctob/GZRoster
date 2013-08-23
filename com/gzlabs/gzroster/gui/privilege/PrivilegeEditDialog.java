@@ -10,8 +10,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import com.gzlabs.gzroster.data.Privilege;
-import com.gzlabs.gzroster.gui.BaseItemEditDialog;
+import com.xpresstek.gzrosterdata.Privilege;
+import com.xpresstek.gzrosterdata.gui.BaseItemEditDialog;
 import com.gzlabs.utils.WidgetUtilities;
 
 import org.eclipse.swt.SWT;

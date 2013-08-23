@@ -8,7 +8,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Button;
 
-import com.gzlabs.gzroster.data.UploadManager;
+import com.xpresstek.gzrosterdata.UploadManager;
+import com.xpresstek.gzrosterdata.IDisplayStatus;
 
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;

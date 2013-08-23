@@ -25,7 +25,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Cursor;
 
-import com.gzlabs.gzroster.sql.Tables;
+import com.xpresstek.gzrosterdata.sql.Tables;
 import com.gzlabs.utils.WidgetUtilities;
 
 /**

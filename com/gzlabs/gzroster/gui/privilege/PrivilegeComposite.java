@@ -2,9 +2,9 @@ package com.gzlabs.gzroster.gui.privilege;
 
 import org.eclipse.swt.widgets.Composite;
 
-import com.gzlabs.gzroster.gui.CheckBoxComposite;
-import com.gzlabs.gzroster.gui.IItemsManager;
-import com.gzlabs.gzroster.sql.DBObjectType;
+import com.xpresstek.gzrosterdata.gui.CheckBoxComposite;
+import com.xpresstek.gzrosterdata.gui.IItemsManager;
+import com.xpresstek.gzrosterdata.sql.DBObjectType;
 
 public class PrivilegeComposite extends CheckBoxComposite {
 

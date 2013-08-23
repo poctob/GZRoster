@@ -1,6 +1,6 @@
 package com.gzlabs.gzroster.gui.person;
 
-import com.gzlabs.gzroster.gui.IItemsManager;
+import com.xpresstek.gzrosterdata.gui.IItemsManager;
 
 /**
  * Manages employee widget

@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
-import com.gzlabs.gzroster.data.UploadManager;
+import com.xpresstek.gzrosterdata.UploadManager;
 
 /**
  * Dialog used for purging data

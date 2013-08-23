@@ -547,4 +547,158 @@ public class DataManager implements Runnable {
 	public DB_Object getObjectByName(String name, DBObjectType type) {
 		return db_factory.getElementByName(name, type);
 	}
+	
+	/**
+	 * Checks Pin against the database
+	 * @param login Login Name
+	 * @param text2 Pin
+	 * @return True if pin is correct
+	 */
+	public boolean pinCorrect(String login, String pin) {
+		ArrayList<String> data=db_factory.getPin(login);
+		if(data.size()==2)
+		{
+			return CryptoUtils.checkPassSHA512(pin, data.get(1), data.get(0));
+		}
+		return false;
+	}
+	
+	/**
+	 * Fetches today's shifts for a specified employee
+	 * @param name Employees Name	
+	 * @return String representation of todays duties.
+	 */
+	public ArrayList<String> getTodayShifts(String name)
+	{
+		ArrayList<String> retval=new ArrayList<String>();
+		ArrayList<DB_Object> duties=db_factory.getTodaysDuty(name);
+		for(DB_Object d:duties)
+		{
+			if(d!=null)
+			{
+				Duty duty=(Duty)d;
+				String start=DateUtils.CalendarToString(duty.getM_start());
+				String end=DateUtils.CalendarToString(duty.getM_end());
+				String position=duty.getM_position();
+				retval.add(start.substring(11, start.length()-5));
+				retval.add(end.substring(11, end.length()-5));
+				retval.add(position);
+			}
+				
+		}
+		return retval;
+	}
+	
+	/**
+	 * Checks if specified employee is currently clocked in
+	 * @param name Employee's Name
+	 * @return True, if an employee is clocked in.
+	 */
+	public boolean isClockedIn(String name)
+	{
+		return db_factory.isClockedIn(name);
+	}
+	
+	/**
+	 * Gets total hours emplyee is schedule to work.
+	 * @param name Emplyee's name
+	 * @return Hours employess is scheduled to work for.
+	 */
+	public double getTotalScheduledHours(String name)
+	{
+		double minutes=db_factory.getWeekScheduledHours(name);
+		return minutes/60;
+	}
+	
+	/**
+	 * Fetches hours an employee worked so far
+	 * @param name Employee's name
+	 * @return Number of hours worked this week.
+	 */
+	public double getWeeklyWorkedHours(String name)
+	{
+		double minutes=db_factory.getWeekWorkeddHours(name);
+		return minutes/60;
+	}
+	
+	/**
+	 * Checks if employees is within 5 minutes of shift start
+	 * @param name Employee name
+	 * @return True if employee is good.
+	 */
+	public boolean checkFiveMinuteRule(String name) {
+		int minutes=db_factory.getNextShiftDiff(name);
+		return (minutes==0 || minutes>300);
+	}
+	
+	/**
+	 * Inserts new clock in/out event into the database
+	 * @param name Employee name
+	 * @param isClockIn If this is clock in
+	 * @param reason Reason
+	 * @param approver Approver
+	 * @return True if success
+	 */
+	public boolean insertClockEvent(String name, boolean isClockIn, String reason, String approver)
+	{
+		if(db_factory.insertClockEvent(name, isClockIn, reason))
+		{
+			safeDisplayStatus("Clock event registered.");
+			return true;
+		}
+		else
+		{
+			safeDisplayStatus("Unable to register an event!");
+			return false;
+		}
+	}
+	
+	/**
+	 * Fetches a list of Time Approval supervisors from the database
+	 * @return List of the time approving supervisors
+	 */
+	public ArrayList<String> getSupervisors() {
+		return db_factory.getSupervisorType("TIME APPROVAL");
+	}
+	
+	/**
+ 	 * Fetches all time off requests for a specified employee.
+ 	 * @param name Employee name.
+ 	 * @return List of time off requests.
+ 	 */
+	public ArrayList<TimeOff> getTimeOffs(String name) {
+		DB_Object person=getObjectByName(name, DBObjectType.PERSON);	
+		return person!=null?((Person)person).getTimeOffs():null;
+	}
+	
+	/**
+	 * Requests time off.
+	 * @param name Employee name
+	 * @param start Time off start
+	 * @param end Time off end
+	 * @return True if success
+	 */
+	public boolean requestTimeOff(String name, String start, String end)
+	{
+		boolean retval=db_factory.requestTimeOff(name, start, end, "Pending");
+		return retval;
+	}
+	
+	/**
+	 * Fetches a clock out reason from the database.
+	 * @return List of the clock out reasons.
+	 */
+	public ArrayList<String> getClockOutReasons()
+	{
+		return db_factory.getClockOutReasons();
+	}
+	
+	public void updateEmployeeData(String nameLabel, String address,
+			String homephone, String cellphone, String email, String pin) {
+		setPin(pin, nameLabel);
+		Person person=(Person)getObjectByName(nameLabel, DBObjectType.PERSON);
+	/*	person.
+		db_factory.updatePerson(nameLabel, address, homephone, cellphone, email);*/
+		
+	}
 }

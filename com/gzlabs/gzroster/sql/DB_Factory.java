@@ -369,12 +369,9 @@ public class DB_Factory {
 	 * Get today's schedule for a specified employee.
 	 * @param dbman Database manager
 	 * @param name Employee's name
-	 * @param positions Positions list (to populate duties object)
-	 * @param persons Persons list (to populate duties object)
 	 * @return List of database duties.
 	 */
-	public ArrayList<DB_Object> getTodaysDuty(String name, ArrayList<DB_Object> positions,
-			ArrayList<DB_Object> persons) {
+	public ArrayList<DB_Object> getTodaysDuty(String name) {
 		if(dbman !=null && name!=null)
 		{
 			ResultSet records = runSproc(Tables.PROC_TODAY_SCHEDULE, true,name);
